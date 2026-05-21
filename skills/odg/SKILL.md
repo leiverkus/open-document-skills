@@ -70,6 +70,8 @@ python scripts/extract_shapes.py input.odg
 python scripts/inspect_package.py input.odg
 ```
 
+For the full script reference, see [docs/script-reference.md](../../docs/script-reference.md#odg).
+
 ## content.xml Structure
 
 An ODG drawing normally stores pages in `content.xml` under:
@@ -142,32 +144,13 @@ If an ODG deliverable is not strictly required, offer SVG or PDF as a more porta
 
 Treat conversion as lossy until QA proves otherwise. Check text, fonts, shapes, connectors, image embedding, and page size.
 
-## Bundled Creation and Editing Scripts
+## Bundled Scripts
 
-These scripts support direct ODG generation and XML-safe template workflows:
-
-| Script | Purpose |
-|--------|---------|
-| `create_minimal_odg.py` | Generate a valid minimal ODG from a JSON spec with pages, text, rectangles, ellipses, lines, connectors, and images |
-| `extract_text.py` | Extract visible drawing labels/text boxes |
-| `extract_shapes.py` | List shapes with page, type, name, coordinates, dimensions, style, and text |
-| `replace_text.py` | XML-safe text replacement in labels/text boxes |
-| `add_image.py` | Copy an image into `Pictures/`, update manifest, and insert a `draw:image` frame |
-| `inspect_package.py` | Inspect package files, pages, media, styles, and shape counts |
-| `list_styles.py` | Print graphic, text, drawing-page, and master-page styles |
-| `validate_refs.py` | Check media/style references and basic geometry issues |
-| `render.py` | Export to PDF/SVG/PNG with LibreOffice |
-| `pack_odg.py` | Repack an extracted ODG with `mimetype` first and uncompressed |
-
-Examples:
+For creation and editing scripts, see [docs/script-reference.md](../../docs/script-reference.md#odg).
+All scripts use the Python standard library and are invoked as:
 
 ```bash
-python scripts/create_minimal_odg.py drawing.json output.odg
-python scripts/extract_shapes.py output.odg
-python scripts/replace_text.py input.odg "{{LABEL}}" "Updated label" -o output.odg
-python scripts/add_image.py input.odg logo.png --x 1cm --y 1cm --width 4cm --height 2cm -o output.odg
-python scripts/render.py output.odg --outdir qa --png
-python scripts/validate_refs.py output.odg
+python scripts/<script_name>.py [args]
 ```
 
 ## ODG Diagram Design Checklist

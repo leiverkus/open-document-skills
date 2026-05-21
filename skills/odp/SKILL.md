@@ -66,6 +66,8 @@ python scripts/extract_text.py input.odp --json
 python scripts/inspect_package.py input.odp
 ```
 
+For the full script reference, see [docs/script-reference.md](../../docs/script-reference.md#odp).
+
 Useful things to inspect:
 
 - `draw:page` elements for slide order and names
@@ -212,41 +214,13 @@ Use LibreOffice conversion when the source already exists in another format or w
 
 Treat conversion as lossy until QA proves otherwise. Check fonts, images, connectors, masters, notes, and placeholder behavior after every conversion.
 
-## Bundled Creation and Editing Scripts
+## Bundled Scripts
 
-These scripts support direct ODP generation and XML-safe template workflows:
-
-| Script | Purpose |
-|--------|---------|
-| `create_minimal_odp.py` | Generate a valid minimal ODP from a JSON slide spec with title, body, image, and blank layouts |
-| `clone_slide.py` | Clone a `draw:page` from a template, preserve its master/layout references, and replace selected text placeholders |
-| `add_image.py` | Copy an image into `Pictures/`, add/update manifest entries, and insert or replace a `draw:image` frame |
-| `replace_text.py` | XML-safe find/replace for slide text, optionally scoped by slide name/index and excluding notes |
-| `list_masters.py` | Print master pages, page layouts, placeholders, and which slides use each master |
-| `validate_refs.py` | Check style, master-page, image, and manifest references for broken links |
-| `pack_odp.py` | Repack an extracted ODP with `mimetype` first and uncompressed |
-
-Examples:
+For creation and editing scripts, see [docs/script-reference.md](../../docs/script-reference.md#odp).
+All scripts use the Python standard library and are invoked as:
 
 ```bash
-# Create a simple deck directly from JSON.
-python scripts/create_minimal_odp.py slides.json output.odp
-
-# Clone slide 1 from a template and replace placeholders.
-python scripts/clone_slide.py template.odp --source-slide 1 --name "Agenda" --replace "{{TITLE}}=Agenda" -o output.odp
-
-# Replace visible slide text without touching notes.
-python scripts/replace_text.py input.odp "Old text" "New text" -o output.odp
-
-# Add an image frame to slide 2 and update the manifest.
-python scripts/add_image.py input.odp figure.png --slide 2 --x 14cm --y 3cm --width 10cm --height 7cm -o output.odp
-
-# List masters and validate references.
-python scripts/list_masters.py output.odp
-python scripts/validate_refs.py output.odp
-
-# Repack an extracted ODP directory.
-python scripts/pack_odp.py unpacked_odp output.odp
+python scripts/<script_name>.py [args]
 ```
 
 Keep direct generation deliberately small unless a task needs more: title/body/image slides, simple notes, a small style set, and QA-rendered output.

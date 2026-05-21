@@ -81,6 +81,8 @@ python scripts/extract_formulas.py input.ods
 python scripts/inspect_package.py input.ods
 ```
 
+For the full script reference, see [docs/script-reference.md](../../docs/script-reference.md#ods).
+
 ## content.xml Structure
 
 An ODS workbook normally stores sheets in `content.xml` under:
@@ -161,33 +163,13 @@ For XLSX/CSV interoperability:
 
 Treat conversion as lossy until QA proves otherwise. Verify formulas, date/number formats, charts, sheet names, and repeated/merged cells.
 
-## Bundled Creation and Editing Scripts
+## Bundled Scripts
 
-These scripts support direct ODS generation, inspection, and XML-safe editing:
-
-| Script | Purpose |
-|--------|---------|
-| `create_minimal_ods.py` | Generate a valid minimal ODS from a JSON workbook spec with sheets, rows, typed values, and formulas |
-| `extract_sheets.py` | Extract sheet dimensions, values, types, and formulas, optionally as JSON |
-| `extract_formulas.py` | List formulas by sheet and A1 address |
-| `replace_cells.py` | Set cell values or formulas by `Sheet!A1` address |
-| `inspect_package.py` | Inspect package files, sheets, media, styles, charts, and manifest |
-| `list_styles.py` | Print cell/table/number/page styles from `styles.xml` and `content.xml` |
-| `validate_refs.py` | Check media, style, manifest, and basic formula error references |
-| `recalc.py` | Open/save with LibreOffice headless, then run formula/error checks |
-| `export_csv.py` | Export extracted sheet data to CSV without requiring LibreOffice |
-| `pack_ods.py` | Repack an extracted ODS with `mimetype` first and uncompressed |
-
-Examples:
+For creation and editing scripts, see [docs/script-reference.md](../../docs/script-reference.md#ods).
+All scripts use the Python standard library and are invoked as:
 
 ```bash
-python scripts/create_minimal_ods.py workbook.json output.ods
-python scripts/extract_sheets.py output.ods --json
-python scripts/extract_formulas.py output.ods
-python scripts/replace_cells.py input.ods 'Data!B2=42' 'Data!C2=formula:of:=[.B2]*2' -o output.ods
-python scripts/export_csv.py output.ods --sheet Data --output data.csv
-python scripts/recalc.py output.ods --outdir qa
-python scripts/validate_refs.py output.ods
+python scripts/<script_name>.py [args]
 ```
 
 ## Editing Existing ODS Files

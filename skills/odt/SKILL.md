@@ -69,6 +69,8 @@ python scripts/extract_text.py input.odt --json
 python scripts/inspect_package.py input.odt
 ```
 
+For the full script reference, see [docs/script-reference.md](../../docs/script-reference.md#odt).
+
 ## content.xml Structure
 
 An ODT document normally stores body content in `content.xml` under:
@@ -163,28 +165,13 @@ pandoc input.md --reference-doc=template.odt -o output.odt
 
 Set explicit heading hierarchy in the source. Avoid manually faking headings with bold text.
 
-## Bundled Creation and Editing Scripts
+## Bundled Scripts
 
-These scripts support direct ODT generation and XML-safe template workflows:
-
-| Script | Purpose |
-|--------|---------|
-| `create_minimal_odt.py` | Generate a valid minimal ODT from a JSON document spec with title, sections, paragraphs, lists, tables, images, and footnotes |
-| `replace_text.py` | XML-safe find/replace, optionally scoped to `content.xml`, `styles.xml`, or both |
-| `add_image.py` | Copy an image into `Pictures/`, update manifest entries, and insert a `draw:image` frame |
-| `list_styles.py` | Print paragraph, text, table, graphic, page, and master-page styles |
-| `validate_refs.py` | Check style, image, and manifest references for broken links |
-| `pack_odt.py` | Repack an extracted ODT with `mimetype` first and uncompressed |
-
-Examples:
+For creation and editing scripts, see [docs/script-reference.md](../../docs/script-reference.md#odt).
+All scripts use the Python standard library and are invoked as:
 
 ```bash
-python scripts/create_minimal_odt.py document.json output.odt
-python scripts/replace_text.py input.odt "{{NAME}}" "Patrick Leiverkus" -o output.odt
-python scripts/add_image.py input.odt figure.png --width 8cm --height 5cm -o output.odt
-python scripts/list_styles.py output.odt
-python scripts/validate_refs.py output.odt
-python scripts/pack_odt.py unpacked_odt output.odt
+python scripts/<script_name>.py [args]
 ```
 
 ## ODT Layout Checklist
