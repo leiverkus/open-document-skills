@@ -168,13 +168,15 @@ python skills/odg/scripts/validate_refs.py output.odg
 
 ## Testing
 
-Run the dependency-free smoke tests:
+Run the test suite:
 
 ```bash
 python -m unittest discover -s tests
 ```
 
-The tests create minimal ODT, ODP, ODS, and ODG files, then exercise extraction, validation, editing, media insertion, and export helpers that do not require LibreOffice.
+The tests create minimal ODT, ODP, ODS, and ODG files, then exercise extraction, validation, editing, media insertion, and export helpers.
+
+LibreOffice integration tests are included. They render ODT/ODP/ODG files and recalculate ODS files when `soffice` is available. If LibreOffice is not available, those tests are skipped.
 
 GitHub Actions runs the same smoke test suite on every push and pull request.
 
