@@ -3,7 +3,7 @@
 [![Tests](https://github.com/leiverkus/open-document-skills/actions/workflows/tests.yml/badge.svg)](https://github.com/leiverkus/open-document-skills/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Codex skills for working with OpenDocument Format files directly:
+Agent skills for working with OpenDocument Format files directly. The repository is structured for Codex, Claude Code, and OpenCode:
 
 - `odt` - OpenDocument Text / LibreOffice Writer
 - `odp` - OpenDocument Presentation / LibreOffice Impress
@@ -14,7 +14,7 @@ The skills favor native ODF package/XML workflows over unnecessary DOCX/PPTX/XLS
 
 ## What This Is
 
-These are Codex skills: self-contained folders with a `SKILL.md` file and optional scripts. They teach Codex how to handle a specific file family with repeatable workflows and bundled tools.
+These are agent skills: self-contained folders with a `SKILL.md` file and optional scripts. They teach Codex, Claude Code, OpenCode, and compatible agents how to handle a specific file family with repeatable workflows and bundled tools.
 
 The goal is not to replace LibreOffice. The goal is to make automated ODF work safer by combining:
 
@@ -47,6 +47,8 @@ tests/
   test_libreoffice_integration.py
 scripts/
   install_skills.py
+.claude-plugin/
+  plugin.json
 examples/
   README.md
   build_examples.py
@@ -72,14 +74,34 @@ By default, the installer writes to `$CODEX_HOME/skills` when `CODEX_HOME` is se
 If your setup uses the older `.agents` directory, install there explicitly:
 
 ```bash
-python3 scripts/install_skills.py --dest ~/.agents/skills
+python3 scripts/install_skills.py --target agents
 ```
 
 Existing skill directories are skipped by default. To intentionally overwrite the installed copies:
 
 ```bash
-python3 scripts/install_skills.py --dest ~/.agents/skills --replace
+python3 scripts/install_skills.py --target agents --replace
 ```
+
+For OpenCode global skills:
+
+```bash
+python3 scripts/install_skills.py --target opencode
+```
+
+To install project-local OpenCode skills:
+
+```bash
+python3 scripts/install_skills.py --target opencode --dest .opencode/skills
+```
+
+For Claude Code, this repository can be used as a skill-focused plugin because it contains `.claude-plugin/plugin.json` and a top-level `skills/` directory. To create a plugin bundle at a chosen destination:
+
+```bash
+python3 scripts/install_skills.py --target claude --dest ./dist/open-document-skills
+```
+
+Then add or install that plugin directory in Claude Code.
 
 To install from a local checkout:
 

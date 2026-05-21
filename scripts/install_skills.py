@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""Install OpenDocument skills into a Codex skills directory."""
+"""Install OpenDocument skills for Codex, Claude Code, or OpenCode."""
 
 from __future__ import annotations
 
@@ -13,13 +13,35 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SKILLS_DIR = ROOT / "skills"
 DEFAULT_SKILLS = ("odt", "odp", "ods", "odg")
+PLUGIN_FILES = ("README.md", "LICENSE")
+PLUGIN_DIRS = (".claude-plugin", "skills")
 
 
-def default_destination() -> Path:
+def default_codex_destination() -> Path:
     codex_home = os.environ.get("CODEX_HOME")
     if codex_home:
         return Path(codex_home).expanduser() / "skills"
     return Path.home() / ".codex" / "skills"
+
+
+def default_opencode_destination() -> Path:
+    opencode_config = os.environ.get("OPENCODE_CONFIG_DIR")
+    if opencode_config:
+        return Path(opencode_config).expanduser() / "skills"
+    xdg_config = os.environ.get("XDG_CONFIG_HOME")
+    if xdg_config:
+        return Path(xdg_config).expanduser() / "opencode" / "skills"
+    return Path.home() / ".config" / "opencode" / "skills"
+
+
+def default_destination(target: str) -> Path | None:
+    if target == "codex":
+        return default_codex_destination()
+    if target == "agents":
+        return Path.home() / ".agents" / "skills"
+    if target == "opencode":
+        return default_opencode_destination()
+    return None
 
 
 def install_skill(name: str, dest: Path, replace: bool) -> str:
@@ -35,13 +57,41 @@ def install_skill(name: str, dest: Path, replace: bool) -> str:
     return f"install {name}: {target}"
 
 
+def install_skills(dest: Path, skills: list[str], replace: bool) -> None:
+    dest.mkdir(parents=True, exist_ok=True)
+    for name in skills:
+        print(install_skill(name, dest, replace))
+
+
+def install_claude_plugin(dest: Path, replace: bool) -> None:
+    if dest.exists():
+        if not replace:
+            print(f"skip claude-plugin: already exists at {dest}")
+            return
+        shutil.rmtree(dest)
+    dest.mkdir(parents=True)
+    for filename in PLUGIN_FILES:
+        shutil.copy2(ROOT / filename, dest / filename)
+    for dirname in PLUGIN_DIRS:
+        shutil.copytree(ROOT / dirname, dest / dirname)
+    print(f"install claude-plugin: {dest}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
+        "--target",
+        choices=["codex", "agents", "opencode", "claude"],
+        default="codex",
+        help="installation target; codex is the default",
+    )
+    parser.add_argument(
         "--dest",
         type=Path,
-        default=default_destination(),
-        help="destination skills directory; defaults to $CODEX_HOME/skills or ~/.codex/skills",
+        help=(
+            "destination directory; defaults depend on --target. "
+            "Claude target requires an explicit plugin destination such as ./dist/open-document-skills."
+        ),
     )
     parser.add_argument(
         "--skills",
@@ -52,13 +102,21 @@ def main() -> None:
     parser.add_argument("--replace", action="store_true", help="replace existing destination skill directories")
     args = parser.parse_args()
 
-    dest = args.dest.expanduser().resolve()
-    dest.mkdir(parents=True, exist_ok=True)
+    dest = args.dest or default_destination(args.target)
+    if dest is None:
+        raise SystemExit("--target claude requires --dest pointing to the plugin directory to create")
+    dest = dest.expanduser().resolve()
 
-    for name in args.skills:
-        print(install_skill(name, dest, args.replace))
+    if args.target == "claude":
+        install_claude_plugin(dest, args.replace)
+        print("Add or install this plugin directory in Claude Code, then restart Claude Code if needed.")
+        return
 
-    print("Restart Codex to pick up newly installed skills.")
+    install_skills(dest, args.skills, args.replace)
+    if args.target == "opencode":
+        print("Restart OpenCode to pick up newly installed skills.")
+    else:
+        print("Restart Codex to pick up newly installed skills.")
 
 
 if __name__ == "__main__":

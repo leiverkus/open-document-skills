@@ -60,12 +60,22 @@ When adding behavior:
 
 ## Skill Installation Check
 
-From a checkout, verify that the installer can copy the skills into a Codex skills directory:
+From a checkout, verify that the installer can copy the skills into Codex/OpenCode-style skills directories:
 
 ```bash
 tmpdir="$(mktemp -d)"
 python3 scripts/install_skills.py --dest "$tmpdir/skills"
+python3 scripts/install_skills.py --target opencode --dest "$tmpdir/opencode/skills"
 find "$tmpdir/skills" -maxdepth 2 -name SKILL.md
+rm -rf "$tmpdir"
+```
+
+Verify the Claude Code plugin bundle path:
+
+```bash
+tmpdir="$(mktemp -d)"
+python3 scripts/install_skills.py --target claude --dest "$tmpdir/open-document-skills"
+test -f "$tmpdir/open-document-skills/.claude-plugin/plugin.json"
 rm -rf "$tmpdir"
 ```
 

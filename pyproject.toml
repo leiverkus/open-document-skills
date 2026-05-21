@@ -1,7 +1,7 @@
 [project]
 name = "open-document-skills"
-version = "0.1.0"
-description = "Codex skills for OpenDocument Format files"
+version = "0.1.2"
+description = "Agent skills for OpenDocument Format files"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 

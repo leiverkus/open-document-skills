@@ -1,7 +1,8 @@
 ---
 name: odt
 description: "Use this skill whenever the user wants to create, read, edit, convert, repair, or inspect OpenDocument Text files (.odt). Trigger on mentions of .odt, ODT, OpenDocument Text, Open Office document, LibreOffice Writer, Writer document, odt-Datei, OpenDocument-Text, or text documents meant for LibreOffice/OpenOffice. Use for extracting or reorganizing content from .odt files, editing styles, headings, tables, images, metadata, comments where possible, or converting between .odt and .docx/.pdf/.html/.md. Do NOT use for spreadsheets (.ods), presentations (.odp), PDFs as the primary deliverable, or general prose editing unless the output/input is an .odt file."
-license: MIT. LICENSE.txt has complete terms
+license: MIT
+version: "0.1.2"
 ---
 
 # ODT creation, editing, and analysis

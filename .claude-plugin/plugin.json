@@ -1,0 +1,12 @@
+{
+  "name": "open-document-skills",
+  "version": "0.1.2",
+  "description": "OpenDocument Format skills for ODT, ODP, ODS, and ODG files.",
+  "author": {
+    "name": "Patrick Leiverkus"
+  },
+  "homepage": "https://github.com/leiverkus/open-document-skills",
+  "repository": "https://github.com/leiverkus/open-document-skills",
+  "license": "MIT",
+  "keywords": ["opendocument", "odf", "libreoffice", "skills", "documents", "presentations", "spreadsheets", "drawings"]
+}
