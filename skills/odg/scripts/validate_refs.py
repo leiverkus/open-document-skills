@@ -15,7 +15,7 @@ from odg_common import NS, iter_pages, iter_shapes, parse_xml_from_zip, q
 def numeric_unit(value: str | None) -> float | None:
     if value is None:
         return None
-    match = re.match(r"^-?([0-9]+(?:\.[0-9]+)?)", value)
+    match = re.match(r"^(-?[0-9]+(?:\.[0-9]+)?)", value)
     return float(match.group(1)) if match else None
 
 
