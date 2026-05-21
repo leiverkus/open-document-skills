@@ -1,0 +1,34 @@
+{
+  "title": "OpenDocument Presentation Example",
+  "slides": [
+    {
+      "name": "Title",
+      "title": "Native ODP workflow",
+      "body": [
+        "Create slides directly as OpenDocument XML",
+        "Inspect draw:page content and speaker notes",
+        "Render to PDF/PNG with LibreOffice for QA"
+      ],
+      "image": "examples/assets/logo.svg",
+      "image_x": "17cm",
+      "image_y": "4cm",
+      "image_width": "8cm",
+      "image_height": "4.5cm",
+      "notes": [
+        "Speaker note: explain why native ODP generation avoids unnecessary PPTX round trips."
+      ]
+    },
+    {
+      "name": "Checklist",
+      "title": "Slide QA checklist",
+      "body": [
+        "Title and body text are extractable",
+        "Images are declared in META-INF/manifest.xml",
+        "Master pages are listed and intentional"
+      ],
+      "notes": [
+        "Speaker note: run list_masters.py and validate_refs.py before delivery."
+      ]
+    }
+  ]
+}

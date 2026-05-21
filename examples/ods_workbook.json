@@ -1,0 +1,22 @@
+{
+  "title": "OpenDocument Spreadsheet Example",
+  "sheets": [
+    {
+      "name": "Data",
+      "rows": [
+        ["Item", "Value", "Double"],
+        ["A", 10, {"formula": "of:=[.B2]*2"}],
+        ["B", 20, {"formula": "of:=[.B3]*2"}],
+        ["C", 30, {"formula": "of:=[.B4]*2"}]
+      ],
+      "cells": {
+        "E1": {
+          "value": "Total"
+        },
+        "E2": {
+          "formula": "of:=SUM([.B2:.B4])"
+        }
+      }
+    }
+  ]
+}

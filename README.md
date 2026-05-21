@@ -45,6 +45,10 @@ tests/
   test_smoke.py
   test_edge_cases.py
   test_libreoffice_integration.py
+examples/
+  README.md
+  build_examples.py
+  *.json
 ```
 
 Each skill is MIT-licensed and also contains its own `LICENSE.txt`.
@@ -199,6 +203,28 @@ Reusable example inputs live in `tests/fixtures/`:
 - `ods_workbook.json`
 - `odg_drawing.json`
 - `image.svg`
+
+## Examples
+
+Runnable examples live in `examples/`. They are meant as a practical first test layer for users of the skills:
+
+```bash
+python examples/build_examples.py
+```
+
+This creates ODT, ODP, ODS, and ODG files in `examples/output/`, then validates their package references. The generated output directory is ignored by Git.
+
+For optional LibreOffice QA:
+
+```bash
+python examples/build_examples.py --render
+```
+
+On macOS, add `--png` when Poppler is installed with Homebrew and PNG page previews are useful:
+
+```bash
+python examples/build_examples.py --render --png
+```
 
 ## LibreOffice Workflows
 
