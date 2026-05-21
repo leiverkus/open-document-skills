@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.1.2 - 2026-05-21
+
+Documentation and installation release.
+
+### Added
+
+- `scripts/install_skills.py` to install the ODT, ODP, ODS, and ODG skills into `$CODEX_HOME/skills`, `~/.codex/skills`, or a custom destination.
+- Installer test coverage for custom destinations and existing-skill skip behavior.
+- `CONTRIBUTING.md` with local checks, example QA, installation checks, and release checklist.
+- README script-reference tables for all four skills.
+
+### Changed
+
+- README installation instructions now prefer the installer script and document `~/.agents/skills` as an explicit legacy/custom destination.
+- README release status updated to `v0.1.2`.
+
 ## v0.1.1 - 2026-05-21
 
 Maintenance and examples release.
