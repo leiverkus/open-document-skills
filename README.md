@@ -18,12 +18,12 @@ python skills/odt/scripts/validate_refs.py out.odt
 
 ## Skills at a glance
 
-| Skill | LibreOffice app | Triggers |
-| --- | --- | --- |
-| [`odt`](skills/odt) | Writer | edit ODT, fill template, add figure, render to PDF |
-| [`odp`](skills/odp) | Impress | clone slide, edit notes, add image, render deck |
-| [`ods`](skills/ods) | Calc | set cells/formulas, export CSV, recalculate |
-| [`odg`](skills/odg) | Draw | edit labels, add shape image, export SVG/PNG |
+| Skill | LibreOffice app | Smithery | Triggers |
+| --- | --- | --- | --- |
+| [`odt`](skills/odt) | Writer | [smithery.ai/skills/leiverkus/odt](https://smithery.ai/skills/leiverkus/odt) | edit ODT, fill template, add figure, render to PDF |
+| [`odp`](skills/odp) | Impress | [smithery.ai/skills/leiverkus/odp](https://smithery.ai/skills/leiverkus/odp) | clone slide, edit notes, add image, render deck |
+| [`ods`](skills/ods) | Calc | [smithery.ai/skills/leiverkus/ods](https://smithery.ai/skills/leiverkus/ods) | set cells/formulas, export CSV, recalculate |
+| [`odg`](skills/odg) | Draw | [smithery.ai/skills/leiverkus/odg](https://smithery.ai/skills/leiverkus/odg) | edit labels, add shape image, export SVG/PNG |
 
 ## Why use these
 
@@ -83,7 +83,30 @@ Detailed documentation lives in [docs/index.md](docs/index.md):
 
 ## Installation
 
-Install the four skills into the default Codex skills directory:
+The skills are available through three channels — pick what fits your setup:
+
+### Smithery (recommended for individual skills)
+
+Browse and install via [smithery.ai](https://smithery.ai). Install one or more skills directly through the Smithery UI: [odt](https://smithery.ai/skills/leiverkus/odt), [odp](https://smithery.ai/skills/leiverkus/odp), [ods](https://smithery.ai/skills/leiverkus/ods), [odg](https://smithery.ai/skills/leiverkus/odg).
+
+### Open Agent Skills CLI
+
+The [vercel-labs/skills](https://github.com/vercel-labs/skills) CLI installs across Claude Code, Codex, Cursor, OpenCode, and 50+ other agents:
+
+```bash
+# List skills in the repo
+npx skills add leiverkus/open-document-skills --list
+
+# Install all four globally for Claude Code
+npx skills add leiverkus/open-document-skills --skill '*' -a claude-code -g
+
+# Install only ODT into your project
+npx skills add leiverkus/open-document-skills --skill odt
+```
+
+### Bundled installer (Codex / OpenCode / Claude Code)
+
+Install all four skills at once via the bundled Python installer:
 
 ```bash
 python3 scripts/install_skills.py
