@@ -1,10 +1,10 @@
 ---
 name: ods
-description: "Create, read, edit, convert, repair, inspect, analyze, or format OpenDocument Spreadsheet files (.ods)."
-triggers: [".ods", "ODS", "OpenDocument Spreadsheet", "Open Office spreadsheet", "LibreOffice Calc", "Calc sheet", "ods-Datei", "OpenDocument-Tabelle", "Tabellenkalkulation"]
+description: "Create, read, edit, convert, repair, inspect, analyze, or format OpenDocument Spreadsheet files (.ods). Supports named ranges, data validation (dropdowns and range constraints), and embedded charts (bar, line, pie, scatter)."
+triggers: [".ods", "ODS", "OpenDocument Spreadsheet", "Open Office spreadsheet", "LibreOffice Calc", "Calc sheet", "ods-Datei", "OpenDocument-Tabelle", "Tabellenkalkulation", "named range", "named expression", "data validation", "dropdown", "Auswahlliste", "chart", "Diagramm", "Balkendiagramm", "Liniendiagramm", "Kreisdiagramm", "Punktdiagramm", "bar chart", "line chart", "pie chart", "scatter"]
 dont_use_for: ["text documents (.odt)", "presentations (.odp)", "analysis where deliverable is not a spreadsheet"]
 license: MIT
-version: "0.5.0"
+version: "0.6.0"
 ---
 
 # ODS creation, editing, and analysis
@@ -191,6 +191,41 @@ cd unpacked_ods
 zip -0 -X ../output.ods mimetype
 zip -r -X ../output.ods . -x mimetype
 ```
+
+## Named Ranges, Data Validation, and Charts
+
+For workbook semantics beyond plain cells, v0.6+ provides direct ODF-native helpers:
+
+```bash
+# Named range (cell-range alias usable in formulas):
+python scripts/add_named_range.py wb.ods --name Sales \
+    --range 'Sheet1.B2:B100' -o wb-nr.ods
+
+# Named expression (formula or constant alias):
+python scripts/add_named_range.py wb.ods --name TaxRate \
+    --expression '0.19' -o wb-nr.ods
+
+# Dropdown list:
+python scripts/add_data_validation.py wb.ods --name months --type list \
+    --values 'Jan,Feb,Mar,Apr' --apply 'Sheet1.A2:A100' -o wb-val.ods
+
+# Numeric constraint:
+python scripts/add_data_validation.py wb.ods --name positive --type number \
+    --condition 'value() > 0' --apply 'Sheet1.B2:B100' -o wb-val.ods
+
+# Bar chart embedded into a cell:
+python scripts/add_chart.py wb.ods --type bar \
+    --data 'Sheet1.A1:B10' --title 'Q1 Sales' \
+    --cell 'Sheet1.D1' -o wb-chart.ods
+
+# Inspect:
+python scripts/list_named_ranges.py wb.ods --json
+python scripts/list_charts.py wb.ods --json
+```
+
+Chart types: `bar`, `line`, `pie`, `scatter`. Charts are embedded as LibreOffice-native `Object N/` sub-packages with the `application/vnd.oasis.opendocument.chart` MIME type. LibreOffice renders them when the file is opened or converted to PDF.
+
+The validator (`validate_refs.py`) catches dangling named-range sheet targets, dangling content-validation references, and missing chart object package targets.
 
 ## Formula and Data Rules
 

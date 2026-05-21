@@ -56,6 +56,11 @@ All scripts use the Python standard library.
 | `list_styles.py` | List spreadsheet styles. |
 | `replace_cells.py` | Set values or formulas by sheet and A1 address. |
 | `export_csv.py` | Export one sheet to CSV. |
+| `add_named_range.py` | Add a `table:named-range` (cell-range alias) or `table:named-expression` (formula/constant), global or sheet-scoped. |
+| `list_named_ranges.py` | List all named ranges and named expressions as JSON. |
+| `add_data_validation.py` | Add a data-validation rule (list/number/date/text) and apply it to a cell range. |
+| `add_chart.py` | Embed a chart object (bar/line/pie/scatter) into a cell via LibreOffice-native `Object N/` sub-package. |
+| `list_charts.py` | List all embedded chart objects as JSON. |
 | `pack_ods.py` | Repack an unpacked ODS directory with correct `mimetype` handling. |
 | `pack_fods.py` | Convert a zipped ODS to a flat `.fods` (single XML, Git-friendly). |
 | `unpack_fods.py` | Convert a flat `.fods` back to a zipped `.ods` package. |

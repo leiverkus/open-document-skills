@@ -22,7 +22,7 @@ python skills/odt/scripts/validate_refs.py out.odt
 | --- | --- | --- | --- |
 | [`odt`](skills/odt) | Writer | [smithery.ai/skills/leiverkus/odt](https://smithery.ai/skills/leiverkus/odt) | edit ODT, footnotes, citations (BibTeX/CSL-JSON), bookmarks, cross-references, figure/table sequences, MathML formulas, render to PDF |
 | [`odp`](skills/odp) | Impress | [smithery.ai/skills/leiverkus/odp](https://smithery.ai/skills/leiverkus/odp) | clone slide, edit notes, add image, render deck |
-| [`ods`](skills/ods) | Calc | [smithery.ai/skills/leiverkus/ods](https://smithery.ai/skills/leiverkus/ods) | set cells/formulas, export CSV, recalculate |
+| [`ods`](skills/ods) | Calc | [smithery.ai/skills/leiverkus/ods](https://smithery.ai/skills/leiverkus/ods) | set cells/formulas, named ranges, dropdowns + data validation, embedded charts (bar/line/pie/scatter), export CSV, recalculate |
 | [`odg`](skills/odg) | Draw | [smithery.ai/skills/leiverkus/odg](https://smithery.ai/skills/leiverkus/odg) | edit labels, add shape image, export SVG/PNG |
 
 ## Why use these
@@ -419,7 +419,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development and release chec
 
 ## Release Status
 
-Current release: `v0.5.0` — adds a DAO-branded template (Nunito Sans, `#02416C`, DFG-Antrag layout), cross-paragraph range bookmarks/refs, RelaxNG schema validation (`validate_refs.py --strict`), magic-byte MIME detection in `add_image.py`, and Hypothesis property tests. See [ROADMAP.md](ROADMAP.md) for v0.6 (format depth: ODS named ranges/charts, ODP animations, ODG glue points).
+Current release: `v0.6.0` — adds ODS depth: named ranges/expressions, data validation (dropdowns, range constraints), and embedded charts (bar/line/pie/scatter via LibreOffice-native `Object N/` sub-packages). See [ROADMAP.md](ROADMAP.md) for v0.7 (ODP animations + real-world corpus tests) and v0.8 (ODG glue points).
 
 ## License
 

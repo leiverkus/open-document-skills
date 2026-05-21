@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v0.5.0** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v0.6.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -43,13 +43,21 @@ Closed the largest gap relative to general-purpose tools (pandoc, docx skills): 
 - **Real-world corpus tests** — ~20 ODF fixtures harvested from LibreOffice/Collabora/AbiWord/Calligra exports (different versions). Round-trip each through pack/unpack and verify content equivalence.
 - **Image probing** — magic-byte MIME sniffing in `add_image.py` (so `.png` with `.jpg` extension lands correctly in the manifest); optional Pillow-based aspect-ratio detection so `--width`/`--height` can be inferred.
 
-## v0.6 — Format depth (next)
+## v0.6 — ODS depth ✅ shipped (2026-05-21)
 
-Adds the most-requested features inside each format. Driven by what users actually ask for after v0.5 ships.
+- ✅ `add_named_range.py` (point + expression), `list_named_ranges.py`
+- ✅ `add_data_validation.py` (list/number/date/text)
+- ✅ `add_chart.py` with four types: bar, line, pie, scatter
+- ✅ `list_charts.py`, validate_refs extended for ODS-specific checks
 
-- **ODS** — named ranges (`table:named-range`), basic chart objects (line, bar), data validation (`table:content-validation`).
-- **ODP** — animation primitives (entrance/exit on shape level), slide transitions.
-- **ODG** — glue points, connector routing, group/ungroup operations.
+## v0.7 — ODP depth + real-world corpus tests (next)
+
+- **ODP** — animation primitives (entrance/exit on shape level), slide transitions, master-page customization helpers.
+- **Real-world corpus tests** — ~20 ODF fixtures from LibreOffice (multiple versions), Collabora, AbiWord, Calligra. Roundtrip tests for all v0.2–v0.6 helpers against each fixture.
+
+## v0.8 — ODG depth
+
+- Glue points, connector routing, group/ungroup operations.
 
 ## v1.0 — Ecosystem maturity
 

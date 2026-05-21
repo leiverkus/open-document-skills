@@ -36,6 +36,10 @@ def validate(path: Path) -> dict[str, object]:
         href = node.attrib.get(q("xlink", "href"))
         if href and not href.startswith("#") and "://" not in href:
             package_path = href.lstrip("./")
+            # Sub-package directory references (e.g. './Object 1/') resolve
+            # via the directory contents, validated separately below.
+            if package_path.endswith("/"):
+                continue
             if package_path not in names:
                 errors.append(f"Missing package media target: {href}")
             if manifest_paths and package_path not in manifest_paths:
@@ -46,6 +50,52 @@ def validate(path: Path) -> dict[str, object]:
         text = "".join(p.text or "" for p in node.findall(".//text:p", NS))
         if any(marker in text for marker in ERROR_MARKERS):
             errors.append(f"Cell displays formula error: {text}")
+
+    # Named range and named expression checks
+    sheet_names: set[str] = set()
+    for sheet in content.findall(".//table:table", NS):
+        sn = sheet.attrib.get(q("table", "name"))
+        if sn:
+            sheet_names.add(sn)
+    name_counts: dict[str, int] = {}
+    for nr in content.iter(q("table", "named-range")):
+        name = nr.attrib.get(q("table", "name"))
+        addr = nr.attrib.get(q("table", "cell-range-address"), "")
+        if name:
+            name_counts[name] = name_counts.get(name, 0) + 1
+        # Address shape: '$Sheet.$A1:.$B2' — extract sheet name from leading '$Sheet.'.
+        if addr.startswith("$") and "." in addr:
+            sheet_part = addr[1:].split(".", 1)[0]
+            if sheet_part not in sheet_names:
+                errors.append(f"Named range {name!r} references unknown sheet {sheet_part!r}")
+    for ne in content.iter(q("table", "named-expression")):
+        name = ne.attrib.get(q("table", "name"))
+        if name:
+            name_counts[name] = name_counts.get(name, 0) + 1
+    for name, count in name_counts.items():
+        if count > 1:
+            errors.append(f"Duplicate named-range/expression {name!r} ({count} occurrences)")
+
+    # Content-validation references
+    validation_names: set[str] = set()
+    for cv in content.iter(q("table", "content-validation")):
+        n = cv.attrib.get(q("table", "name"))
+        if n:
+            validation_names.add(n)
+    for cell in content.iter(q("table", "table-cell")):
+        ref = cell.attrib.get(q("table", "content-validation-name"))
+        if ref and ref not in validation_names:
+            errors.append(f"Dangling content-validation reference: {ref}")
+
+    # Chart object package targets
+    for obj in content.iter(q("draw", "object")):
+        href = obj.attrib.get(q("xlink", "href"))
+        if not href:
+            continue
+        target = href.lstrip("./").rstrip("/")
+        if not any(n.startswith(target + "/") for n in names):
+            errors.append(f"Missing draw:object package target: {href}")
+
     return {
         "status": "ok" if not errors else "errors_found",
         "errors": sorted(set(errors)),

@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.6.0 - 2026-05-21
+
+ODS depth: named ranges, data validation, and embedded charts.
+
+### Added
+
+- **Named ranges (ODS)**:
+  - `add_named_range.py` — emits `table:named-range` (cell-range alias) or `table:named-expression` (formula/constant alias). Supports global or sheet-scoped names. Idempotent: re-adding the same name replaces the entry.
+  - `list_named_ranges.py` — JSON listing of all named ranges + expressions, with scope.
+- **Data validation (ODS)**:
+  - `add_data_validation.py` — types `list` (dropdown), `number`, `date`, `text`. Applies to a cell range via `table:content-validation-name`. Supports help/error messages.
+- **Charts (ODS)**: embedded chart objects via `add_chart.py` with `--type bar|line|pie|scatter`. Charts live as `Object N/` sub-packages with MIME `application/vnd.oasis.opendocument.chart`, parallel to v0.4 MathML structure. Two manifest entries per chart. `list_charts.py` for inspection.
+- **`validate_refs.py` (ODS)** extended: detects unknown sheet names in named-range targets, duplicate named-range/expression names, dangling `table:content-validation-name` references, and missing chart `Object N/` package targets.
+- New `ods_common.py` helpers: `build_chart_content` (chart XML payload builder for all four types), re-exports of `unique_object_name`, `copy_with_multiple_members`, `ensure_manifest_entry` from `lib/odf_common`.
+- ODS `NS` map extended with `chart`, `draw`, `svg` for chart object handling.
+- 19 new tests across `tests/test_ods_named_ranges.py`, `tests/test_ods_validation.py`, `tests/test_ods_charts.py`. Total: 182 (was 163).
+
+### Changed
+
+- ODS `SKILL.md` description and trigger list extended with named-range, dropdown, chart, Diagramm, Balkendiagramm, Liniendiagramm, Kreisdiagramm keywords.
+- `tests/test_property.py` `_concatenated_text` helper made recursive (Hypothesis caught a non-recursive bug in the test, not the production code).
+
 ## v0.5.0 - 2026-05-21
 
 DAO-branded template, cross-paragraph ranges, RelaxNG schema validation, magic-byte MIME, Hypothesis property tests.

@@ -171,6 +171,38 @@ python3 skills/odt/scripts/list_citations.py output.odt --json
 
 LibreOffice renders citations through its bibliography style and generates the bibliography index from the inserted `text:bibliography-mark` elements. BibTeX support requires `pip install open-document-skills[scholarly]`; CSL-JSON uses stdlib only.
 
+## Spreadsheet authoring: ranges, validation, charts (ODS)
+
+ODS v0.6 adds direct ODF-native helpers for the three core spreadsheet features beyond plain cells:
+
+```bash
+# Named range — reusable in formulas as a name:
+python3 skills/ods/scripts/add_named_range.py wb.ods \
+    --name Sales --range 'Sheet1.B2:B100' -o wb.ods
+
+# Named expression — formula/constant alias:
+python3 skills/ods/scripts/add_named_range.py wb.ods \
+    --name TaxRate --expression '0.19' -o wb.ods
+
+# Dropdown for data entry:
+python3 skills/ods/scripts/add_data_validation.py wb.ods \
+    --name months --type list --values 'Jan,Feb,Mar,Apr' \
+    --apply 'Sheet1.A2:A100' -o wb.ods
+
+# Bar chart embedded into a cell:
+python3 skills/ods/scripts/add_chart.py wb.ods --type bar \
+    --data 'Sheet1.A1:B10' --title 'Q1 Sales' \
+    --cell 'Sheet1.D1' -o wb.ods
+
+# Inspect:
+python3 skills/ods/scripts/list_named_ranges.py wb.ods --json
+python3 skills/ods/scripts/list_charts.py wb.ods --json
+```
+
+Chart types: `bar`, `line`, `pie`, `scatter`. Charts use the LibreOffice-native `Object N/` sub-package convention (parallel to v0.4 MathML formulas) — two manifest entries per chart, `application/vnd.oasis.opendocument.chart` MIME for the directory and `text/xml` for `Object N/content.xml`. LibreOffice renders charts when opening or converting to PDF.
+
+The `validate_refs.py` ODS validator detects: unknown sheet names in named-range targets, duplicate named-range/expression names, dangling `table:content-validation-name` references, and missing chart `Object N/` package targets.
+
 ## Schema validation (--strict)
 
 `validate_refs.py --strict` runs OASIS ODF 1.3 RelaxNG validation against `content.xml` and `META-INF/manifest.xml`. The schemas are downloaded once on first use to `~/.cache/open-document-skills/schemas/` and reused afterwards.

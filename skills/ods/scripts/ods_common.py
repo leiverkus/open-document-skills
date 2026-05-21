@@ -19,10 +19,13 @@ if str(_repo_root) not in sys.path:
 
 # Single consolidated import block from lib.odf_common.
 from lib.odf_common import (  # noqa: E402, I001
+    copy_with_multiple_members as _copy_members_base,
+    ensure_manifest_entry as _ensure_base,
     find_soffice,
     pack_dir_as_odf,
     pack_flat_odf,
     parse_xml_from_zip,
+    unique_object_name,
     unpack_flat_odf,
     update_meta_for_edit as _update_meta_base,
     write_odf_with_replacements as _write_base,
@@ -35,10 +38,13 @@ __all__ = [
     "ODS_MIMETYPE",
     "q",
     "a1",
+    "build_chart_content",
     "cell_text",
     "cell_value",
     "col_to_index",
+    "copy_with_multiple_members",
     "ensure_cell",
+    "ensure_manifest_entry",
     "expanded_rows",
     "find_sheet",
     "find_soffice",
@@ -51,6 +57,7 @@ __all__ = [
     "repeated",
     "set_cell_value",
     "sheet_name",
+    "unique_object_name",
     "unpack_flat_odf",
     "update_meta_for_edit",
     "write_csv",
@@ -59,12 +66,15 @@ __all__ = [
 ]
 
 NS = {
+    "chart": "urn:oasis:names:tc:opendocument:xmlns:chart:1.0",
     "dc": "http://purl.org/dc/elements/1.1/",
+    "draw": "urn:oasis:names:tc:opendocument:xmlns:drawing:1.0",
     "fo": "urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0",
     "manifest": "urn:oasis:names:tc:opendocument:xmlns:manifest:1.0",
     "meta": "urn:oasis:names:tc:opendocument:xmlns:meta:1.0",
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
     "style": "urn:oasis:names:tc:opendocument:xmlns:style:1.0",
+    "svg": "urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0",
     "table": "urn:oasis:names:tc:opendocument:xmlns:table:1.0",
     "text": "urn:oasis:names:tc:opendocument:xmlns:text:1.0",
     "xlink": "http://www.w3.org/1999/xlink",
@@ -94,6 +104,125 @@ def write_ods_with_replacements(
 
 def update_meta_for_edit(meta_root: ET.Element) -> None:
     _update_meta_base(meta_root, NS, q)
+
+
+def ensure_manifest_entry(manifest_root: ET.Element, full_path: str, media_type: str) -> None:
+    _ensure_base(manifest_root, full_path, media_type, NS, q)
+
+
+def copy_with_multiple_members(
+    input_ods: Path,
+    output_ods: Path,
+    new_members: dict[str, bytes],
+    replacements: dict[str, bytes],
+) -> None:
+    _copy_members_base(input_ods, output_ods, new_members, replacements, ODS_MIMETYPE)
+
+
+CHART_TYPE_TO_CLASS: dict[str, str] = {
+    "bar": "chart:bar",
+    "line": "chart:line",
+    "pie": "chart:circle",
+    "scatter": "chart:scatter",
+}
+
+
+def build_chart_content(
+    chart_type: str,
+    data_range: str,
+    title: str | None = None,
+    x_label: str | None = None,
+    y_label: str | None = None,
+) -> bytes:
+    """Build the Object N/content.xml payload for an embedded ODS chart.
+
+    Returns UTF-8 bytes ready to be added as ``Object N/content.xml`` of a
+    ``application/vnd.oasis.opendocument.chart`` sub-package.
+
+    Args:
+        chart_type: One of ``bar``, ``line``, ``pie``, ``scatter``.
+        data_range: ODF cell range, e.g. ``$Sheet1.$A$1:.$B$10``.
+        title: Optional chart title.
+        x_label: Optional x-axis label.
+        y_label: Optional y-axis label.
+    """
+    if chart_type not in CHART_TYPE_TO_CLASS:
+        raise SystemExit(f"unknown chart type {chart_type!r}; choose from {sorted(CHART_TYPE_TO_CLASS)}")
+    chart_class = CHART_TYPE_TO_CLASS[chart_type]
+
+    office_ns = NS["office"]
+    chart_ns = NS["chart"]
+    table_ns = NS["table"]
+    text_ns = NS["text"]
+    svg_ns = NS["svg"]
+    style_ns = NS["style"]
+    draw_ns = NS["draw"]
+
+    root = ET.Element(
+        f"{{{office_ns}}}document-content",
+        {f"{{{office_ns}}}version": "1.3"},
+    )
+    auto_styles = ET.SubElement(root, f"{{{office_ns}}}automatic-styles")
+    # Minimal chart style
+    style = ET.SubElement(
+        auto_styles,
+        f"{{{style_ns}}}style",
+        {f"{{{style_ns}}}name": "ch1", f"{{{style_ns}}}family": "chart"},
+    )
+    ET.SubElement(
+        style,
+        f"{{{style_ns}}}graphic-properties",
+        {f"{{{draw_ns}}}stroke": "none", f"{{{draw_ns}}}fill": "none"},
+    )
+
+    body = ET.SubElement(root, f"{{{office_ns}}}body")
+    chart_root = ET.SubElement(body, f"{{{office_ns}}}chart")
+    chart = ET.SubElement(
+        chart_root,
+        f"{{{chart_ns}}}chart",
+        {
+            f"{{{chart_ns}}}class": chart_class,
+            f"{{{svg_ns}}}width": "10cm",
+            f"{{{svg_ns}}}height": "7cm",
+            f"{{{chart_ns}}}style-name": "ch1",
+        },
+    )
+    if title:
+        title_el = ET.SubElement(chart, f"{{{chart_ns}}}title")
+        p = ET.SubElement(title_el, f"{{{text_ns}}}p")
+        p.text = title
+
+    plot_area = ET.SubElement(
+        chart,
+        f"{{{chart_ns}}}plot-area",
+        {f"{{{table_ns}}}cell-range-address": data_range},
+    )
+
+    # Axes (skip for pie)
+    if chart_type != "pie":
+        x_axis = ET.SubElement(
+            plot_area, f"{{{chart_ns}}}axis", {f"{{{chart_ns}}}dimension": "x", f"{{{chart_ns}}}name": "primary-x"}
+        )
+        if x_label:
+            t = ET.SubElement(x_axis, f"{{{chart_ns}}}title")
+            p = ET.SubElement(t, f"{{{text_ns}}}p")
+            p.text = x_label
+        y_axis = ET.SubElement(
+            plot_area, f"{{{chart_ns}}}axis", {f"{{{chart_ns}}}dimension": "y", f"{{{chart_ns}}}name": "primary-y"}
+        )
+        if y_label:
+            t = ET.SubElement(y_axis, f"{{{chart_ns}}}title")
+            p = ET.SubElement(t, f"{{{text_ns}}}p")
+            p.text = y_label
+
+    # Series — one bound to the whole data range. LibreOffice will read columns.
+    ET.SubElement(
+        plot_area,
+        f"{{{chart_ns}}}series",
+        {f"{{{chart_ns}}}values-cell-range-address": data_range},
+    )
+
+    return xml_bytes(root)
 
 
 def col_to_index(col: str) -> int:

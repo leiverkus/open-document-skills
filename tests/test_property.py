@@ -48,14 +48,18 @@ PARAGRAPH_STRATEGY = st.builds(
 
 
 def _concatenated_text(element: ET.Element) -> str:
+    """Recursively concatenate .text and .tail of every descendant in document order."""
     parts: list[str] = []
-    if element.text:
-        parts.append(element.text)
-    for child in element:
-        if child.text:
-            parts.append(child.text)
-        if child.tail:
-            parts.append(child.tail)
+
+    def visit(node: ET.Element, is_root: bool) -> None:
+        if node.text:
+            parts.append(node.text)
+        for child in node:
+            visit(child, False)
+        if not is_root and node.tail:
+            parts.append(node.tail)
+
+    visit(element, True)
     return "".join(parts)
 
 
