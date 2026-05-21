@@ -258,3 +258,11 @@ For user-facing reports, also render/export via LibreOffice to PDF and inspect l
 4. Export CSV/PDF for the relevant sheets.
 5. Fix data, formula, type, formatting, or package issues.
 6. Re-run the relevant checks until no unresolved issues remain.
+
+## See also
+
+Part of the [open-document-skills](https://github.com/leiverkus/open-document-skills) suite:
+
+- [`odt`](../odt/SKILL.md) — OpenDocument Text / LibreOffice Writer
+- [`odp`](../odp/SKILL.md) — OpenDocument Presentation / LibreOffice Impress
+- [`odg`](../odg/SKILL.md) — OpenDocument Graphics / LibreOffice Draw

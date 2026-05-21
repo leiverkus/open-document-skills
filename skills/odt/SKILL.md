@@ -267,3 +267,11 @@ Inspect page breaks, headers/footers, table overflow, footnote placement, missin
 - Embedded images live under package paths such as `Pictures/...`; the manifest must include them.
 - OpenDocument comments and tracked changes are not uniformly preserved across tools. When those matter, prefer LibreOffice round-trips and verify manually.
 - Avoid creating minimal XML by hand unless the file is simple; ODT consumers are forgiving, but style and manifest mistakes cause subtle rendering problems.
+
+## See also
+
+Part of the [open-document-skills](https://github.com/leiverkus/open-document-skills) suite:
+
+- [`odp`](../odp/SKILL.md) — OpenDocument Presentation / LibreOffice Impress
+- [`ods`](../ods/SKILL.md) — OpenDocument Spreadsheet / LibreOffice Calc
+- [`odg`](../odg/SKILL.md) — OpenDocument Graphics / LibreOffice Draw

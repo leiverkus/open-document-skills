@@ -379,3 +379,11 @@ For template-based decks, always verify at least one slide using each master pag
 - Fonts may substitute differently in LibreOffice, PowerPoint, and browser previewers. Render with the target app when possible.
 - Keep aspect ratios explicit for images.
 - Prefer template-based work for branded decks.
+
+## See also
+
+Part of the [open-document-skills](https://github.com/leiverkus/open-document-skills) suite:
+
+- [`odt`](../odt/SKILL.md) — OpenDocument Text / LibreOffice Writer
+- [`ods`](../ods/SKILL.md) — OpenDocument Spreadsheet / LibreOffice Calc
+- [`odg`](../odg/SKILL.md) — OpenDocument Graphics / LibreOffice Draw

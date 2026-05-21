@@ -233,3 +233,11 @@ For multi-page ODG files, PDF export is usually the most reliable visual check. 
 - Connectors can depend on glue points and object IDs. After moving shapes, verify connector routing visually.
 - Embedded images require manifest entries and stable package paths.
 - Font substitution can change text fit. Always render/export before delivering a user-facing ODG.
+
+## See also
+
+Part of the [open-document-skills](https://github.com/leiverkus/open-document-skills) suite:
+
+- [`odt`](../odt/SKILL.md) — OpenDocument Text / LibreOffice Writer
+- [`odp`](../odp/SKILL.md) — OpenDocument Presentation / LibreOffice Impress
+- [`ods`](../ods/SKILL.md) — OpenDocument Spreadsheet / LibreOffice Calc
