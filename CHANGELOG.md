@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.1.6 - 2026-05-21
+
+Type hints, test coverage, and documentation slimming.
+
+### Added
+
+- Full type hints and expanded docstrings for all 12 functions in `lib/odf_common.py`.
+- `tests/test_lib_odf_common.py` — 18 direct unit tests for library functions, achieving 100% coverage on `lib/`.
+- `unittest.mock`-based tests for `find_soffice()` (PATH-found and not-found paths).
+
+### Changed
+
+- All four `SKILL.md` files: script tables and example blocks replaced with links to `docs/script-reference.md` (~74 lines removed).
+- Coverage CI job fixed: LibreOffice installed to satisfy `find_soffice()` import-time call.
+
 ## v0.1.5 - 2026-05-21
 
 Dev dependencies and pre-commit hooks.
