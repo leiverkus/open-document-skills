@@ -36,5 +36,6 @@ jobs:
       - uses: actions/setup-python@v6.2.0
         with:
           python-version: "3.12"
-      - run: pip install pytest pytest-cov
-      - run: pytest tests/ --cov=lib --cov-fail-under=30
+      - run: pip install coverage pytest
+      - run: coverage run --source=lib -m pytest tests/
+      - run: coverage report --fail-under=30 --show-missing
