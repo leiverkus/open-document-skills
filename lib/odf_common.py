@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-VERSION = "0.4.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
+VERSION = "0.5.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
 
 ODF_NAMESPACES: dict[str, str] = {
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
@@ -177,6 +177,98 @@ def ensure_manifest_entry(
     )
 
 
+def inject_styles_from_file(
+    input_path: Path,
+    styles_path: Path,
+    output_path: Path,
+    mimetype_value: str,
+) -> list[str]:
+    """Replace the ``styles.xml`` member of an ODF file with the contents of *styles_path*.
+
+    Returns a list of style-name references in content.xml that do NOT appear
+    in the new styles.xml — these are dangling and indicate the injection
+    swapped out styles that were still referenced by the content.
+
+    Args:
+        input_path: Source ODF file.
+        styles_path: Local styles.xml replacement to inject.
+        output_path: Destination ODF file (overwritten).
+        mimetype_value: The mimetype string to preserve.
+
+    Returns:
+        List of style names referenced in content but missing in the new styles.
+    """
+    new_styles_bytes: bytes = styles_path.read_bytes()
+    # Validate cross-references: collect style names defined in new styles
+    new_styles_root: ET.Element = ET.fromstring(new_styles_bytes)
+    style_ns: str = "urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+    text_ns: str = "urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+    defined_names: set[str] = set()
+    for style_el in new_styles_root.iter(f"{{{style_ns}}}style"):
+        name = style_el.attrib.get(f"{{{style_ns}}}name")
+        if name:
+            defined_names.add(name)
+    # Also include parent-style-name targets (so we resolve a chain)
+    parent_names: set[str] = set()
+    for style_el in new_styles_root.iter(f"{{{style_ns}}}style"):
+        parent = style_el.attrib.get(f"{{{style_ns}}}parent-style-name")
+        if parent:
+            parent_names.add(parent)
+    # Style names used by content.xml's text:style-name attributes
+    content_root: ET.Element = parse_xml_from_zip(input_path, "content.xml")
+    used: set[str] = set()
+    for node in content_root.iter():
+        v = node.attrib.get(f"{{{text_ns}}}style-name")
+        if v:
+            used.add(v)
+    missing: list[str] = sorted(used - defined_names - parent_names)
+
+    write_odf_with_replacements(
+        input_path,
+        output_path,
+        {"styles.xml": new_styles_bytes},
+        mimetype_value,
+    )
+    return missing
+
+
+def embed_pictures(
+    input_path: Path,
+    pictures: Mapping[str, Path],
+    output_path: Path,
+    mimetype_value: str,
+    ns: Mapping[str, str],
+    q_fn: Callable[[str, str], str],
+) -> None:
+    """Embed multiple local pictures into the ODF at given package paths.
+
+    Each picture is added as a new ZIP member and registered in
+    ``META-INF/manifest.xml``. The content.xml is **not** modified — callers
+    typically reference the pictures from their own draw:frame markup.
+
+    Args:
+        input_path: Source ODF file.
+        pictures: Mapping of package paths (e.g. ``"Pictures/logo.png"``) to local file paths.
+        output_path: Destination ODF file.
+        mimetype_value: The mimetype string to preserve.
+        ns: Namespace map (must contain ``manifest``).
+        q_fn: Qualified-name builder.
+    """
+    manifest: ET.Element = parse_xml_from_zip(input_path, "META-INF/manifest.xml")
+    new_members: dict[str, bytes] = {}
+    for package_path, source in pictures.items():
+        new_members[package_path] = source.read_bytes()
+        ensure_manifest_entry(manifest, package_path, sniff_image_mime(source), ns, q_fn)
+
+    copy_with_multiple_members(
+        input_path,
+        output_path,
+        new_members,
+        {"META-INF/manifest.xml": xml_bytes(manifest)},
+        mimetype_value,
+    )
+
+
 def update_meta_for_edit(
     meta_root: ET.Element,
     ns: Mapping[str, str],
@@ -229,6 +321,53 @@ def update_meta_for_edit(
     except ValueError:
         current = 0
     cycles_el.text = str(current + 1)
+
+
+_IMAGE_MIME_BY_MAGIC: list[tuple[bytes, str]] = [
+    (b"\x89PNG\r\n\x1a\n", "image/png"),
+    (b"\xff\xd8\xff", "image/jpeg"),
+    (b"GIF87a", "image/gif"),
+    (b"GIF89a", "image/gif"),
+    (b"<?xml", "image/svg+xml"),  # requires <svg> later in header
+    (b"<svg", "image/svg+xml"),
+    (b"BM", "image/bmp"),
+    (b"RIFF", "image/webp"),  # requires bytes 8:12 == b"WEBP"
+    (b"II*\x00", "image/tiff"),
+    (b"MM\x00*", "image/tiff"),
+]
+
+
+def sniff_image_mime(path: Path) -> str:
+    """Return the MIME type of an image file by inspecting its magic bytes.
+
+    Reads the first 64 bytes (enough for all checks including the SVG-via-XML
+    case and the WebP four-CC validation) and falls back to extension-based
+    detection via :func:`media_type_for` when no magic matches.
+
+    Args:
+        path: Local file path.
+
+    Returns:
+        MIME type string (e.g. ``"image/png"``); falls back to the extension
+        guess if the file is unreadable or no magic matches.
+    """
+    try:
+        with open(path, "rb") as handle:
+            header: bytes = handle.read(64)
+    except OSError:
+        return media_type_for(path)
+    for magic, mime in _IMAGE_MIME_BY_MAGIC:
+        if not header.startswith(magic):
+            continue
+        if mime == "image/svg+xml" and magic == b"<?xml":
+            # Confirm it's actually SVG, not arbitrary XML.
+            if b"<svg" not in header:
+                continue
+        if mime == "image/webp":
+            if len(header) < 12 or header[8:12] != b"WEBP":
+                continue
+        return mime
+    return media_type_for(path)
 
 
 def media_type_for(path: Path) -> str:
@@ -367,6 +506,79 @@ def unique_object_name(existing: Set[str]) -> str:
 def find_pandoc() -> str | None:
     """Locate the pandoc executable on PATH. Returns None if not found."""
     return shutil.which("pandoc")
+
+
+SCHEMA_URLS: dict[str, str] = {
+    "content": "https://docs.oasis-open.org/office/OpenDocument/v1.3/os/schemas/OpenDocument-v1.3-schema.rng",
+    "manifest": "https://docs.oasis-open.org/office/OpenDocument/v1.3/os/schemas/OpenDocument-v1.3-manifest-schema.rng",
+}
+
+
+def ensure_schema(name: str) -> Path:
+    """Locate an OASIS ODF 1.3 RelaxNG schema, downloading it on first use.
+
+    Schemas are cached under ``$XDG_CACHE_HOME/open-document-skills/schemas/``
+    (defaulting to ``~/.cache/open-document-skills/schemas/``).
+
+    Args:
+        name: Either ``"content"`` or ``"manifest"``.
+
+    Returns:
+        Local filesystem path to the cached schema.
+
+    Raises:
+        SystemExit: If *name* is unknown or download fails.
+    """
+    import os
+    import urllib.request
+
+    if name not in SCHEMA_URLS:
+        raise SystemExit(f"unknown schema {name!r}; choose from {sorted(SCHEMA_URLS)}")
+    cache_root: Path = (
+        Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "open-document-skills" / "schemas"
+    )
+    cache_root.mkdir(parents=True, exist_ok=True)
+    schema_path: Path = cache_root / f"odf-1.3-{name}.rng"
+    if not schema_path.exists():
+        url: str = SCHEMA_URLS[name]
+        try:
+            with urllib.request.urlopen(url, timeout=30) as resp:
+                schema_path.write_bytes(resp.read())
+        except Exception as exc:
+            raise SystemExit(f"failed to download schema {url}: {exc}")
+    return schema_path
+
+
+def validate_against_schema(xml_bytes_input: bytes, schema_name: str) -> tuple[bool, list[str]]:
+    """Validate *xml_bytes_input* against the named OASIS ODF 1.3 RelaxNG schema.
+
+    Lazily imports ``lxml`` and raises ``SystemExit`` with an install hint
+    when the optional dependency is missing.
+
+    Args:
+        xml_bytes_input: Raw XML bytes to validate.
+        schema_name: Schema key, e.g. ``"content"`` or ``"manifest"``.
+
+    Returns:
+        ``(is_valid, errors)`` where errors is a list of human-readable strings.
+    """
+    try:
+        from lxml import etree  # type: ignore
+    except ImportError:
+        raise SystemExit("Schema validation requires lxml. Install with:\n  pip install open-document-skills[validate]")
+    schema_path: Path = ensure_schema(schema_name)
+    rng_doc = etree.parse(str(schema_path))
+    relaxng = etree.RelaxNG(rng_doc)
+    try:
+        doc = etree.fromstring(xml_bytes_input)
+    except etree.XMLSyntaxError as exc:
+        return False, [f"XML syntax error: {exc}"]
+    valid = relaxng.validate(doc)
+    errors: list[str] = []
+    if not valid:
+        for err in relaxng.error_log:
+            errors.append(f"line {err.line}: {err.message}")
+    return valid, errors
 
 
 def latex_to_mathml(latex: str) -> bytes:
@@ -721,6 +933,84 @@ def wrap_text_with_pair_in_element(
         parent: ET.Element | None = parent_map.get(end_element)
         if parent is not None:
             # Restore the tail before removing.
+            siblings: list[ET.Element] = list(parent)
+            idx: int = siblings.index(end_element)
+            preceding_tail: str | None = end_element.tail
+            if idx == 0:
+                parent.text = (parent.text or "") + (preceding_tail or "") or None
+            else:
+                prev: ET.Element = siblings[idx - 1]
+                prev.tail = (prev.tail or "") + (preceding_tail or "") or None
+            parent.remove(end_element)
+        return False
+    return True
+
+
+def wrap_text_across_elements(
+    elements: list[ET.Element],
+    start_anchor: str,
+    end_anchor: str,
+    start_element: ET.Element,
+    end_element: ET.Element,
+) -> bool:
+    """Bracket a text region with a start/end marker pair across multiple paragraphs.
+
+    Searches *elements* in document order for *start_anchor*; in the first
+    matching element, then searches the remainder (and the same element after
+    the start position) for *end_anchor*. Inserts *start_element* immediately
+    after the start anchor and *end_element* immediately after the end anchor.
+
+    If start and end fall in the same element, falls back to
+    :func:`wrap_text_with_pair_in_element`. Otherwise, inserts the end first
+    (in a later element, so positions stay stable) and the start second.
+    Rolls back on failure.
+
+    Args:
+        elements: Container elements to search (typically all paragraphs).
+        start_anchor: Substring marking the range start.
+        end_anchor: Substring marking the range end (must come after start).
+        start_element: Element inserted after the start anchor.
+        end_element: Element inserted after the end anchor.
+
+    Returns:
+        ``True`` if both markers were inserted, ``False`` otherwise.
+    """
+    if not start_anchor or not end_anchor:
+        return False
+
+    # Locate start
+    start_idx: int = -1
+    for i, element in enumerate(elements):
+        if find_text_position_in_element(element, start_anchor) is not None:
+            start_idx = i
+            break
+    if start_idx < 0:
+        return False
+
+    # Locate end: in the same element after the start, or in any subsequent element.
+    end_idx: int = -1
+    start_element_combined: str = "".join(getattr(n, a) or "" for n, a in _collect_text_slots(elements[start_idx]))
+    s_pos: int = start_element_combined.find(start_anchor)
+    e_pos: int = start_element_combined.find(end_anchor, s_pos + len(start_anchor))
+    if e_pos >= 0:
+        # Both in same element.
+        return wrap_text_with_pair_in_element(elements[start_idx], start_anchor, end_anchor, start_element, end_element)
+
+    for j in range(start_idx + 1, len(elements)):
+        if find_text_position_in_element(elements[j], end_anchor) is not None:
+            end_idx = j
+            break
+    if end_idx < 0:
+        return False
+
+    # Insert end first (later element); positions in start element remain stable.
+    if not insert_after_text_in_element(elements[end_idx], end_anchor, end_element):
+        return False
+    if not insert_after_text_in_element(elements[start_idx], start_anchor, start_element):
+        # Rollback end insertion.
+        parent_map: dict[ET.Element, ET.Element] = _build_parent_map(elements[end_idx])
+        parent: ET.Element | None = parent_map.get(end_element)
+        if parent is not None:
             siblings: list[ET.Element] = list(parent)
             idx: int = siblings.index(end_element)
             preceding_tail: str | None = end_element.tail

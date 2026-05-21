@@ -36,14 +36,32 @@ def run(script: str, *args: object) -> None:
     subprocess.run(cmd, check=True)
 
 
+def inject_dao_styles_and_logo(input_odt: Path, output_odt: Path) -> None:
+    """Replace styles.xml with the DAO-branded version and embed the logo."""
+    # Add scripts dir to sys.path so we can import odt_common in-process.
+    sys.path.insert(0, str(SCRIPTS))
+    from odt_common import embed_pictures, inject_styles_from_file  # noqa: E402
+
+    intermediate = OUT / "_styled.tmp.odt"
+    missing = inject_styles_from_file(input_odt, DAO / "styles.xml", intermediate)
+    if missing:
+        print(f"  ! style refs in content not defined in new styles.xml: {missing}", file=sys.stderr)
+    embed_pictures(intermediate, {"Pictures/logo.png": DAO / "logo-placeholder.png"}, output_odt)
+    intermediate.unlink(missing_ok=True)
+
+
 def main() -> None:
     print("Step 1: Generate base ODT from spec.json")
     base = OUT / "01-base.odt"
     run("create_minimal_odt.py", DAO / "spec.json", base)
 
+    print("Step 1b: Inject DAO branded styles + logo placeholder")
+    styled = OUT / "01b-styled.odt"
+    inject_dao_styles_and_logo(base, styled)
+
     print("Step 2: Fill citations from refs.bib")
     with_citations = OUT / "02-with-citations.odt"
-    run("fill_citations.py", base, "--source", DAO / "refs.bib", "-o", with_citations)
+    run("fill_citations.py", styled, "--source", DAO / "refs.bib", "-o", with_citations)
 
     print("Step 3: Add a footnote on the methodology")
     with_footnote = OUT / "03-with-footnote.odt"

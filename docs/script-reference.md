@@ -26,7 +26,7 @@ All scripts use the Python standard library.
 | `pack_fodt.py` | Convert a zipped ODT to a flat `.fodt` (single XML, Git-friendly). |
 | `unpack_fodt.py` | Convert a flat `.fodt` back to a zipped `.odt` package. |
 | `render.py` | Render ODT to PDF, optionally PNG pages, through LibreOffice/Poppler. |
-| `validate_refs.py` | Validate manifest, embedded image references, note id consistency, citation field completeness, and leftover citation placeholders. |
+| `validate_refs.py` | Validate manifest, embedded image references, note id consistency, citation field completeness, leftover citation placeholders, cross-reference targets. Use `--strict` for OASIS RelaxNG schema validation (requires `pip install open-document-skills[validate]`). |
 
 ## ODP
 

@@ -22,6 +22,7 @@ from odt_common import (
     parse_xml_from_zip,
     q,
     update_meta_for_edit,
+    wrap_text_across_elements,
     wrap_text_with_pair_in_element,
     write_odt_with_replacements,
     xml_bytes,
@@ -67,13 +68,18 @@ def main() -> None:
     inserted = False
 
     if args.start_anchor is not None:
-        # Range bookmark.
+        # Range bookmark — try intra-paragraph first, then cross-paragraph.
         for paragraph in paragraphs:
             start_el = ET.Element(q("text", "bookmark-start"), {q("text", "name"): args.name})
             end_el = ET.Element(q("text", "bookmark-end"), {q("text", "name"): args.name})
             if wrap_text_with_pair_in_element(paragraph, args.start_anchor, args.end_anchor, start_el, end_el):
                 inserted = True
                 break
+        if not inserted:
+            start_el = ET.Element(q("text", "bookmark-start"), {q("text", "name"): args.name})
+            end_el = ET.Element(q("text", "bookmark-end"), {q("text", "name"): args.name})
+            if wrap_text_across_elements(paragraphs, args.start_anchor, args.end_anchor, start_el, end_el):
+                inserted = True
     elif args.anchor is not None:
         for paragraph in paragraphs:
             if find_text_position_in_element(paragraph, args.anchor) is None:

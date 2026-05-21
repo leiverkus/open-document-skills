@@ -419,7 +419,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development and release chec
 
 ## Release Status
 
-Current release: `v0.4.0` — adds cross-references (bookmarks, reference-marks, figure/table sequences), MathML formulas (from LaTeX via Pandoc or raw), and an end-to-end DAO grant-proposal example. See [ROADMAP.md](ROADMAP.md) for what's next: DAO branded template + robustness in v0.5.
+Current release: `v0.5.0` — adds a DAO-branded template (Nunito Sans, `#02416C`, DFG-Antrag layout), cross-paragraph range bookmarks/refs, RelaxNG schema validation (`validate_refs.py --strict`), magic-byte MIME detection in `add_image.py`, and Hypothesis property tests. See [ROADMAP.md](ROADMAP.md) for v0.6 (format depth: ODS named ranges/charts, ODP animations, ODG glue points).
 
 ## License
 

@@ -12,9 +12,9 @@ from odg_common import (
     copy_into_package,
     ensure_manifest_entry,
     iter_pages,
-    media_type_for,
     parse_xml_from_zip,
     q,
+    sniff_image_mime,
     unique_picture_name,
     update_meta_for_edit,
     xml_bytes,
@@ -63,7 +63,7 @@ def main() -> None:
             q("xlink", "actuate"): "onLoad",
         },
     )
-    ensure_manifest_entry(manifest, package_path, media_type_for(args.image))
+    ensure_manifest_entry(manifest, package_path, sniff_image_mime(args.image))
     meta = parse_xml_from_zip(args.input_odg, "meta.xml")
     update_meta_for_edit(meta)
     copy_into_package(

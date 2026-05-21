@@ -1,5 +1,35 @@
 # Changelog
 
+## v0.5.0 - 2026-05-21
+
+DAO-branded template, cross-paragraph ranges, RelaxNG schema validation, magic-byte MIME, Hypothesis property tests.
+
+### Added
+
+- **DAO-branded template** in `examples/dao/`:
+  - `styles.xml` — Nunito Sans, `#02416C`, A4 with 2.5 cm DFG-Antrag margins, master page with logo header + footer with page number, 7 named paragraph styles (`DAO-Title`, `DAO-Heading-1..3`, `DAO-Body`, `DAO-Quote`, `DAO-Caption`), outline numbering for 3 levels.
+  - `logo-placeholder.png` — 300×100 PNG with `#02416C`-bordered transparent placeholder; user replaces with the real DAO logo.
+  - `build_grant_proposal.py` — new Step 1b injects DAO styles + embeds logo.
+  - `spec.json` — all block specs reference DAO-* style names.
+  - Resulting PDF: ~115 KB (up from ~50 KB) reflecting the elaborated styling.
+- **Cross-paragraph range bookmarks/refs**: new `wrap_text_across_elements` helper; `add_bookmark.py` and `add_reference.py` now fall back to cross-paragraph when intra-paragraph fails.
+- **RelaxNG schema validation**: optional `[validate] = ["lxml>=4.9"]` extra. `ensure_schema` downloads OASIS ODF 1.3 schemas on first use to `~/.cache/open-document-skills/schemas/`. `validate_refs.py --strict` activates content.xml + manifest.xml RelaxNG validation.
+- **Magic-byte MIME detection**: new public `sniff_image_mime(path)` reading file headers (PNG/JPEG/GIF/SVG/BMP/WebP/TIFF) with `media_type_for` fallback. Wired into `add_image.py` for ODT/ODP/ODG — PNG-with-`.jpg`-extension and similar mislabels now land with the correct manifest MIME.
+- **Hypothesis property tests** in `tests/test_property.py` — 5 invariants for the walker/locator (idempotence, content conservation, child preservation, rollback, anchor-preservation under insert). 80 examples per invariant.
+- **Library helpers in `lib/odf_common.py`**:
+  - `wrap_text_across_elements`
+  - `inject_styles_from_file` (with cross-reference validation against content.xml)
+  - `embed_pictures` (bulk Pictures/ + manifest insertion)
+  - `ensure_schema`, `validate_against_schema`
+  - `sniff_image_mime` + `_IMAGE_MIME_BY_MAGIC` table
+- **`create_minimal_odt.py`** now reads an optional `style` field on block specs (heading/paragraph) and emits `text:style-name` accordingly — prerequisite for DAO style injection.
+- 27 new tests across `tests/test_dao_template.py`, `tests/test_property.py`, `tests/test_schema_validation.py`, plus cross-paragraph and magic-byte tests in existing files. Total: 163 (was 136).
+
+### Changed
+
+- `pyproject.toml`: new `[validate]` extra; `hypothesis` added to `[dev]`.
+- CI workflow installs `lxml` and `hypothesis` (and `pandoc` from v0.4) so all paths are exercised.
+
 ## v0.4.0 - 2026-05-21
 
 Cross-references, MathML, and an end-to-end DAO grant-proposal example.

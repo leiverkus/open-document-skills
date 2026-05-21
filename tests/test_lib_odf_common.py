@@ -29,10 +29,12 @@ from lib.odf_common import (
     pack_dir_as_odf,
     parse_xml_from_zip,
     replace_text_in_element,
+    sniff_image_mime,
     unique_object_name,
     unique_picture_name,
     unpack_to_temp,
     update_meta_for_edit,
+    wrap_text_across_elements,
     wrap_text_with_pair_in_element,
     write_odf_with_replacements,
     xml_bytes,
@@ -382,6 +384,43 @@ class LibOdfCommonTests(unittest.TestCase):
         ok = wrap_text_with_pair_in_element(p, "START", "END", ET.Element("a"), ET.Element("b"))
         self.assertFalse(ok)
 
+    def test_wrap_across_elements_same_paragraph(self) -> None:
+        p = ET.fromstring("<p>x START middle END y</p>")
+        start = ET.Element("s")
+        end = ET.Element("e")
+        ok = wrap_text_across_elements([p], "START", "END", start, end)
+        self.assertTrue(ok)
+        self.assertEqual([c.tag for c in p], ["s", "e"])
+
+    def test_wrap_across_elements_cross_paragraph(self) -> None:
+        p1 = ET.fromstring("<p>first START here</p>")
+        p2 = ET.fromstring("<p>middle paragraph</p>")
+        p3 = ET.fromstring("<p>third END text</p>")
+        start = ET.Element("s")
+        end = ET.Element("e")
+        ok = wrap_text_across_elements([p1, p2, p3], "START", "END", start, end)
+        self.assertTrue(ok)
+        # start_element is in p1; end_element is in p3
+        self.assertEqual(list(p1)[0].tag, "s")
+        self.assertEqual(len(list(p2)), 0)
+        self.assertEqual(list(p3)[0].tag, "e")
+
+    def test_wrap_across_elements_no_start(self) -> None:
+        p1 = ET.fromstring("<p>nothing here</p>")
+        p2 = ET.fromstring("<p>END only</p>")
+        ok = wrap_text_across_elements([p1, p2], "START", "END", ET.Element("s"), ET.Element("e"))
+        self.assertFalse(ok)
+        self.assertEqual(len(list(p1)), 0)
+        self.assertEqual(len(list(p2)), 0)
+
+    def test_wrap_across_elements_no_end(self) -> None:
+        p1 = ET.fromstring("<p>START in p1</p>")
+        p2 = ET.fromstring("<p>nothing in p2</p>")
+        ok = wrap_text_across_elements([p1, p2], "START", "END", ET.Element("s"), ET.Element("e"))
+        self.assertFalse(ok)
+        self.assertEqual(len(list(p1)), 0)
+        self.assertEqual(len(list(p2)), 0)
+
     def test_ensure_sequence_declarations_creates_block(self) -> None:
         text = ET.Element(f"{{{NS['office']}}}text")
         ET.SubElement(text, f"{{{NS['text']}}}p")
@@ -429,6 +468,53 @@ class LibOdfCommonTests(unittest.TestCase):
                 self.assertIn("Object 1/styles.xml", names)
                 self.assertEqual(archive.read("content.xml"), b"<root/>")
                 self.assertEqual(names[0], "mimetype")
+
+    def test_sniff_image_mime_png(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            png = Path(tmp) / "fake.unknown"
+            png.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 100)
+            self.assertEqual(sniff_image_mime(png), "image/png")
+
+    def test_sniff_image_mime_jpeg(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            jpg = Path(tmp) / "fake.png"
+            jpg.write_bytes(b"\xff\xd8\xff\xe0" + b"\x00" * 100)
+            self.assertEqual(sniff_image_mime(jpg), "image/jpeg")
+
+    def test_sniff_image_mime_gif(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            gif = Path(tmp) / "fake.jpg"
+            gif.write_bytes(b"GIF89a" + b"\x00" * 100)
+            self.assertEqual(sniff_image_mime(gif), "image/gif")
+
+    def test_sniff_image_mime_webp_requires_webp_marker(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            # RIFF without WEBP marker → should fall back to extension
+            non_webp = Path(tmp) / "ambiguous.wav"
+            non_webp.write_bytes(b"RIFF\x00\x00\x00\x00WAVE" + b"\x00" * 100)
+            # Should fall back to media_type_for; .wav → audio/wav (or octet-stream)
+            self.assertNotEqual(sniff_image_mime(non_webp), "image/webp")
+            # Real WebP:
+            webp = Path(tmp) / "image.unknown"
+            webp.write_bytes(b"RIFF\x00\x00\x00\x00WEBP" + b"\x00" * 100)
+            self.assertEqual(sniff_image_mime(webp), "image/webp")
+
+    def test_sniff_image_mime_svg(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            svg = Path(tmp) / "noext"
+            svg.write_bytes(b'<?xml version="1.0"?>\n<svg xmlns="http://www.w3.org/2000/svg"></svg>')
+            self.assertEqual(sniff_image_mime(svg), "image/svg+xml")
+            # XML without SVG → falls back
+            xml = Path(tmp) / "ambiguous.xml"
+            xml.write_bytes(b'<?xml version="1.0"?>\n<other/>')
+            self.assertNotEqual(sniff_image_mime(xml), "image/svg+xml")
+
+    def test_sniff_image_mime_falls_back_for_unknown(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            blob = Path(tmp) / "data.png"
+            blob.write_bytes(b"\x00\x01\x02\x03" + b"random")
+            # Magic doesn't match → falls back to extension → image/png
+            self.assertEqual(sniff_image_mime(blob), "image/png")
 
     def test_update_meta_creates_missing_elements(self) -> None:
         root = ET.Element(q("office", "document-meta"))

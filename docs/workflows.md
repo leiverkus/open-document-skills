@@ -171,6 +171,28 @@ python3 skills/odt/scripts/list_citations.py output.odt --json
 
 LibreOffice renders citations through its bibliography style and generates the bibliography index from the inserted `text:bibliography-mark` elements. BibTeX support requires `pip install open-document-skills[scholarly]`; CSL-JSON uses stdlib only.
 
+## Schema validation (--strict)
+
+`validate_refs.py --strict` runs OASIS ODF 1.3 RelaxNG validation against `content.xml` and `META-INF/manifest.xml`. The schemas are downloaded once on first use to `~/.cache/open-document-skills/schemas/` and reused afterwards.
+
+```bash
+pip install open-document-skills[validate]
+python3 skills/odt/scripts/validate_refs.py output.odt --strict
+```
+
+Without `--strict`, only the internal consistency checks run (manifest, media, style references, note ids, citation identifiers, cross-references). Use `--strict` before delivery if exact OASIS conformance matters; the strict check catches non-trivial issues like `text:p` containing content the schema does not permit.
+
+## DAO branded template (example)
+
+The `examples/dao/` directory ships a complete grant-proposal pipeline with DAO branding:
+
+```bash
+python3 examples/dao/build_grant_proposal.py
+# Output: examples/dao/output/grant_proposal.{odt,pdf}
+```
+
+The build runs `create_minimal_odt.py` then injects `examples/dao/styles.xml` (Nunito Sans, `#02416C`, DFG-Antrag margins, logo placeholder header, page-number footer) before filling citations, footnotes, cross-references, and a LaTeX math formula.
+
 ## Flat ODF (Git-friendly)
 
 Every format has `pack_*` and `unpack_*` scripts that convert between the zipped ODF package and a flat single-XML file (`.fodt`, `.fodp`, `.fods`, `.fodg`). Flat ODF is part of the OASIS specification, opens directly in LibreOffice, and produces readable diffs under Git.

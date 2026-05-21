@@ -1,6 +1,6 @@
 [project]
 name = "open-document-skills"
-version = "0.4.0"
+version = "0.5.0"
 description = "Agent skills for OpenDocument Format files"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -8,7 +8,8 @@ license = { text = "MIT" }
 [project.optional-dependencies]
 odf = ["odfpy>=1.4.0"]
 scholarly = ["bibtexparser>=1.4"]
-dev = ["pytest>=8.0", "ruff>=0.9", "pytest-cov>=5.0"]
+validate = ["lxml>=4.9"]
+dev = ["pytest>=8.0", "ruff>=0.9", "pytest-cov>=5.0", "hypothesis>=6.0"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v0.4.0** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v0.5.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -30,21 +30,22 @@ Closed the largest gap relative to general-purpose tools (pandoc, docx skills): 
 - ✅ **DAO grant-proposal example** — `examples/dao/build_grant_proposal.py` end-to-end pipeline combining all v0.3 + v0.4 features.
 - ⏳ **DAO branded template** (Nunito Sans, `#02416C`, master pages) — deferred to v0.5; the DAO example currently uses default styles.
 
-## v0.5 — DAO branding + Robustness (next)
+## v0.5 — DAO branding + Robustness ✅ shipped (2026-05-21)
 
-- **DAO branded template** — `examples/dao/styles.xml` with Nunito Sans, `#02416C`, master pages (Header/Footer with logo placeholder, A4 with DFG-standard margins). Inject step in `build_grant_proposal.py`.
-- **Cross-paragraph range bookmarks/refs** — extend `wrap_text_with_pair_in_element` to handle ranges spanning multiple paragraphs.
-
-Polish the existing surface before adding new format depth.
+- ✅ DAO-branded template (Nunito Sans, `#02416C`, logo placeholder, DFG-standard margins, outline numbering)
+- ✅ Cross-paragraph range bookmarks/refs via new `wrap_text_across_elements`
+- ✅ RelaxNG schema validation (opt-in via `[validate]` extra; OASIS schemas downloaded on first use)
+- ✅ Hypothesis property tests for walker/locator (5 invariants)
+- ✅ Magic-byte MIME detection in `add_image.py` for all three formats
 
 - **RelaxNG schema validation** against OASIS ODF 1.3 — opt-in `--strict` flag on `validate_refs.py`, depends on `lxml` (optional). Schemas bundled or downloaded from the OASIS registry on demand.
 - **Property-based tests** (`hypothesis`) for `replace_text_in_element` — random paragraph trees with mixed inline children; invariants: structure preserved, total text length conserved (modulo replacements), no orphaned tail text.
 - **Real-world corpus tests** — ~20 ODF fixtures harvested from LibreOffice/Collabora/AbiWord/Calligra exports (different versions). Round-trip each through pack/unpack and verify content equivalence.
 - **Image probing** — magic-byte MIME sniffing in `add_image.py` (so `.png` with `.jpg` extension lands correctly in the manifest); optional Pillow-based aspect-ratio detection so `--width`/`--height` can be inferred.
 
-## v0.6 — Format depth
+## v0.6 — Format depth (next)
 
-Adds the most-requested features inside each format. Driven by what users actually ask for.
+Adds the most-requested features inside each format. Driven by what users actually ask for after v0.5 ships.
 
 - **ODS** — named ranges (`table:named-range`), basic chart objects (line, bar), data validation (`table:content-validation`).
 - **ODP** — animation primitives (entrance/exit on shape level), slide transitions.

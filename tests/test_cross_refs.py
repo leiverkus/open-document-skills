@@ -295,6 +295,68 @@ class CrossRefTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("Dangling", result.stdout)
 
+    def test_add_bookmark_cross_paragraph_range(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            odt = self._make_odt(
+                tmp_path,
+                [
+                    {"type": "paragraph", "text": "first START here"},
+                    {"type": "paragraph", "text": "middle paragraph"},
+                    {"type": "paragraph", "text": "third END text"},
+                ],
+            )
+            out = tmp_path / "out.odt"
+            run_script(
+                SKILLS / "odt" / "scripts" / "add_bookmark.py",
+                odt,
+                "--name",
+                "CrossRange",
+                "--start-anchor",
+                "START",
+                "--end-anchor",
+                "END",
+                "-o",
+                out,
+            )
+            content = read_content(out)
+            starts = [b for b in content.iter() if b.tag == q("text", "bookmark-start")]
+            ends = [b for b in content.iter() if b.tag == q("text", "bookmark-end")]
+            self.assertEqual(len(starts), 1)
+            self.assertEqual(len(ends), 1)
+            self.assertEqual(starts[0].attrib.get(q("text", "name")), "CrossRange")
+            self.assertEqual(ends[0].attrib.get(q("text", "name")), "CrossRange")
+
+    def test_add_reference_cross_paragraph_mark_range(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            odt = self._make_odt(
+                tmp_path,
+                [
+                    {"type": "paragraph", "text": "Theorem 1 START stmt"},
+                    {"type": "paragraph", "text": "proof body"},
+                    {"type": "paragraph", "text": "END qed"},
+                ],
+            )
+            out = tmp_path / "out.odt"
+            run_script(
+                SKILLS / "odt" / "scripts" / "add_reference.py",
+                odt,
+                "--mark-range",
+                "thm1",
+                "--start-anchor",
+                "START",
+                "--end-anchor",
+                "END",
+                "-o",
+                out,
+            )
+            content = read_content(out)
+            starts = [m for m in content.iter() if m.tag == q("text", "reference-mark-start")]
+            ends = [m for m in content.iter() if m.tag == q("text", "reference-mark-end")]
+            self.assertEqual(len(starts), 1)
+            self.assertEqual(len(ends), 1)
+
     def test_validate_refs_detects_duplicate_bookmark_names(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)

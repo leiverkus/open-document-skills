@@ -27,6 +27,7 @@ from odt_common import (
     parse_xml_from_zip,
     q,
     update_meta_for_edit,
+    wrap_text_across_elements,
     wrap_text_with_pair_in_element,
     write_odt_with_replacements,
     xml_bytes,
@@ -91,6 +92,12 @@ def main() -> None:
                 inserted = True
                 label = args.mark_range
                 break
+        if not inserted:
+            start = ET.Element(q("text", "reference-mark-start"), {q("text", "name"): args.mark_range})
+            end = ET.Element(q("text", "reference-mark-end"), {q("text", "name"): args.mark_range})
+            if wrap_text_across_elements(paragraphs, args.start_anchor, args.end_anchor, start, end):
+                inserted = True
+                label = args.mark_range
     else:
         # --ref-to
         if args.kind is None:

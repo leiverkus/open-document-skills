@@ -20,10 +20,14 @@ def add_paragraph(parent: ET.Element, text: str, style: str = "Body") -> None:
     paragraph.text = text
 
 
-def add_heading(parent: ET.Element, text: str, level: int = 1) -> None:
-    """Add a text:h element with the given outline level and Heading{N} style."""
+def add_heading(parent: ET.Element, text: str, level: int = 1, style: str | None = None) -> None:
+    """Add a text:h element with the given outline level and style.
+
+    If *style* is given it overrides the default ``Heading{level}`` style.
+    """
+    style_name = style or f"Heading{level}"
     heading = ET.SubElement(
-        parent, q("text", "h"), {q("text", "outline-level"): str(level), q("text", "style-name"): f"Heading{level}"}
+        parent, q("text", "h"), {q("text", "outline-level"): str(level), q("text", "style-name"): style_name}
     )
     heading.text = text
 
@@ -162,10 +166,11 @@ def main() -> None:
             add_heading(text, str(spec["title"]), 1)
         for block in spec.get("blocks", []):
             kind = block.get("type", "paragraph")
+            style = block.get("style")
             if kind == "heading":
-                add_heading(text, str(block.get("text", "")), int(block.get("level", 1)))
+                add_heading(text, str(block.get("text", "")), int(block.get("level", 1)), style=style)
             elif kind == "paragraph":
-                add_paragraph(text, str(block.get("text", "")))
+                add_paragraph(text, str(block.get("text", "")), style=style or "Body")
             elif kind == "list":
                 add_list(text, [str(item) for item in block.get("items", [])])
             elif kind == "table":
