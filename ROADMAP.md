@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v0.6.0** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v0.7.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -50,14 +50,17 @@ Closed the largest gap relative to general-purpose tools (pandoc, docx skills): 
 - ✅ `add_chart.py` with four types: bar, line, pie, scatter
 - ✅ `list_charts.py`, validate_refs extended for ODS-specific checks
 
-## v0.7 — ODP depth + real-world corpus tests (next)
+## v0.7 — ODP depth ✅ shipped (2026-05-21)
 
-- **ODP** — animation primitives (entrance/exit on shape level), slide transitions, master-page customization helpers.
-- **Real-world corpus tests** — ~20 ODF fixtures from LibreOffice (multiple versions), Collabora, AbiWord, Calligra. Roundtrip tests for all v0.2–v0.6 helpers against each fixture.
+- ✅ Shape-level animations (entrance, exit, emphasis, motion paths)
+- ✅ Slide transitions with all standard types
+- ✅ Master-page customization (background, header, footer, logo, clone-to)
+- ✅ validate_refs extended for animation target consistency
 
-## v0.8 — ODG depth
+## v0.8 — ODG depth + corpus tests (next)
 
-- Glue points, connector routing, group/ungroup operations.
+- **ODG** — glue points, connector routing, group/ungroup operations.
+- **Real-world corpus tests** — kuratiertes MIT-Sample-Set (~15-20 ODF-Dateien) im Repo. Roundtrip-Tests für alle v0.2-v0.7-Helper gegen jede Fixture.
 
 ## v1.0 — Ecosystem maturity
 

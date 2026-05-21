@@ -4,7 +4,7 @@ description: "Create, read, edit, convert, repair, or inspect OpenDocument Prese
 triggers: [".odp", "ODP", "OpenDocument Presentation", "Open Office presentation", "LibreOffice Impress", "Impress deck", "odp-Datei", "OpenDocument-Präsentation", "Folien", "Präsentation"]
 dont_use_for: ["text documents (.odt)", "spreadsheets (.ods)", "general presentation advice without .odp file"]
 license: MIT
-version: "0.6.0"
+version: "0.7.0"
 ---
 
 # ODP creation, editing, and analysis

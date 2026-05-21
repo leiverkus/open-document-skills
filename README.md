@@ -21,7 +21,7 @@ python skills/odt/scripts/validate_refs.py out.odt
 | Skill | LibreOffice app | Smithery | Triggers |
 | --- | --- | --- | --- |
 | [`odt`](skills/odt) | Writer | [smithery.ai/skills/leiverkus/odt](https://smithery.ai/skills/leiverkus/odt) | edit ODT, footnotes, citations (BibTeX/CSL-JSON), bookmarks, cross-references, figure/table sequences, MathML formulas, render to PDF |
-| [`odp`](skills/odp) | Impress | [smithery.ai/skills/leiverkus/odp](https://smithery.ai/skills/leiverkus/odp) | clone slide, edit notes, add image, render deck |
+| [`odp`](skills/odp) | Impress | [smithery.ai/skills/leiverkus/odp](https://smithery.ai/skills/leiverkus/odp) | clone slide, edit notes, add image, animations (entrance/exit/emphasis/motion), slide transitions, master-page customization (background, header/footer, logo), render deck |
 | [`ods`](skills/ods) | Calc | [smithery.ai/skills/leiverkus/ods](https://smithery.ai/skills/leiverkus/ods) | set cells/formulas, named ranges, dropdowns + data validation, embedded charts (bar/line/pie/scatter), export CSV, recalculate |
 | [`odg`](skills/odg) | Draw | [smithery.ai/skills/leiverkus/odg](https://smithery.ai/skills/leiverkus/odg) | edit labels, add shape image, export SVG/PNG |
 
@@ -419,7 +419,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development and release chec
 
 ## Release Status
 
-Current release: `v0.6.0` — adds ODS depth: named ranges/expressions, data validation (dropdowns, range constraints), and embedded charts (bar/line/pie/scatter via LibreOffice-native `Object N/` sub-packages). See [ROADMAP.md](ROADMAP.md) for v0.7 (ODP animations + real-world corpus tests) and v0.8 (ODG glue points).
+Current release: `v0.7.0` — adds ODP depth: shape-level animations (entrance/exit/emphasis/motion paths), slide transitions, and master-page customization (backgrounds, headers/footers, logo embedding). See [ROADMAP.md](ROADMAP.md) for v0.8 (ODG depth + real-world corpus tests).
 
 ## License
 

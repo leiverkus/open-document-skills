@@ -45,6 +45,9 @@ __all__ = [
     "copy_into_package",
     "copy_slide",
     "ensure_manifest_entry",
+    "ensure_shape_id",
+    "ensure_timing_root",
+    "find_shape_by_name",
     "find_soffice",
     "find_slides",
     "media_type_for",
@@ -152,6 +155,54 @@ def select_slide(content_root: ET.Element, slide: str | None) -> ET.Element:
         if page.attrib.get(q("draw", "name")) == slide:
             return page
     raise SystemExit(f"Slide not found: {slide}")
+
+
+def find_shape_by_name(slide_page: ET.Element, name: str) -> ET.Element | None:
+    """Find a draw:frame / draw:shape / draw:* with matching draw:name (recursive)."""
+    name_attr = q("draw", "name")
+    for descendant in slide_page.iter():
+        if descendant.attrib.get(name_attr) == name:
+            return descendant
+    return None
+
+
+def ensure_shape_id(shape: ET.Element, content_root: ET.Element) -> str:
+    """Return shape's draw:id, or assign a unique 'shape-N' and return that."""
+    id_attr = q("draw", "id")
+    existing = shape.attrib.get(id_attr)
+    if existing:
+        return existing
+    all_ids: set[str] = set()
+    for el in content_root.iter():
+        v = el.attrib.get(id_attr)
+        if v:
+            all_ids.add(v)
+    counter = 1
+    while f"shape-{counter}" in all_ids:
+        counter += 1
+    new_id = f"shape-{counter}"
+    shape.set(id_attr, new_id)
+    return new_id
+
+
+def ensure_timing_root(slide_page: ET.Element) -> ET.Element:
+    """Locate or create the slide's animation timing root.
+
+    Per ODF 1.3, animations live under a ``<anim:par presentation:node-type="timing-root">``
+    that is a direct child of ``<draw:page>``. This helper returns it, creating it
+    as the last child if missing.
+    """
+    anim_par_tag = q("anim", "par")
+    node_type_attr = q("presentation", "node-type")
+    for child in slide_page:
+        if child.tag == anim_par_tag and child.attrib.get(node_type_attr) == "timing-root":
+            return child
+    timing_root = ET.SubElement(
+        slide_page,
+        anim_par_tag,
+        {node_type_attr: "timing-root"},
+    )
+    return timing_root
 
 
 def copy_slide(page: ET.Element) -> ET.Element:

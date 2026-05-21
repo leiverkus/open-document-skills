@@ -39,6 +39,11 @@ All scripts use the Python standard library.
 | `clone_slide.py` | Clone a slide from a template deck with optional text replacements. |
 | `replace_text.py` | XML-safe text replacement in slides and notes. |
 | `add_image.py` | Add an image to a slide and update package references. |
+| `add_animation.py` | Add a shape-level animation (entrance/exit/emphasis/motion path). |
+| `list_animations.py` | List all animations as JSON. |
+| `add_transition.py` | Add or remove a slide transition (fade/wipe/cover/uncover/push/dissolve/random). |
+| `list_transitions.py` | List all slide transitions as JSON. |
+| `customize_master.py` | Customize a master page: background, header/footer, page numbers, logo, clone-to. |
 | `pack_odp.py` | Repack an unpacked ODP directory with correct `mimetype` handling. |
 | `pack_fodp.py` | Convert a zipped ODP to a flat `.fodp` (single XML, Git-friendly). |
 | `unpack_fodp.py` | Convert a flat `.fodp` back to a zipped `.odp` package. |

@@ -54,10 +54,26 @@ def validate(path: Path) -> dict[str, object]:
         if not href or href.startswith("#") or "://" in href:
             continue
         package_path = href.lstrip("./")
+        if package_path.endswith("/"):
+            continue
         if package_path not in names:
             errors.append(f"Missing package media target: {href}")
         if manifest_paths and package_path not in manifest_paths:
             warnings.append(f"Media target not listed in manifest: {package_path}")
+
+    # Animation target consistency: every smil:targetElement must reference an existing draw:id.
+    draw_ids: dict[str, int] = {}
+    for el in content.iter():
+        eid = el.attrib.get(q("draw", "id"))
+        if eid:
+            draw_ids[eid] = draw_ids.get(eid, 0) + 1
+    for eid, count in draw_ids.items():
+        if count > 1:
+            errors.append(f"Duplicate draw:id {eid!r} ({count} occurrences)")
+    for el in content.iter():
+        target = el.attrib.get(q("smil", "targetElement"))
+        if target and target not in draw_ids:
+            errors.append(f"Animation references missing draw:id: {target}")
 
     return {
         "status": "ok" if not errors else "errors_found",

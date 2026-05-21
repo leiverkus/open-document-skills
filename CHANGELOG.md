@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.7.0 - 2026-05-21
+
+ODP depth: animations, slide transitions, master-page customization.
+
+### Added
+
+- **Animations (ODP)**:
+  - `add_animation.py` with four effect categories — entrance (`appear`, `fade-in`, `fly-in`, `wipe-in`), exit (`disappear`, `fade-out`, `fly-out`, `wipe-out`), emphasis (`pulse`, `spin`, `grow-shrink`, `color-change`), and motion paths (`linear`, `arc`, `curve`).
+  - `--direction`, `--duration`, `--delay`, `--trigger` flags for fine control.
+  - Auto-assigns unique `draw:id` to target shapes when missing.
+  - LibreOffice-compatible `ooo-*` preset-id mapping.
+  - `list_animations.py` for JSON inventory.
+- **Slide transitions (ODP)**:
+  - `add_transition.py` with `--slide N|all|NAME`, types `fade`, `wipe`, `cover`, `uncover`, `push`, `dissolve`, `random`, plus `--direction`, `--duration`, and `--remove`.
+  - `list_transitions.py` for inventory.
+  - Auto-creates `style:style style:family="drawing-page"` under `office:automatic-styles`.
+- **Master-page customization (ODP)**:
+  - `customize_master.py` for background color/image, header/footer text, page-number visibility, logo embedding.
+  - `--clone-to NEW_NAME` to create a derived master.
+  - Reuses v0.5 `embed_pictures` for image embedding.
+- **`odp_common.py`** helpers: `find_shape_by_name`, `ensure_shape_id`, `ensure_timing_root`.
+- **`validate_refs.py` (ODP)** extended: detects duplicate `draw:id`, dangling `smil:targetElement` animation references.
+- 15 new tests across `tests/test_odp_animations.py`, `tests/test_odp_transitions.py`, `tests/test_odp_master.py`. Total: 197 (was 182).
+
+### Changed
+
+- ODP `SKILL.md` description + triggers extended with animation, Animation, Effekt, transition, Übergang, Folienübergang, master page, Folienmaster, background, Hintergrund, fade-in, fly-in, wipe, motion path.
+
 ## v0.6.0 - 2026-05-21
 
 ODS depth: named ranges, data validation, and embedded charts.
