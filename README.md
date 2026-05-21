@@ -45,6 +45,8 @@ tests/
   test_smoke.py
   test_edge_cases.py
   test_libreoffice_integration.py
+scripts/
+  install_skills.py
 examples/
   README.md
   build_examples.py
@@ -55,20 +57,36 @@ Each skill is MIT-licensed and also contains its own `LICENSE.txt`.
 
 ## Installation
 
-Copy the skill folders into your Codex skills directory:
+Install the four skills into the default Codex skills directory:
 
 ```bash
-cp -R skills/odt skills/odp skills/ods skills/odg ~/.agents/skills/
+python3 scripts/install_skills.py
 ```
 
-If your Codex setup uses another skills directory, copy the four folders there instead.
+By default, the installer writes to `$CODEX_HOME/skills` when `CODEX_HOME` is set, otherwise to:
+
+```bash
+~/.codex/skills
+```
+
+If your setup uses the older `.agents` directory, install there explicitly:
+
+```bash
+python3 scripts/install_skills.py --dest ~/.agents/skills
+```
+
+Existing skill directories are skipped by default. To intentionally overwrite the installed copies:
+
+```bash
+python3 scripts/install_skills.py --dest ~/.agents/skills --replace
+```
 
 To install from a local checkout:
 
 ```bash
 git clone https://github.com/leiverkus/open-document-skills.git
 cd open-document-skills
-cp -R skills/odt skills/odp skills/ods skills/odg ~/.agents/skills/
+python3 scripts/install_skills.py
 ```
 
 ## Requirements

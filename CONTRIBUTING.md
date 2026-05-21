@@ -60,10 +60,13 @@ When adding behavior:
 
 ## Skill Installation Check
 
-From a checkout, verify that the skills can be copied into a Codex skills directory:
+From a checkout, verify that the installer can copy the skills into a Codex skills directory:
 
 ```bash
-cp -R skills/odt skills/odp skills/ods skills/odg ~/.agents/skills/
+tmpdir="$(mktemp -d)"
+python3 scripts/install_skills.py --dest "$tmpdir/skills"
+find "$tmpdir/skills" -maxdepth 2 -name SKILL.md
+rm -rf "$tmpdir"
 ```
 
 Each skill directory should contain:
