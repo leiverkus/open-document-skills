@@ -9,7 +9,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 SOFFICE_CANDIDATES = [
     "/Applications/LibreOffice.app/Contents/MacOS/soffice",
     "/usr/bin/libreoffice",

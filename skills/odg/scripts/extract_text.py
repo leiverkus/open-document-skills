@@ -7,7 +7,7 @@ import argparse
 import json
 from pathlib import Path
 
-from odg_common import NS, element_text, iter_pages, parse_xml_from_zip, page_name
+from odg_common import NS, element_text, iter_pages, page_name, parse_xml_from_zip
 
 
 def extract(path: Path) -> list[dict[str, object]]:

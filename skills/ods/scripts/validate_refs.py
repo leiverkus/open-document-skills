@@ -10,7 +10,6 @@ from pathlib import Path
 
 from ods_common import NS, parse_xml_from_zip, q
 
-
 ERROR_MARKERS = ("#REF!", "#DIV/0!", "#VALUE!", "#NAME?", "#N/A", "Err:")
 
 

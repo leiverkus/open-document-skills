@@ -7,7 +7,7 @@ import argparse
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from odp_common import NS, clear_children, parse_xml_from_zip, q, select_slide, write_odp_with_replacements, xml_bytes
+from odp_common import NS, clear_children, parse_xml_from_zip, select_slide, write_odp_with_replacements, xml_bytes
 
 
 def paragraph_text(paragraph: ET.Element) -> str:
@@ -38,8 +38,7 @@ def iter_target_paragraphs(root: ET.Element, slide: str | None, include_notes: b
                 page_copy.remove(copied_notes)
             # Match paragraphs by position in the original visible subtree.
             visible_count = len(page_copy.findall(".//text:p", NS))
-            for paragraph in page.findall(".//text:p", NS)[:visible_count]:
-                yield paragraph
+            yield from page.findall(".//text:p", NS)[:visible_count]
         if include_notes or notes_only:
             if notes is not None:
                 yield from notes.findall(".//text:p", NS)

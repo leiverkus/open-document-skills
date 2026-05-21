@@ -9,7 +9,6 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 from odp_common import (
-    NS,
     copy_into_package,
     ensure_manifest_entry,
     media_type_for,

@@ -1,6 +1,8 @@
 ---
 name: odt
-description: "Use this skill whenever the user wants to create, read, edit, convert, repair, or inspect OpenDocument Text files (.odt). Trigger on mentions of .odt, ODT, OpenDocument Text, Open Office document, LibreOffice Writer, Writer document, odt-Datei, OpenDocument-Text, or text documents meant for LibreOffice/OpenOffice. Use for extracting or reorganizing content from .odt files, editing styles, headings, tables, images, metadata, comments where possible, or converting between .odt and .docx/.pdf/.html/.md. Do NOT use for spreadsheets (.ods), presentations (.odp), PDFs as the primary deliverable, or general prose editing unless the output/input is an .odt file."
+description: "Create, read, edit, convert, repair, or inspect OpenDocument Text files (.odt)."
+triggers: [".odt", "ODT", "OpenDocument Text", "Open Office document", "LibreOffice Writer", "Writer document", "odt-Datei", "OpenDocument-Text"]
+dont_use_for: ["spreadsheets (.ods)", "presentations (.odp)", "PDFs as primary deliverable", "general prose editing"]
 license: MIT
 version: "0.1.3"
 ---
@@ -38,33 +40,7 @@ which pandoc
 python3 -c "import odf; print('odfpy available')"
 ```
 
-Resolve the LibreOffice command before running conversion examples. This works in common macOS/Linux shells and also in Git Bash/WSL-style Windows environments:
-
-```bash
-SOFFICE="$(command -v soffice || command -v libreoffice || true)"
-if [ -z "$SOFFICE" ]; then
-  for candidate in \
-    "/Applications/LibreOffice.app/Contents/MacOS/soffice" \
-    "/usr/bin/libreoffice" \
-    "/usr/local/bin/libreoffice" \
-    "/snap/bin/libreoffice" \
-    "/c/Program Files/LibreOffice/program/soffice.exe" \
-    "/mnt/c/Program Files/LibreOffice/program/soffice.exe"; do
-    if [ -x "$candidate" ]; then SOFFICE="$candidate"; break; fi
-  done
-fi
-test -n "$SOFFICE" || { echo "LibreOffice/soffice not found"; exit 1; }
-```
-
-On native Windows PowerShell, use `$Soffice` and call it with `& $Soffice`:
-
-```powershell
-$Soffice = (Get-Command soffice -ErrorAction SilentlyContinue).Source
-if (-not $Soffice) { $Soffice = "C:\Program Files\LibreOffice\program\soffice.exe" }
-if (-not (Test-Path $Soffice)) { throw "LibreOffice/soffice not found" }
-```
-
-Use the bundled workspace Python when normal `python3` lacks document libraries.
+Resolve the LibreOffice command as described in [docs/soffice-resolver.md](../../docs/soffice-resolver.md).
 
 ## Reading Content
 

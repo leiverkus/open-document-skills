@@ -14,6 +14,7 @@ from ods_common import ODS_MIMETYPE, ensure_cell, pack_dir_as_ods, parse_a1, q, 
 
 
 def build_styles() -> ET.Element:
+    """Build office:document-styles with empty styles and a Default master page."""
     root = ET.Element(q("office", "document-styles"), {q("office", "version"): "1.3"})
     ET.SubElement(root, q("office", "styles"))
     ET.SubElement(root, q("office", "automatic-styles"))
@@ -23,6 +24,7 @@ def build_styles() -> ET.Element:
 
 
 def build_meta(title: str | None) -> ET.Element:
+    """Build office:document-meta with optional dc:title and current UTC creation-date."""
     root = ET.Element(q("office", "document-meta"), {q("office", "version"): "1.3"})
     meta = ET.SubElement(root, q("office", "meta"))
     if title:
@@ -34,12 +36,14 @@ def build_meta(title: str | None) -> ET.Element:
 
 
 def build_settings() -> ET.Element:
+    """Build office:document-settings with an empty office:settings element."""
     root = ET.Element(q("office", "document-settings"), {q("office", "version"): "1.3"})
     ET.SubElement(root, q("office", "settings"))
     return root
 
 
 def build_manifest() -> ET.Element:
+    """Build manifest:manifest with mimetype and all XML file entries."""
     root = ET.Element(q("manifest", "manifest"), {q("manifest", "version"): "1.3"})
     for full_path, media_type in [
         ("/", ODS_MIMETYPE),
@@ -57,7 +61,12 @@ def main() -> None:
     parser.add_argument("spec", type=Path, help="JSON workbook spec")
     parser.add_argument("output_ods", type=Path)
     args = parser.parse_args()
-    spec = json.loads(args.spec.read_text())
+    if not args.spec.exists():
+        raise SystemExit(f"Spec file not found: {args.spec}")
+    try:
+        spec = json.loads(args.spec.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"Invalid JSON in {args.spec}: {exc}")
 
     content = ET.Element(q("office", "document-content"), {q("office", "version"): "1.3"})
     body = ET.SubElement(content, q("office", "body"))

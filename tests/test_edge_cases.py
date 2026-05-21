@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import json
+
+# Import shared namespace helpers from the ODT common module
+# (all four *_common.py modules share the same lib.odf_common base)
+import sys
 import tempfile
 import unittest
 import zipfile
@@ -9,6 +13,12 @@ from xml.etree import ElementTree as ET
 
 from helpers import FIXTURES, SKILLS, run_script
 
+_repo_root = Path(__file__).resolve().parents[1]
+if str(_repo_root) not in sys.path:
+    sys.path.insert(0, str(_repo_root))
+
+
+# ODS-specific namespace for edge-case XML manipulation
 NS = {
     "draw": "urn:oasis:names:tc:opendocument:xmlns:drawing:1.0",
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
@@ -156,6 +166,48 @@ class EdgeCaseTests(unittest.TestCase):
             self.assertIn("Pictures/image-1.svg", out)
             package = json.loads(run_script(scripts / "inspect_package.py", with_image).stdout)
             self.assertEqual(len(package["media_files"]), 2)
+
+    def test_odt_replace_text_handles_xml_special_chars(self) -> None:
+        """replace_text.py must not break on XML-reserved characters."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odt" / "scripts"
+            odt = tmp_path / "doc.odt"
+            run_script(scripts / "create_minimal_odt.py", FIXTURES / "odt_document.json", odt)
+            replaced = tmp_path / "replaced.odt"
+            # Replace with XML-special characters.
+            run_script(scripts / "replace_text.py", odt, "Hello ODT", "A & B < C > D", "-o", replaced)
+            # The output must still be a valid ODF package.
+            run_script(scripts / "validate_refs.py", replaced)
+            self.assertIn("A & B < C > D", run_script(scripts / "extract_text.py", replaced).stdout)
+
+    def test_odt_create_fails_on_missing_spec(self) -> None:
+        """create_minimal_odt.py must fail cleanly when spec file is missing."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odt" / "scripts"
+            result = run_script(
+                scripts / "create_minimal_odt.py",
+                tmp_path / "nonexistent.json", tmp_path / "out.odt",
+                check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("Spec file not found", result.stdout)
+
+    def test_odt_create_fails_on_invalid_json(self) -> None:
+        """create_minimal_odt.py must fail cleanly on malformed JSON."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odt" / "scripts"
+            bad_json = tmp_path / "bad.json"
+            bad_json.write_text("{invalid json", encoding="utf-8")
+            result = run_script(
+                scripts / "create_minimal_odt.py",
+                bad_json, tmp_path / "out.odt",
+                check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("Invalid JSON", result.stdout)
 
 
 if __name__ == "__main__":

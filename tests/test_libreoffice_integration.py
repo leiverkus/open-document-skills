@@ -1,33 +1,19 @@
 from __future__ import annotations
 
 import json
-import shutil
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 from helpers import FIXTURES, SKILLS, run_script
 
+# Import shared find_soffice from lib
+_repo_root = Path(__file__).resolve().parents[1]
+if str(_repo_root) not in sys.path:
+    sys.path.insert(0, str(_repo_root))
 
-def find_soffice() -> str | None:
-    for name in ("soffice", "libreoffice"):
-        found = shutil.which(name)
-        if found:
-            return found
-    candidates = [
-        "/Applications/LibreOffice.app/Contents/MacOS/soffice",
-        "/usr/bin/libreoffice",
-        "/usr/local/bin/libreoffice",
-        "/snap/bin/libreoffice",
-        r"C:\Program Files\LibreOffice\program\soffice.exe",
-        "/c/Program Files/LibreOffice/program/soffice.exe",
-        "/mnt/c/Program Files/LibreOffice/program/soffice.exe",
-    ]
-    for candidate in candidates:
-        if Path(candidate).exists():
-            return candidate
-    return None
-
+from lib.odf_common import find_soffice  # noqa: E402
 
 SOFFICE = find_soffice()
 

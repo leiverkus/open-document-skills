@@ -1,5 +1,28 @@
 # Changelog
 
+## v0.1.4 - 2026-05-21
+
+Refactoring, shared library, and CI improvements.
+
+### Added
+
+- `lib/odf_common.py` shared library with 13 reusable functions (ZIP packing, XML parsing, manifest handling, `find_soffice`, media-type detection, picture-name deduplication).
+- `docs/soffice-resolver.md` documenting the LibreOffice discovery strategy.
+- Version synchronization test between `pyproject.toml` and all four `SKILL.md` files.
+- Ruff configuration (`E`, `F`, `W`, `I`, `UP` selected; `E501` ignored).
+- Lint job in GitHub Actions CI.
+- JSON error handling (file existence check, `JSONDecodeError` catch) in all four `create_minimal_*.py` scripts.
+- `odfpy` as optional dependency (`[odf]` extra) in `pyproject.toml`.
+- Edge case tests for XML special characters, missing spec files, and invalid JSON.
+- Docstrings on all helper functions in `create_minimal_*.py` scripts.
+
+### Changed
+
+- `skills/odt/scripts/odt_common.py`, `skills/odp/scripts/odp_common.py`, `skills/ods/scripts/ods_common.py`, `skills/odg/scripts/odg_common.py` refactored to import from `lib.odf_common` via thin format-specific wrappers.
+- Test files updated to use shared imports.
+- All four `SKILL.md` files: frontmatter split into `description`, `triggers`, and `dont_use_for`; tool check references `docs/soffice-resolver.md`.
+- README shortened: script tables replaced with links to `docs/script-reference.md`.
+
 ## v0.1.3 - 2026-05-21
 
 Multi-agent and documentation release.

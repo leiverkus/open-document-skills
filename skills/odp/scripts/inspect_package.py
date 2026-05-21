@@ -10,7 +10,6 @@ from collections import Counter
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-
 NS = {
     "draw": "urn:oasis:names:tc:opendocument:xmlns:drawing:1.0",
     "presentation": "urn:oasis:names:tc:opendocument:xmlns:presentation:1.0",

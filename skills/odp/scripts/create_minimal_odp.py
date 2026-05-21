@@ -11,10 +11,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from odp_common import ODP_MIMETYPE, NS, ensure_manifest_entry, media_type_for, pack_dir_as_odp, q, unique_picture_name
+from odp_common import ODP_MIMETYPE, ensure_manifest_entry, media_type_for, pack_dir_as_odp, q, unique_picture_name
 
 
-def text_frame(parent: ET.Element, name: str, x: str, y: str, width: str, height: str, style: str, lines: list[str]) -> None:
+def text_frame(
+    parent: ET.Element, name: str, x: str, y: str,
+    width: str, height: str, style: str, lines: list[str],
+) -> None:
+    """Add a draw:frame with draw:text-box containing styled paragraphs."""
     frame = ET.SubElement(
         parent,
         q("draw", "frame"),
@@ -32,7 +36,11 @@ def text_frame(parent: ET.Element, name: str, x: str, y: str, width: str, height
         paragraph.text = line
 
 
-def image_frame(parent: ET.Element, href: str, x: str, y: str, width: str, height: str) -> None:
+def image_frame(
+    parent: ET.Element, href: str, x: str, y: str,
+    width: str, height: str,
+) -> None:
+    """Add a draw:frame with embedded draw:image at the given position."""
     frame = ET.SubElement(
         parent,
         q("draw", "frame"),
@@ -57,6 +65,7 @@ def image_frame(parent: ET.Element, href: str, x: str, y: str, width: str, heigh
 
 
 def build_styles() -> ET.Element:
+    """Build office:document-styles with Title/Body/Notes styles and Screen page layout."""
     root = ET.Element(q("office", "document-styles"), {q("office", "version"): "1.3"})
     styles = ET.SubElement(root, q("office", "styles"))
     for name, size, weight in [("Title", "32pt", "bold"), ("Body", "18pt", "normal"), ("Notes", "12pt", "normal")]:
@@ -71,6 +80,7 @@ def build_styles() -> ET.Element:
 
 
 def build_manifest(entries: list[tuple[str, str]]) -> ET.Element:
+    """Build manifest:manifest with root mimetype entry and one file-entry per *entries*."""
     root = ET.Element(q("manifest", "manifest"), {q("manifest", "version"): "1.3"})
     ensure_manifest_entry(root, "/", ODP_MIMETYPE)
     for full_path, media_type in entries:
@@ -79,6 +89,7 @@ def build_manifest(entries: list[tuple[str, str]]) -> ET.Element:
 
 
 def build_meta(title: str | None) -> ET.Element:
+    """Build office:document-meta with optional dc:title and current UTC creation-date."""
     root = ET.Element(q("office", "document-meta"), {q("office", "version"): "1.3"})
     meta = ET.SubElement(root, q("office", "meta"))
     if title:
@@ -90,6 +101,7 @@ def build_meta(title: str | None) -> ET.Element:
 
 
 def build_settings() -> ET.Element:
+    """Build office:document-settings with an empty office:settings element."""
     root = ET.Element(q("office", "document-settings"), {q("office", "version"): "1.3"})
     ET.SubElement(root, q("office", "settings"))
     return root
@@ -101,7 +113,12 @@ def main() -> None:
     parser.add_argument("output_odp", type=Path)
     args = parser.parse_args()
 
-    spec = json.loads(args.spec.read_text())
+    if not args.spec.exists():
+        raise SystemExit(f"Spec file not found: {args.spec}")
+    try:
+        spec = json.loads(args.spec.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"Invalid JSON in {args.spec}: {exc}")
     slides = spec.get("slides", [])
     if not slides:
         raise SystemExit("Spec must contain a non-empty slides array")

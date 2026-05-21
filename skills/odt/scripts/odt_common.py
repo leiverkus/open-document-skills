@@ -1,14 +1,42 @@
-"""Shared helpers for small ODT scripts."""
+"""Shared helpers for small ODT scripts.
+
+All format-agnostic functions live in lib.odf_common.
+This module adds the ODT namespace, MIMETYPE, and thin wrappers
+so that existing script imports (``from odt_common import …``)
+continue to work unchanged.
+"""
 
 from __future__ import annotations
 
-import mimetypes
-import posixpath
-import shutil
-import zipfile
+import sys
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
+# Add repo root to sys.path so we can import from lib/
+_repo_root = Path(__file__).resolve().parents[3]
+if str(_repo_root) not in sys.path:
+    sys.path.insert(0, str(_repo_root))
+
+# Single consolidated import block from lib.odf_common.
+from lib.odf_common import (  # noqa: E402, I001
+    clear_children,
+    copy_into_package as _copy_base,
+    ensure_manifest_entry as _ensure_base,
+    media_type_for,
+    pack_dir_as_odf,
+    parse_xml_from_zip,
+    unique_picture_name,
+    write_odf_with_replacements as _write_base,
+    xml_bytes,
+)
+
+# Direct re-exports.
+__all__ = [
+    "NS", "ODT_MIMETYPE", "q",
+    "clear_children", "copy_into_package", "ensure_manifest_entry",
+    "media_type_for", "pack_dir_as_odt", "parse_xml_from_zip",
+    "unique_picture_name", "write_odt_with_replacements", "xml_bytes",
+]
 
 NS = {
     "dc": "http://purl.org/dc/elements/1.1/",
@@ -24,9 +52,7 @@ NS = {
     "xlink": "http://www.w3.org/1999/xlink",
 }
 
-
 ODT_MIMETYPE = "application/vnd.oasis.opendocument.text"
-
 
 for prefix, uri in NS.items():
     ET.register_namespace(prefix, uri)
@@ -36,81 +62,27 @@ def q(prefix: str, local: str) -> str:
     return f"{{{NS[prefix]}}}{local}"
 
 
-def parse_xml_from_zip(path: Path, member: str) -> ET.Element:
-    with zipfile.ZipFile(path) as archive:
-        with archive.open(member) as handle:
-            return ET.parse(handle).getroot()
+def ensure_manifest_entry(
+    manifest_root: ET.Element, full_path: str, media_type: str,
+) -> None:
+    _ensure_base(manifest_root, full_path, media_type, NS, q)
 
 
-def xml_bytes(root: ET.Element) -> bytes:
-    return ET.tostring(root, encoding="utf-8", xml_declaration=True)
-
-
-def write_odt_with_replacements(input_odt: Path, output_odt: Path, replacements: dict[str, bytes]) -> None:
-    with zipfile.ZipFile(input_odt) as src:
-        names = src.namelist()
-        with zipfile.ZipFile(output_odt, "w") as dst:
-            if "mimetype" in names:
-                dst.writestr("mimetype", replacements.get("mimetype", src.read("mimetype")), compress_type=zipfile.ZIP_STORED)
-            for name in names:
-                if name == "mimetype":
-                    continue
-                dst.writestr(name, replacements.get(name, src.read(name)), compress_type=zipfile.ZIP_DEFLATED)
-
-
-def pack_dir_as_odt(source_dir: Path, output_odt: Path) -> None:
-    mimetype = source_dir / "mimetype"
-    if not mimetype.exists():
-        raise SystemExit(f"Missing mimetype file in {source_dir}")
-    with zipfile.ZipFile(output_odt, "w") as archive:
-        archive.write(mimetype, "mimetype", compress_type=zipfile.ZIP_STORED)
-        for path in sorted(source_dir.rglob("*")):
-            if path.is_dir() or path == mimetype:
-                continue
-            archive.write(path, path.relative_to(source_dir).as_posix(), compress_type=zipfile.ZIP_DEFLATED)
-
-
-def ensure_manifest_entry(manifest_root: ET.Element, full_path: str, media_type: str) -> None:
-    for entry in manifest_root.findall(".//manifest:file-entry", NS):
-        if entry.attrib.get(q("manifest", "full-path")) == full_path:
-            entry.set(q("manifest", "media-type"), media_type)
-            return
-    ET.SubElement(
-        manifest_root,
-        q("manifest", "file-entry"),
-        {q("manifest", "full-path"): full_path, q("manifest", "media-type"): media_type},
+def copy_into_package(
+    input_odt: Path, output_odt: Path, package_path: str,
+    source: Path, replacements: dict[str, bytes],
+) -> None:
+    _copy_base(
+        input_odt, output_odt, package_path, source, replacements,
+        ODT_MIMETYPE,
     )
 
 
-def media_type_for(path: Path) -> str:
-    guessed, _ = mimetypes.guess_type(path.name)
-    return guessed or "application/octet-stream"
+def pack_dir_as_odt(source_dir: Path, output_odt: Path) -> None:
+    pack_dir_as_odf(source_dir, output_odt, ODT_MIMETYPE)
 
 
-def unique_picture_name(existing: set[str], image: Path) -> str:
-    base = image.name.replace("\\", "_").replace("/", "_")
-    candidate = posixpath.join("Pictures", base)
-    stem = image.stem
-    suffix = image.suffix
-    counter = 1
-    while candidate in existing:
-        candidate = posixpath.join("Pictures", f"{stem}-{counter}{suffix}")
-        counter += 1
-    return candidate
-
-
-def copy_into_package(input_odt: Path, output_odt: Path, package_path: str, source: Path, replacements: dict[str, bytes]) -> None:
-    with zipfile.ZipFile(input_odt) as src:
-        names = src.namelist()
-        with zipfile.ZipFile(output_odt, "w") as dst:
-            if "mimetype" in names:
-                dst.writestr("mimetype", replacements.get("mimetype", src.read("mimetype")), compress_type=zipfile.ZIP_STORED)
-            for name in names:
-                if name == "mimetype" or name == package_path:
-                    continue
-                dst.writestr(name, replacements.get(name, src.read(name)), compress_type=zipfile.ZIP_DEFLATED)
-            dst.write(source, package_path, compress_type=zipfile.ZIP_DEFLATED)
-
-
-def clear_children(element: ET.Element) -> None:
-    element[:] = []
+def write_odt_with_replacements(
+    input_odt: Path, output_odt: Path, replacements: dict[str, bytes],
+) -> None:
+    _write_base(input_odt, output_odt, replacements, ODT_MIMETYPE)

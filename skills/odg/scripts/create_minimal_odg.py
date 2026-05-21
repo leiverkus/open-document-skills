@@ -15,6 +15,7 @@ from odg_common import ODG_MIMETYPE, ensure_manifest_entry, media_type_for, pack
 
 
 def add_text(page: ET.Element, item: dict[str, object]) -> None:
+    """Add a draw:frame with draw:text-box containing a single text:p."""
     frame = ET.SubElement(page, q("draw", "frame"), {q("draw", "name"): str(item.get("name", "Text")), q("svg", "x"): str(item.get("x", "1cm")), q("svg", "y"): str(item.get("y", "1cm")), q("svg", "width"): str(item.get("width", "8cm")), q("svg", "height"): str(item.get("height", "2cm"))})
     box = ET.SubElement(frame, q("draw", "text-box"))
     p = ET.SubElement(box, q("text", "p"))
@@ -22,6 +23,7 @@ def add_text(page: ET.Element, item: dict[str, object]) -> None:
 
 
 def add_shape(page: ET.Element, item: dict[str, object]) -> None:
+    """Add a draw:rect, draw:ellipse, draw:line, or draw:connector with optional text."""
     shape_type = str(item.get("type", "rect"))
     if shape_type not in {"rect", "ellipse", "line", "connector"}:
         raise SystemExit(f"Unsupported shape type: {shape_type}")
@@ -39,7 +41,12 @@ def add_shape(page: ET.Element, item: dict[str, object]) -> None:
         p.text = str(text)
 
 
-def add_image(page: ET.Element, item: dict[str, object], root_dir: Path, manifest_entries: list[tuple[str, str]], existing: set[str]) -> None:
+def add_image(
+    page: ET.Element, item: dict[str, object],
+    root_dir: Path, manifest_entries: list[tuple[str, str]],
+    existing: set[str],
+) -> None:
+    """Copy an image into the package, register it in the manifest, and add a draw:frame."""
     source = Path(str(item["path"]))
     package_path = unique_picture_name(existing, source)
     existing.add(package_path)
@@ -52,6 +59,7 @@ def add_image(page: ET.Element, item: dict[str, object], root_dir: Path, manifes
 
 
 def build_styles() -> ET.Element:
+    """Build office:document-styles with DefaultGraphic style and Screen page layout."""
     root = ET.Element(q("office", "document-styles"), {q("office", "version"): "1.3"})
     styles = ET.SubElement(root, q("office", "styles"))
     ET.SubElement(styles, q("style", "style"), {q("style", "name"): "DefaultGraphic", q("style", "family"): "graphic"})
@@ -64,6 +72,7 @@ def build_styles() -> ET.Element:
 
 
 def simple_doc(root_name: str) -> ET.Element:
+    """Create a minimal office:* root element with version 1.3 attribute."""
     return ET.Element(q("office", root_name), {q("office", "version"): "1.3"})
 
 
@@ -72,7 +81,12 @@ def main() -> None:
     parser.add_argument("spec", type=Path)
     parser.add_argument("output_odg", type=Path)
     args = parser.parse_args()
-    spec = json.loads(args.spec.read_text())
+    if not args.spec.exists():
+        raise SystemExit(f"Spec file not found: {args.spec}")
+    try:
+        spec = json.loads(args.spec.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"Invalid JSON in {args.spec}: {exc}")
     with tempfile.TemporaryDirectory() as tmp:
         root_dir = Path(tmp)
         (root_dir / "META-INF").mkdir()

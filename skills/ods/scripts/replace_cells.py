@@ -6,7 +6,15 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from ods_common import ensure_cell, find_sheet, parse_a1, parse_xml_from_zip, set_cell_value, write_ods_with_replacements, xml_bytes
+from ods_common import (
+    ensure_cell,
+    find_sheet,
+    parse_a1,
+    parse_xml_from_zip,
+    set_cell_value,
+    write_ods_with_replacements,
+    xml_bytes,
+)
 
 
 def main() -> None:

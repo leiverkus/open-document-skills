@@ -9,7 +9,6 @@ import zipfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-
 NS = {
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
     "draw": "urn:oasis:names:tc:opendocument:xmlns:drawing:1.0",

@@ -8,7 +8,16 @@ import zipfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from odg_common import copy_into_package, ensure_manifest_entry, iter_pages, media_type_for, parse_xml_from_zip, q, unique_picture_name, xml_bytes
+from odg_common import (
+    copy_into_package,
+    ensure_manifest_entry,
+    iter_pages,
+    media_type_for,
+    parse_xml_from_zip,
+    q,
+    unique_picture_name,
+    xml_bytes,
+)
 
 
 def main() -> None:

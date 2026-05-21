@@ -1,14 +1,40 @@
-"""Shared helpers for small ODS scripts."""
+"""Shared helpers for small ODS scripts.
+
+All format-agnostic functions live in lib.odf_common.
+This module adds the ODS namespace, MIMETYPE, and spreadsheet-specific helpers.
+"""
 
 from __future__ import annotations
 
 import csv
 import re
-import shutil
-import zipfile
+import sys
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
+# Add repo root to sys.path so we can import from lib/
+_repo_root = Path(__file__).resolve().parents[3]
+if str(_repo_root) not in sys.path:
+    sys.path.insert(0, str(_repo_root))
+
+# Single consolidated import block from lib.odf_common.
+from lib.odf_common import (  # noqa: E402, I001
+    find_soffice,
+    pack_dir_as_odf,
+    parse_xml_from_zip,
+    write_odf_with_replacements as _write_base,
+    xml_bytes,
+)
+
+# Direct re-exports.
+__all__ = [
+    "NS", "ODS_MIMETYPE", "q",
+    "a1", "cell_text", "cell_value", "col_to_index", "ensure_cell",
+    "expanded_rows", "find_sheet", "find_soffice", "index_to_col",
+    "iter_sheets", "pack_dir_as_ods", "parse_a1", "parse_xml_from_zip",
+    "repeated", "set_cell_value", "sheet_name", "write_csv",
+    "write_ods_with_replacements", "xml_bytes",
+]
 
 NS = {
     "dc": "http://purl.org/dc/elements/1.1/",
@@ -32,7 +58,18 @@ def q(prefix: str, local: str) -> str:
     return f"{{{NS[prefix]}}}{local}"
 
 
+def pack_dir_as_ods(source_dir: Path, output_ods: Path) -> None:
+    pack_dir_as_odf(source_dir, output_ods, ODS_MIMETYPE)
+
+
+def write_ods_with_replacements(
+    input_ods: Path, output_ods: Path, replacements: dict[str, bytes],
+) -> None:
+    _write_base(input_ods, output_ods, replacements, ODS_MIMETYPE)
+
+
 def col_to_index(col: str) -> int:
+    """Convert a column letter (A, B, …, AA) to a 1-based index."""
     value = 0
     for char in col.upper():
         if not ("A" <= char <= "Z"):
@@ -42,6 +79,7 @@ def col_to_index(col: str) -> int:
 
 
 def index_to_col(index: int) -> str:
+    """Convert a 1-based column index to a letter (1 → A, 27 → AA)."""
     chars = []
     while index:
         index, rem = divmod(index - 1, 26)
@@ -50,6 +88,7 @@ def index_to_col(index: int) -> str:
 
 
 def parse_a1(address: str) -> tuple[str, int, int]:
+    """Parse an A1 address like 'Sheet!$B$3' into (sheet, row, col)."""
     if "!" in address:
         sheet, cell = address.split("!", 1)
     else:
@@ -61,48 +100,19 @@ def parse_a1(address: str) -> tuple[str, int, int]:
 
 
 def a1(row: int, col: int) -> str:
+    """Build an A1 cell reference from 1-based row and column indices."""
     return f"{index_to_col(col)}{row}"
 
 
-def parse_xml_from_zip(path: Path, member: str) -> ET.Element:
-    with zipfile.ZipFile(path) as archive:
-        with archive.open(member) as handle:
-            return ET.parse(handle).getroot()
-
-
-def xml_bytes(root: ET.Element) -> bytes:
-    return ET.tostring(root, encoding="utf-8", xml_declaration=True)
-
-
-def write_ods_with_replacements(input_ods: Path, output_ods: Path, replacements: dict[str, bytes]) -> None:
-    with zipfile.ZipFile(input_ods) as src:
-        names = src.namelist()
-        with zipfile.ZipFile(output_ods, "w") as dst:
-            if "mimetype" in names:
-                dst.writestr("mimetype", replacements.get("mimetype", src.read("mimetype")), compress_type=zipfile.ZIP_STORED)
-            for name in names:
-                if name == "mimetype":
-                    continue
-                dst.writestr(name, replacements.get(name, src.read(name)), compress_type=zipfile.ZIP_DEFLATED)
-
-
-def pack_dir_as_ods(source_dir: Path, output_ods: Path) -> None:
-    mimetype = source_dir / "mimetype"
-    if not mimetype.exists():
-        raise SystemExit(f"Missing mimetype file in {source_dir}")
-    with zipfile.ZipFile(output_ods, "w") as archive:
-        archive.write(mimetype, "mimetype", compress_type=zipfile.ZIP_STORED)
-        for path in sorted(source_dir.rglob("*")):
-            if path.is_dir() or path == mimetype:
-                continue
-            archive.write(path, path.relative_to(source_dir).as_posix(), compress_type=zipfile.ZIP_DEFLATED)
-
-
 def cell_text(cell: ET.Element) -> str:
-    return " ".join("".join(node.text or "" for node in cell.findall(".//text:p", NS)).split())
+    """Extract visible text from a table:table-cell element."""
+    return " ".join(
+        "".join(node.text or "" for node in cell.findall(".//text:p", NS)).split()
+    )
 
 
 def cell_value(cell: ET.Element) -> object:
+    """Return the typed value of a cell based on office:value-type."""
     value_type = cell.attrib.get(q("office", "value-type"))
     if value_type in {"float", "percentage", "currency"}:
         raw = cell.attrib.get(q("office", "value"))
@@ -120,6 +130,7 @@ def cell_value(cell: ET.Element) -> object:
 
 
 def repeated(node: ET.Element, attr: str) -> int:
+    """Return the repeat count for table:number-columns-repeated or similar."""
     raw = node.attrib.get(q("table", attr))
     if raw is None:
         return 1
@@ -130,19 +141,27 @@ def repeated(node: ET.Element, attr: str) -> int:
 
 
 def iter_sheets(root: ET.Element):
+    """Yield all table:table elements (sheets) from ODS content."""
     yield from root.findall(".//table:table", NS)
 
 
 def sheet_name(sheet: ET.Element) -> str:
+    """Return the table:name attribute of a sheet."""
     return sheet.attrib.get(q("table", "name"), "")
 
 
-def expanded_rows(sheet: ET.Element, max_repeat: int = 1000) -> list[list[ET.Element]]:
+def expanded_rows(
+    sheet: ET.Element, max_repeat: int = 1000,
+) -> list[list[ET.Element]]:
+    """Expand repeated rows and columns into a flat list of row cell lists."""
     rows: list[list[ET.Element]] = []
     for row in sheet.findall("table:table-row", NS):
         row_cells: list[ET.Element] = []
         for cell in list(row):
-            if cell.tag not in {q("table", "table-cell"), q("table", "covered-table-cell")}:
+            if cell.tag not in {
+                q("table", "table-cell"),
+                q("table", "covered-table-cell"),
+            }:
                 continue
             count = min(repeated(cell, "number-columns-repeated"), max_repeat)
             row_cells.extend([cell] * count)
@@ -151,7 +170,10 @@ def expanded_rows(sheet: ET.Element, max_repeat: int = 1000) -> list[list[ET.Ele
     return rows
 
 
-def set_cell_value(cell: ET.Element, value: str, formula: bool = False) -> None:
+def set_cell_value(
+    cell: ET.Element, value: str, formula: bool = False,
+) -> None:
+    """Set the value or formula of a table:table-cell element."""
     cell.attrib.pop(q("table", "number-columns-repeated"), None)
     for child in list(cell):
         cell.remove(child)
@@ -170,7 +192,10 @@ def set_cell_value(cell: ET.Element, value: str, formula: bool = False) -> None:
     p.text = "" if formula else value
 
 
-def ensure_cell(sheet: ET.Element, row_index: int, col_index: int) -> ET.Element:
+def ensure_cell(
+    sheet: ET.Element, row_index: int, col_index: int,
+) -> ET.Element:
+    """Ensure a cell exists at the given row/col, creating intermediates."""
     rows = sheet.findall("table:table-row", NS)
     while len(rows) < row_index:
         ET.SubElement(sheet, q("table", "table-row"))
@@ -184,6 +209,7 @@ def ensure_cell(sheet: ET.Element, row_index: int, col_index: int) -> ET.Element
 
 
 def find_sheet(root: ET.Element, name: str) -> ET.Element:
+    """Find a sheet by name. If name is empty, returns the first sheet."""
     sheets = list(iter_sheets(root))
     if not name and sheets:
         return sheets[0]
@@ -194,26 +220,7 @@ def find_sheet(root: ET.Element, name: str) -> ET.Element:
 
 
 def write_csv(path: Path, rows: list[list[object]]) -> None:
+    """Write rows to a CSV file with UTF-8 encoding."""
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         writer.writerows(rows)
-
-
-def find_soffice() -> str:
-    candidates = [
-        "/Applications/LibreOffice.app/Contents/MacOS/soffice",
-        "/usr/bin/libreoffice",
-        "/usr/local/bin/libreoffice",
-        "/snap/bin/libreoffice",
-        r"C:\Program Files\LibreOffice\program\soffice.exe",
-        "/c/Program Files/LibreOffice/program/soffice.exe",
-        "/mnt/c/Program Files/LibreOffice/program/soffice.exe",
-    ]
-    for name in ("soffice", "libreoffice"):
-        found = shutil.which(name)
-        if found:
-            return found
-    for candidate in candidates:
-        if Path(candidate).exists():
-            return candidate
-    raise SystemExit("LibreOffice/soffice not found")

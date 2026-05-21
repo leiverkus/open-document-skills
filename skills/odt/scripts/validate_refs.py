@@ -10,7 +10,6 @@ from pathlib import Path
 
 from odt_common import NS, parse_xml_from_zip, q
 
-
 STYLE_ATTRS = [
     q("text", "style-name"),
     q("draw", "style-name"),

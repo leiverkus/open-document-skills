@@ -7,8 +7,7 @@ import argparse
 import json
 from pathlib import Path
 
-from odg_common import element_text, iter_pages, iter_shapes, local_name, parse_xml_from_zip, page_name, q
-
+from odg_common import element_text, iter_pages, iter_shapes, local_name, page_name, parse_xml_from_zip, q
 
 GEOM_ATTRS = ["x", "y", "width", "height", "x1", "y1", "x2", "y2"]
 

@@ -5,5 +5,17 @@ description = "Agent skills for OpenDocument Format files"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 
+[project.optional-dependencies]
+odf = ["odfpy>=1.4.0"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+exclude = ["examples/output"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+ignore = ["E501"]

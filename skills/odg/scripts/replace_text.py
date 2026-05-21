@@ -7,7 +7,7 @@ import argparse
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from odg_common import NS, element_text, parse_xml_from_zip, q, write_odg_with_replacements, xml_bytes
+from odg_common import NS, element_text, parse_xml_from_zip, write_odg_with_replacements, xml_bytes
 
 
 def set_plain_text(paragraph: ET.Element, value: str) -> None:
