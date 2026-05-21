@@ -53,9 +53,20 @@ examples/
   README.md
   build_examples.py
   *.json
+docs/
+  index.md
 ```
 
 Each skill is MIT-licensed and also contains its own `LICENSE.txt`.
+
+## Documentation
+
+Detailed documentation lives in [docs/index.md](docs/index.md):
+
+- [Installation](docs/installation.md)
+- [Agent Compatibility](docs/agent-compatibility.md)
+- [OpenDocument Workflows](docs/workflows.md)
+- [Script Reference](docs/script-reference.md)
 
 ## Installation
 
