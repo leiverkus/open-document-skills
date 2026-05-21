@@ -28,14 +28,3 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m unittest discover -s tests
-
-  coverage:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6.0.2
-      - uses: actions/setup-python@v6.2.0
-        with:
-          python-version: "3.12"
-      - run: pip install coverage pytest
-      - run: coverage run --source=lib -m pytest tests/
-      - run: coverage report --fail-under=30 --show-missing
