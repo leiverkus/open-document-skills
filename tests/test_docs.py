@@ -30,7 +30,7 @@ class DocsTests(unittest.TestCase):
         """All SKILL.md version fields must match pyproject.toml version."""
         pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
         pyproject_version_match = re.search(r'^version\s*=\s*"([^"]+)"', pyproject, re.MULTILINE)
-        self.assertIsNotNone(pyproject_version_match, "No version found in pyproject.toml")
+        assert pyproject_version_match is not None, "No version found in pyproject.toml"
         pyproject_version = pyproject_version_match.group(1)
 
         for skill_dir in sorted((ROOT / "skills").iterdir()):
@@ -39,10 +39,7 @@ class DocsTests(unittest.TestCase):
                 continue
             text = skill_md.read_text(encoding="utf-8")
             version_match = SKILL_VERSION_RE.search(text)
-            self.assertIsNotNone(
-                version_match,
-                f"No version found in {skill_md.relative_to(ROOT)}",
-            )
+            assert version_match is not None, f"No version found in {skill_md.relative_to(ROOT)}"
             skill_version = version_match.group(1)
             self.assertEqual(
                 pyproject_version,

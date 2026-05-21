@@ -69,7 +69,7 @@ class EdgeCaseTests(unittest.TestCase):
 
             content = read_zip_xml(ods, "content.xml")
             sheet = content.find(".//table:table", NS)
-            self.assertIsNotNone(sheet)
+            assert sheet is not None
             sheet.clear()
             sheet.set(q("table", "name"), "Data")
             row = ET.SubElement(sheet, q("table", "table-row"), {q("table", "number-rows-repeated"): "2"})
