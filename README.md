@@ -1,5 +1,8 @@
 # Open Document Skills
 
+[![Tests](https://github.com/leiverkus/open-document-skills/actions/workflows/tests.yml/badge.svg)](https://github.com/leiverkus/open-document-skills/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Codex skills for working with OpenDocument Format files directly:
 
 - `odt` - OpenDocument Text / LibreOffice Writer
@@ -240,6 +243,12 @@ When adding a new script or behavior:
 2. Add or update a smoke test.
 3. Run local tests.
 4. Push and let GitHub Actions verify the repo.
+
+## Release Status
+
+Current initial release target: `v0.1.0`.
+
+This version is intended as a practical starting point: useful for direct ODF generation and inspection, with conservative scripts and growing test coverage. More advanced ODF features should be added incrementally with fixtures and tests.
 
 ## License
 
