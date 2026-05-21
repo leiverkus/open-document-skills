@@ -28,3 +28,13 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m unittest discover -s tests
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: actions/setup-python@v6.2.0
+        with:
+          python-version: "3.12"
+      - run: pip install pytest pytest-cov
+      - run: pytest tests/ --cov=lib --cov-fail-under=30

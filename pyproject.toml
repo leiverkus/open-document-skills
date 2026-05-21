@@ -7,10 +7,17 @@ license = { text = "MIT" }
 
 [project.optional-dependencies]
 odf = ["odfpy>=1.4.0"]
-dev = ["pytest>=8.0", "ruff>=0.9"]
+dev = ["pytest>=8.0", "ruff>=0.9", "pytest-cov>=5.0"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["lib"]
+
+[tool.coverage.report]
+fail_under = 30
+show_missing = true
 
 [tool.ruff]
 line-length = 120
