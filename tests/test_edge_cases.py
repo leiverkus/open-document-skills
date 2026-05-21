@@ -1,17 +1,13 @@
 from __future__ import annotations
 
 import json
-import subprocess
-import sys
 import tempfile
 import unittest
 import zipfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-
-ROOT = Path(__file__).resolve().parents[1]
-SKILLS = ROOT / "skills"
+from helpers import FIXTURES, SKILLS, run_script
 
 NS = {
     "draw": "urn:oasis:names:tc:opendocument:xmlns:drawing:1.0",
@@ -26,29 +22,8 @@ def q(prefix: str, local: str) -> str:
     return f"{{{NS[prefix]}}}{local}"
 
 
-def run_script(script: Path, *args: object, check: bool = True) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [sys.executable, "-B", str(script), *map(str, args)],
-        cwd=script.parent,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        check=check,
-    )
-
-
 def write_json(path: Path, data: object) -> Path:
     path.write_text(json.dumps(data), encoding="utf-8")
-    return path
-
-
-def write_svg(path: Path, label: str) -> Path:
-    path.write_text(
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="160" height="100">'
-        f'<rect width="160" height="100" fill="#eef0ff"/>'
-        f'<text x="20" y="55" font-size="22">{label}</text></svg>',
-        encoding="utf-8",
-    )
     return path
 
 
@@ -120,23 +95,13 @@ class EdgeCaseTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             scripts = SKILLS / "odt" / "scripts"
-            spec = write_json(
-                tmp_path / "doc.json",
-                {
-                    "title": "Doc",
-                    "blocks": [
-                        {"type": "table", "name": "Data", "rows": [["A", "B"], ["1", "2"]]},
-                        {"type": "footnote", "text": "Footnote body"},
-                    ],
-                },
-            )
             odt = tmp_path / "doc.odt"
-            run_script(scripts / "create_minimal_odt.py", spec, odt)
+            run_script(scripts / "create_minimal_odt.py", FIXTURES / "odt_document.json", odt)
             data = json.loads(run_script(scripts / "extract_text.py", odt, "--json").stdout)
             table = next(item for item in data if item["type"] == "table")
             note = next(item for item in data if item["type"] == "note")
             self.assertEqual(table["rows"][1], ["1", "2"])
-            self.assertEqual(note["text"], "Footnote body")
+            self.assertEqual(note["text"], "A note")
 
     def test_odp_notes_are_not_modified_by_visible_text_replace(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -183,12 +148,11 @@ class EdgeCaseTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             scripts = SKILLS / "odg" / "scripts"
-            image = write_svg(tmp_path / "image.svg", "ODG")
-            spec = write_json(tmp_path / "drawing.json", {"pages": [{"name": "Diagram", "items": [{"type": "image", "path": str(image)}]}]})
+            spec = write_json(tmp_path / "drawing.json", {"pages": [{"name": "Diagram", "items": [{"type": "image", "path": str(FIXTURES / "image.svg")}]}]})
             odg = tmp_path / "drawing.odg"
             run_script(scripts / "create_minimal_odg.py", spec, odg)
             with_image = tmp_path / "with-image.odg"
-            out = run_script(scripts / "add_image.py", odg, image, "-o", with_image).stdout
+            out = run_script(scripts / "add_image.py", odg, FIXTURES / "image.svg", "-o", with_image).stdout
             self.assertIn("Pictures/image-1.svg", out)
             package = json.loads(run_script(scripts / "inspect_package.py", with_image).stdout)
             self.assertEqual(len(package["media_files"]), 2)

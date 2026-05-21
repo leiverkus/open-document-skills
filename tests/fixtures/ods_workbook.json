@@ -1,0 +1,14 @@
+{
+  "title": "Test Workbook",
+  "sheets": [
+    {
+      "name": "Data",
+      "rows": [["Item", "Value"], ["A", 10], ["B", 20]],
+      "cells": {
+        "C2": {
+          "formula": "of:=[.B2]*2"
+        }
+      }
+    }
+  ]
+}

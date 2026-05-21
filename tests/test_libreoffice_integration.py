@@ -2,15 +2,11 @@ from __future__ import annotations
 
 import json
 import shutil
-import subprocess
-import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-
-ROOT = Path(__file__).resolve().parents[1]
-SKILLS = ROOT / "skills"
+from helpers import FIXTURES, SKILLS, run_script
 
 
 def find_soffice() -> str | None:
@@ -36,29 +32,11 @@ def find_soffice() -> str | None:
 SOFFICE = find_soffice()
 
 
-def run_script(script: Path, *args: object) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [sys.executable, "-B", str(script), *map(str, args)],
-        cwd=script.parent,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        check=True,
-    )
-
-
-def write_json(path: Path, data: object) -> Path:
-    path.write_text(json.dumps(data), encoding="utf-8")
-    return path
-
-
-def write_svg(path: Path, label: str) -> Path:
-    path.write_text(
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="160" height="100">'
-        f'<rect width="160" height="100" fill="#eef0ff"/>'
-        f'<text x="20" y="55" font-size="22">{label}</text></svg>',
-        encoding="utf-8",
-    )
+def odg_fixture_with_image(tmp_path: Path) -> Path:
+    spec = json.loads((FIXTURES / "odg_drawing.json").read_text(encoding="utf-8"))
+    spec["pages"][0]["items"][-1]["path"] = str(FIXTURES / "image.svg")
+    path = tmp_path / "drawing.json"
+    path.write_text(json.dumps(spec), encoding="utf-8")
     return path
 
 
@@ -68,10 +46,9 @@ class LibreOfficeIntegrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             scripts = SKILLS / "odt" / "scripts"
-            spec = write_json(tmp_path / "doc.json", {"title": "Render ODT", "blocks": [{"type": "paragraph", "text": "Hello PDF"}]})
             odt = tmp_path / "doc.odt"
             outdir = tmp_path / "qa"
-            run_script(scripts / "create_minimal_odt.py", spec, odt)
+            run_script(scripts / "create_minimal_odt.py", FIXTURES / "odt_document.json", odt)
             run_script(scripts / "render.py", odt, "--outdir", outdir)
             pdf = outdir / "doc.pdf"
             self.assertTrue(pdf.exists())
@@ -81,10 +58,9 @@ class LibreOfficeIntegrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             scripts = SKILLS / "odp" / "scripts"
-            spec = write_json(tmp_path / "slides.json", {"slides": [{"name": "Intro", "title": "Render ODP", "body": ["Hello PDF"]}]})
             odp = tmp_path / "deck.odp"
             outdir = tmp_path / "qa"
-            run_script(scripts / "create_minimal_odp.py", spec, odp)
+            run_script(scripts / "create_minimal_odp.py", FIXTURES / "odp_slides.json", odp)
             run_script(scripts / "render.py", odp, "--outdir", outdir)
             pdf = outdir / "deck.pdf"
             self.assertTrue(pdf.exists())
@@ -94,14 +70,9 @@ class LibreOfficeIntegrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             scripts = SKILLS / "odg" / "scripts"
-            image = write_svg(tmp_path / "image.svg", "ODG")
-            spec = write_json(
-                tmp_path / "drawing.json",
-                {"pages": [{"name": "Diagram", "items": [{"type": "text", "text": "Render ODG"}, {"type": "image", "path": str(image)}]}]},
-            )
             odg = tmp_path / "drawing.odg"
             outdir = tmp_path / "qa"
-            run_script(scripts / "create_minimal_odg.py", spec, odg)
+            run_script(scripts / "create_minimal_odg.py", odg_fixture_with_image(tmp_path), odg)
             run_script(scripts / "render.py", odg, "--outdir", outdir, "--formats", "pdf")
             pdf = outdir / "drawing.pdf"
             self.assertTrue(pdf.exists())
@@ -111,13 +82,9 @@ class LibreOfficeIntegrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             scripts = SKILLS / "ods" / "scripts"
-            spec = write_json(
-                tmp_path / "workbook.json",
-                {"sheets": [{"name": "Data", "rows": [["Value"], [10]], "cells": {"B2": {"formula": "of:=[.A2]*2"}}}]},
-            )
             ods = tmp_path / "book.ods"
             outdir = tmp_path / "qa"
-            run_script(scripts / "create_minimal_ods.py", spec, ods)
+            run_script(scripts / "create_minimal_ods.py", FIXTURES / "ods_workbook.json", ods)
             run_script(scripts / "recalc.py", ods, "--outdir", outdir)
             recalced = outdir / "book.ods"
             self.assertTrue(recalced.exists())

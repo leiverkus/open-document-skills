@@ -1,0 +1,41 @@
+{
+  "pages": [
+    {
+      "name": "Diagram",
+      "items": [
+        {
+          "type": "text",
+          "text": "Hello Draw",
+          "x": "1cm",
+          "y": "1cm"
+        },
+        {
+          "type": "rect",
+          "name": "Box",
+          "x": "1cm",
+          "y": "4cm",
+          "text": "Box Label"
+        },
+        {
+          "type": "ellipse",
+          "x": "8cm",
+          "y": "4cm",
+          "text": "Ellipse"
+        },
+        {
+          "type": "line",
+          "x1": "1cm",
+          "y1": "7cm",
+          "x2": "12cm",
+          "y2": "7cm"
+        },
+        {
+          "type": "image",
+          "path": "__IMAGE__",
+          "x": "14cm",
+          "y": "3cm"
+        }
+      ]
+    }
+  ]
+}

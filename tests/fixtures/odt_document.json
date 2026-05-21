@@ -1,0 +1,27 @@
+{
+  "title": "Test Document",
+  "blocks": [
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Section"
+    },
+    {
+      "type": "paragraph",
+      "text": "Hello ODT"
+    },
+    {
+      "type": "list",
+      "items": ["First", "Second"]
+    },
+    {
+      "type": "table",
+      "name": "Data",
+      "rows": [["A", "B"], ["1", "2"]]
+    },
+    {
+      "type": "footnote",
+      "text": "A note"
+    }
+  ]
+}

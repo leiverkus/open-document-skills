@@ -38,7 +38,10 @@ skills/
     SKILL.md
     scripts/
 tests/
+  fixtures/
   test_smoke.py
+  test_edge_cases.py
+  test_libreoffice_integration.py
 ```
 
 Each skill is MIT-licensed and also contains its own `LICENSE.txt`.
@@ -179,6 +182,14 @@ The tests create minimal ODT, ODP, ODS, and ODG files, then exercise extraction,
 LibreOffice integration tests are included. They render ODT/ODP/ODG files and recalculate ODS files when `soffice` is available. If LibreOffice is not available, those tests are skipped.
 
 GitHub Actions runs the same smoke test suite on every push and pull request.
+
+Reusable example inputs live in `tests/fixtures/`:
+
+- `odt_document.json`
+- `odp_slides.json`
+- `ods_workbook.json`
+- `odg_drawing.json`
+- `image.svg`
 
 ## LibreOffice Workflows
 
