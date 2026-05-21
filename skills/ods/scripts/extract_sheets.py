@@ -28,7 +28,9 @@ def extract(path: Path) -> list[dict[str, object]]:
             if cells_out:
                 rows_out.append({"row": r, "cells": cells_out})
         max_col = max((len(row) for row in expanded_rows(sheet)), default=0)
-        result.append({"name": sheet_name(sheet), "rows": len(expanded_rows(sheet)), "columns": max_col, "data": rows_out})
+        result.append(
+            {"name": sheet_name(sheet), "rows": len(expanded_rows(sheet)), "columns": max_col, "data": rows_out}
+        )
     return result
 
 

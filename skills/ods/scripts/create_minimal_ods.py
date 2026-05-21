@@ -52,7 +52,11 @@ def build_manifest() -> ET.Element:
         ("meta.xml", "text/xml"),
         ("settings.xml", "text/xml"),
     ]:
-        ET.SubElement(root, q("manifest", "file-entry"), {q("manifest", "full-path"): full_path, q("manifest", "media-type"): media_type})
+        ET.SubElement(
+            root,
+            q("manifest", "file-entry"),
+            {q("manifest", "full-path"): full_path, q("manifest", "media-type"): media_type},
+        )
     return root
 
 
@@ -98,9 +102,13 @@ def main() -> None:
         (root_dir / "mimetype").write_text(ODS_MIMETYPE)
         ET.ElementTree(content).write(root_dir / "content.xml", encoding="utf-8", xml_declaration=True)
         ET.ElementTree(build_styles()).write(root_dir / "styles.xml", encoding="utf-8", xml_declaration=True)
-        ET.ElementTree(build_meta(spec.get("title"))).write(root_dir / "meta.xml", encoding="utf-8", xml_declaration=True)
+        ET.ElementTree(build_meta(spec.get("title"))).write(
+            root_dir / "meta.xml", encoding="utf-8", xml_declaration=True
+        )
         ET.ElementTree(build_settings()).write(root_dir / "settings.xml", encoding="utf-8", xml_declaration=True)
-        ET.ElementTree(build_manifest()).write(root_dir / "META-INF" / "manifest.xml", encoding="utf-8", xml_declaration=True)
+        ET.ElementTree(build_manifest()).write(
+            root_dir / "META-INF" / "manifest.xml", encoding="utf-8", xml_declaration=True
+        )
         pack_dir_as_ods(root_dir, args.output_ods)
     print(args.output_ods)
 

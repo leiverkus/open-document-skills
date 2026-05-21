@@ -22,7 +22,9 @@ def add_paragraph(parent: ET.Element, text: str, style: str = "Body") -> None:
 
 def add_heading(parent: ET.Element, text: str, level: int = 1) -> None:
     """Add a text:h element with the given outline level and Heading{N} style."""
-    heading = ET.SubElement(parent, q("text", "h"), {q("text", "outline-level"): str(level), q("text", "style-name"): f"Heading{level}"})
+    heading = ET.SubElement(
+        parent, q("text", "h"), {q("text", "outline-level"): str(level), q("text", "style-name"): f"Heading{level}"}
+    )
     heading.text = text
 
 
@@ -56,8 +58,21 @@ def add_note(parent: ET.Element, text: str, note_class: str = "footnote") -> Non
 def add_image(parent: ET.Element, href: str, width: str, height: str) -> None:
     """Add a draw:frame with embedded draw:image, anchored to a paragraph."""
     paragraph = ET.SubElement(parent, q("text", "p"))
-    frame = ET.SubElement(paragraph, q("draw", "frame"), {q("text", "anchor-type"): "paragraph", q("svg", "width"): width, q("svg", "height"): height})
-    ET.SubElement(frame, q("draw", "image"), {q("xlink", "href"): href, q("xlink", "type"): "simple", q("xlink", "show"): "embed", q("xlink", "actuate"): "onLoad"})
+    frame = ET.SubElement(
+        paragraph,
+        q("draw", "frame"),
+        {q("text", "anchor-type"): "paragraph", q("svg", "width"): width, q("svg", "height"): height},
+    )
+    ET.SubElement(
+        frame,
+        q("draw", "image"),
+        {
+            q("xlink", "href"): href,
+            q("xlink", "type"): "simple",
+            q("xlink", "show"): "embed",
+            q("xlink", "actuate"): "onLoad",
+        },
+    )
 
 
 def build_styles() -> ET.Element:
@@ -70,12 +85,20 @@ def build_styles() -> ET.Element:
         ("Heading2", "paragraph", "14pt", "bold"),
     ]:
         style = ET.SubElement(styles, q("style", "style"), {q("style", "name"): name, q("style", "family"): family})
-        ET.SubElement(style, q("style", "text-properties"), {q("fo", "font-size"): size, q("fo", "font-weight"): weight})
+        ET.SubElement(
+            style, q("style", "text-properties"), {q("fo", "font-size"): size, q("fo", "font-weight"): weight}
+        )
     automatic = ET.SubElement(root, q("office", "automatic-styles"))
     layout = ET.SubElement(automatic, q("style", "page-layout"), {q("style", "name"): "A4"})
-    ET.SubElement(layout, q("style", "page-layout-properties"), {q("fo", "page-width"): "21cm", q("fo", "page-height"): "29.7cm", q("fo", "margin"): "2cm"})
+    ET.SubElement(
+        layout,
+        q("style", "page-layout-properties"),
+        {q("fo", "page-width"): "21cm", q("fo", "page-height"): "29.7cm", q("fo", "margin"): "2cm"},
+    )
     masters = ET.SubElement(root, q("office", "master-styles"))
-    ET.SubElement(masters, q("style", "master-page"), {q("style", "name"): "Standard", q("style", "page-layout-name"): "A4"})
+    ET.SubElement(
+        masters, q("style", "master-page"), {q("style", "name"): "Standard", q("style", "page-layout-name"): "A4"}
+    )
     return root
 
 
@@ -124,7 +147,12 @@ def main() -> None:
         (root_dir / "META-INF").mkdir()
         (root_dir / "Pictures").mkdir()
         (root_dir / "mimetype").write_text(ODT_MIMETYPE)
-        manifest_entries = [("content.xml", "text/xml"), ("styles.xml", "text/xml"), ("meta.xml", "text/xml"), ("settings.xml", "text/xml")]
+        manifest_entries = [
+            ("content.xml", "text/xml"),
+            ("styles.xml", "text/xml"),
+            ("meta.xml", "text/xml"),
+            ("settings.xml", "text/xml"),
+        ]
         existing_media: set[str] = set()
 
         content = ET.Element(q("office", "document-content"), {q("office", "version"): "1.3"})
@@ -158,9 +186,13 @@ def main() -> None:
 
         ET.ElementTree(content).write(root_dir / "content.xml", encoding="utf-8", xml_declaration=True)
         ET.ElementTree(build_styles()).write(root_dir / "styles.xml", encoding="utf-8", xml_declaration=True)
-        ET.ElementTree(build_meta(spec.get("title"))).write(root_dir / "meta.xml", encoding="utf-8", xml_declaration=True)
+        ET.ElementTree(build_meta(spec.get("title"))).write(
+            root_dir / "meta.xml", encoding="utf-8", xml_declaration=True
+        )
         ET.ElementTree(build_settings()).write(root_dir / "settings.xml", encoding="utf-8", xml_declaration=True)
-        ET.ElementTree(build_manifest(manifest_entries)).write(root_dir / "META-INF" / "manifest.xml", encoding="utf-8", xml_declaration=True)
+        ET.ElementTree(build_manifest(manifest_entries)).write(
+            root_dir / "META-INF" / "manifest.xml", encoding="utf-8", xml_declaration=True
+        )
         pack_dir_as_odt(root_dir, args.output_odt)
     print(args.output_odt)
 

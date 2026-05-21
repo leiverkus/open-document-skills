@@ -15,8 +15,14 @@ from odp_common import ODP_MIMETYPE, ensure_manifest_entry, media_type_for, pack
 
 
 def text_frame(
-    parent: ET.Element, name: str, x: str, y: str,
-    width: str, height: str, style: str, lines: list[str],
+    parent: ET.Element,
+    name: str,
+    x: str,
+    y: str,
+    width: str,
+    height: str,
+    style: str,
+    lines: list[str],
 ) -> None:
     """Add a draw:frame with draw:text-box containing styled paragraphs."""
     frame = ET.SubElement(
@@ -37,8 +43,12 @@ def text_frame(
 
 
 def image_frame(
-    parent: ET.Element, href: str, x: str, y: str,
-    width: str, height: str,
+    parent: ET.Element,
+    href: str,
+    x: str,
+    y: str,
+    width: str,
+    height: str,
 ) -> None:
     """Add a draw:frame with embedded draw:image at the given position."""
     frame = ET.SubElement(
@@ -69,13 +79,29 @@ def build_styles() -> ET.Element:
     root = ET.Element(q("office", "document-styles"), {q("office", "version"): "1.3"})
     styles = ET.SubElement(root, q("office", "styles"))
     for name, size, weight in [("Title", "32pt", "bold"), ("Body", "18pt", "normal"), ("Notes", "12pt", "normal")]:
-        style = ET.SubElement(styles, q("style", "style"), {q("style", "name"): name, q("style", "family"): "paragraph"})
-        ET.SubElement(style, q("style", "text-properties"), {q("fo", "font-size"): size, q("fo", "font-weight"): weight})
+        style = ET.SubElement(
+            styles, q("style", "style"), {q("style", "name"): name, q("style", "family"): "paragraph"}
+        )
+        ET.SubElement(
+            style, q("style", "text-properties"), {q("fo", "font-size"): size, q("fo", "font-weight"): weight}
+        )
     master_styles = ET.SubElement(root, q("office", "master-styles"))
-    ET.SubElement(master_styles, q("style", "master-page"), {q("style", "name"): "Default", q("style", "page-layout-name"): "Screen"})
+    ET.SubElement(
+        master_styles,
+        q("style", "master-page"),
+        {q("style", "name"): "Default", q("style", "page-layout-name"): "Screen"},
+    )
     automatic = ET.SubElement(root, q("office", "automatic-styles"))
     layout = ET.SubElement(automatic, q("style", "page-layout"), {q("style", "name"): "Screen"})
-    ET.SubElement(layout, q("style", "page-layout-properties"), {q("fo", "page-width"): "28cm", q("fo", "page-height"): "15.75cm", q("style", "print-orientation"): "landscape"})
+    ET.SubElement(
+        layout,
+        q("style", "page-layout-properties"),
+        {
+            q("fo", "page-width"): "28cm",
+            q("fo", "page-height"): "15.75cm",
+            q("style", "print-orientation"): "landscape",
+        },
+    )
     return root
 
 
@@ -166,7 +192,14 @@ def main() -> None:
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(source, target)
                 manifest_entries.append((package_path, media_type_for(source)))
-                image_frame(page, package_path, slide.get("image_x", "15cm"), slide.get("image_y", "3cm"), slide.get("image_width", "11cm"), slide.get("image_height", "8cm"))
+                image_frame(
+                    page,
+                    package_path,
+                    slide.get("image_x", "15cm"),
+                    slide.get("image_y", "3cm"),
+                    slide.get("image_width", "11cm"),
+                    slide.get("image_height", "8cm"),
+                )
             notes = slide.get("notes", [])
             if isinstance(notes, str):
                 notes = [notes]
@@ -176,9 +209,13 @@ def main() -> None:
 
         ET.ElementTree(content).write(root_dir / "content.xml", encoding="utf-8", xml_declaration=True)
         ET.ElementTree(build_styles()).write(root_dir / "styles.xml", encoding="utf-8", xml_declaration=True)
-        ET.ElementTree(build_meta(spec.get("title"))).write(root_dir / "meta.xml", encoding="utf-8", xml_declaration=True)
+        ET.ElementTree(build_meta(spec.get("title"))).write(
+            root_dir / "meta.xml", encoding="utf-8", xml_declaration=True
+        )
         ET.ElementTree(build_settings()).write(root_dir / "settings.xml", encoding="utf-8", xml_declaration=True)
-        ET.ElementTree(build_manifest(manifest_entries)).write(root_dir / "META-INF" / "manifest.xml", encoding="utf-8", xml_declaration=True)
+        ET.ElementTree(build_manifest(manifest_entries)).write(
+            root_dir / "META-INF" / "manifest.xml", encoding="utf-8", xml_declaration=True
+        )
         pack_dir_as_odp(root_dir, args.output_odp)
     print(args.output_odp)
 

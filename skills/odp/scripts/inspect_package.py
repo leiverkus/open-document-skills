@@ -81,7 +81,11 @@ def summarize(path: Path) -> dict[str, object]:
         "file": str(path),
         "entries": len(names),
         "has_mimetype_first": bool(names and names[0] == "mimetype"),
-        "package_files": [name for name in names if name in {"content.xml", "styles.xml", "meta.xml", "settings.xml", "META-INF/manifest.xml"}],
+        "package_files": [
+            name
+            for name in names
+            if name in {"content.xml", "styles.xml", "meta.xml", "settings.xml", "META-INF/manifest.xml"}
+        ],
         "media_files": [name for name in names if name.startswith("Pictures/")],
         "media_refs": sorted(media_refs),
         "slide_count": len(slides),

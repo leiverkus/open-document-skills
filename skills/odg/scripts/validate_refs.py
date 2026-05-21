@@ -35,7 +35,9 @@ def validate(path: Path) -> dict[str, object]:
     manifest = parse_xml_from_zip(path, "META-INF/manifest.xml") if "META-INF/manifest.xml" in names else None
     manifest_paths = set()
     if manifest is not None:
-        manifest_paths = {e.attrib.get(q("manifest", "full-path")) for e in manifest.findall(".//manifest:file-entry", NS)}
+        manifest_paths = {
+            e.attrib.get(q("manifest", "full-path")) for e in manifest.findall(".//manifest:file-entry", NS)
+        }
     for node in content.iter():
         href = node.attrib.get(q("xlink", "href"))
         if href and not href.startswith("#") and "://" not in href:
@@ -52,7 +54,11 @@ def validate(path: Path) -> dict[str, object]:
                 warnings.append(f"Page {page_idx} has zero-size shape")
             if width is not None and width < 0 or height is not None and height < 0:
                 errors.append(f"Page {page_idx} has negative-size shape")
-    return {"status": "ok" if not errors else "errors_found", "errors": sorted(set(errors)), "warnings": sorted(set(warnings))}
+    return {
+        "status": "ok" if not errors else "errors_found",
+        "errors": sorted(set(errors)),
+        "warnings": sorted(set(warnings)),
+    }
 
 
 def main() -> None:

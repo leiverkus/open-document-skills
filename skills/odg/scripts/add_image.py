@@ -41,10 +41,35 @@ def main() -> None:
     with zipfile.ZipFile(args.input_odg) as archive:
         existing = set(archive.namelist())
     package_path = unique_picture_name(existing, args.image)
-    frame = ET.SubElement(page, q("draw", "frame"), {q("draw", "name"): args.name, q("svg", "x"): args.x, q("svg", "y"): args.y, q("svg", "width"): args.width, q("svg", "height"): args.height})
-    ET.SubElement(frame, q("draw", "image"), {q("xlink", "href"): package_path, q("xlink", "type"): "simple", q("xlink", "show"): "embed", q("xlink", "actuate"): "onLoad"})
+    frame = ET.SubElement(
+        page,
+        q("draw", "frame"),
+        {
+            q("draw", "name"): args.name,
+            q("svg", "x"): args.x,
+            q("svg", "y"): args.y,
+            q("svg", "width"): args.width,
+            q("svg", "height"): args.height,
+        },
+    )
+    ET.SubElement(
+        frame,
+        q("draw", "image"),
+        {
+            q("xlink", "href"): package_path,
+            q("xlink", "type"): "simple",
+            q("xlink", "show"): "embed",
+            q("xlink", "actuate"): "onLoad",
+        },
+    )
     ensure_manifest_entry(manifest, package_path, media_type_for(args.image))
-    copy_into_package(args.input_odg, args.output, package_path, args.image, {"content.xml": xml_bytes(content), "META-INF/manifest.xml": xml_bytes(manifest)})
+    copy_into_package(
+        args.input_odg,
+        args.output,
+        package_path,
+        args.image,
+        {"content.xml": xml_bytes(content), "META-INF/manifest.xml": xml_bytes(manifest)},
+    )
     print(package_path)
 
 

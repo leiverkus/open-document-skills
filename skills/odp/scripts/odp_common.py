@@ -33,12 +33,23 @@ from lib.odf_common import (  # noqa: E402, I001
 
 # Direct re-exports.
 __all__ = [
-    "NS", "ODP_MIMETYPE", "q",
-    "clear_children", "copy_into_package", "copy_slide",
-    "ensure_manifest_entry", "find_soffice", "find_slides",
-    "media_type_for", "pack_dir_as_odp", "parse_xml_from_zip",
-    "select_slide", "unique_picture_name", "unpack_to_temp",
-    "write_odp_with_replacements", "xml_bytes",
+    "NS",
+    "ODP_MIMETYPE",
+    "q",
+    "clear_children",
+    "copy_into_package",
+    "copy_slide",
+    "ensure_manifest_entry",
+    "find_soffice",
+    "find_slides",
+    "media_type_for",
+    "pack_dir_as_odp",
+    "parse_xml_from_zip",
+    "select_slide",
+    "unique_picture_name",
+    "unpack_to_temp",
+    "write_odp_with_replacements",
+    "xml_bytes",
 ]
 
 NS = {
@@ -70,17 +81,26 @@ def q(prefix: str, local: str) -> str:
 
 
 def ensure_manifest_entry(
-    manifest_root: ET.Element, full_path: str, media_type: str,
+    manifest_root: ET.Element,
+    full_path: str,
+    media_type: str,
 ) -> None:
     _ensure_base(manifest_root, full_path, media_type, NS, q)
 
 
 def copy_into_package(
-    input_odp: Path, output_odp: Path, package_path: str,
-    source: Path, replacements: dict[str, bytes],
+    input_odp: Path,
+    output_odp: Path,
+    package_path: str,
+    source: Path,
+    replacements: dict[str, bytes],
 ) -> None:
     _copy_base(
-        input_odp, output_odp, package_path, source, replacements,
+        input_odp,
+        output_odp,
+        package_path,
+        source,
+        replacements,
         ODP_MIMETYPE,
     )
 
@@ -90,7 +110,9 @@ def pack_dir_as_odp(source_dir: Path, output_odp: Path) -> None:
 
 
 def write_odp_with_replacements(
-    input_odp: Path, output_odp: Path, replacements: dict[str, bytes],
+    input_odp: Path,
+    output_odp: Path,
+    replacements: dict[str, bytes],
 ) -> None:
     _write_base(input_odp, output_odp, replacements, ODP_MIMETYPE)
 

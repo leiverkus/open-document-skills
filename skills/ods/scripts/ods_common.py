@@ -28,12 +28,28 @@ from lib.odf_common import (  # noqa: E402, I001
 
 # Direct re-exports.
 __all__ = [
-    "NS", "ODS_MIMETYPE", "q",
-    "a1", "cell_text", "cell_value", "col_to_index", "ensure_cell",
-    "expanded_rows", "find_sheet", "find_soffice", "index_to_col",
-    "iter_sheets", "pack_dir_as_ods", "parse_a1", "parse_xml_from_zip",
-    "repeated", "set_cell_value", "sheet_name", "write_csv",
-    "write_ods_with_replacements", "xml_bytes",
+    "NS",
+    "ODS_MIMETYPE",
+    "q",
+    "a1",
+    "cell_text",
+    "cell_value",
+    "col_to_index",
+    "ensure_cell",
+    "expanded_rows",
+    "find_sheet",
+    "find_soffice",
+    "index_to_col",
+    "iter_sheets",
+    "pack_dir_as_ods",
+    "parse_a1",
+    "parse_xml_from_zip",
+    "repeated",
+    "set_cell_value",
+    "sheet_name",
+    "write_csv",
+    "write_ods_with_replacements",
+    "xml_bytes",
 ]
 
 NS = {
@@ -63,7 +79,9 @@ def pack_dir_as_ods(source_dir: Path, output_ods: Path) -> None:
 
 
 def write_ods_with_replacements(
-    input_ods: Path, output_ods: Path, replacements: dict[str, bytes],
+    input_ods: Path,
+    output_ods: Path,
+    replacements: dict[str, bytes],
 ) -> None:
     _write_base(input_ods, output_ods, replacements, ODS_MIMETYPE)
 
@@ -106,9 +124,7 @@ def a1(row: int, col: int) -> str:
 
 def cell_text(cell: ET.Element) -> str:
     """Extract visible text from a table:table-cell element."""
-    return " ".join(
-        "".join(node.text or "" for node in cell.findall(".//text:p", NS)).split()
-    )
+    return " ".join("".join(node.text or "" for node in cell.findall(".//text:p", NS)).split())
 
 
 def cell_value(cell: ET.Element) -> object:
@@ -151,7 +167,8 @@ def sheet_name(sheet: ET.Element) -> str:
 
 
 def expanded_rows(
-    sheet: ET.Element, max_repeat: int = 1000,
+    sheet: ET.Element,
+    max_repeat: int = 1000,
 ) -> list[list[ET.Element]]:
     """Expand repeated rows and columns into a flat list of row cell lists."""
     rows: list[list[ET.Element]] = []
@@ -171,7 +188,9 @@ def expanded_rows(
 
 
 def set_cell_value(
-    cell: ET.Element, value: str, formula: bool = False,
+    cell: ET.Element,
+    value: str,
+    formula: bool = False,
 ) -> None:
     """Set the value or formula of a table:table-cell element."""
     cell.attrib.pop(q("table", "number-columns-repeated"), None)
@@ -193,7 +212,9 @@ def set_cell_value(
 
 
 def ensure_cell(
-    sheet: ET.Element, row_index: int, col_index: int,
+    sheet: ET.Element,
+    row_index: int,
+    col_index: int,
 ) -> ET.Element:
     """Ensure a cell exists at the given row/col, creating intermediates."""
     rows = sheet.findall("table:table-row", NS)

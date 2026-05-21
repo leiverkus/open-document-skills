@@ -17,9 +17,21 @@ def collect(path: Path) -> dict[str, list[dict[str, str | None]]]:
         root = parse_xml_from_zip(path, member)
         for style in root.findall(".//style:style", NS):
             family = style.attrib.get(q("style", "family"), "unknown")
-            result[family].append({"name": style.attrib.get(q("style", "name")), "parent": style.attrib.get(q("style", "parent-style-name")), "source": member})
+            result[family].append(
+                {
+                    "name": style.attrib.get(q("style", "name")),
+                    "parent": style.attrib.get(q("style", "parent-style-name")),
+                    "source": member,
+                }
+            )
         for master in root.findall(".//style:master-page", NS):
-            result["master-page"].append({"name": master.attrib.get(q("style", "name")), "parent": master.attrib.get(q("style", "page-layout-name")), "source": member})
+            result["master-page"].append(
+                {
+                    "name": master.attrib.get(q("style", "name")),
+                    "parent": master.attrib.get(q("style", "page-layout-name")),
+                    "source": member,
+                }
+            )
     return dict(result)
 
 

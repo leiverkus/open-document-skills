@@ -53,7 +53,9 @@ def write_zip_replacement(input_file: Path, output_file: Path, member: str, xml_
             for name in names:
                 if name == "mimetype":
                     continue
-                dst.writestr(name, replacement if name == member else src.read(name), compress_type=zipfile.ZIP_DEFLATED)
+                dst.writestr(
+                    name, replacement if name == member else src.read(name), compress_type=zipfile.ZIP_DEFLATED
+                )
 
 
 class EdgeCaseTests(unittest.TestCase):
@@ -158,7 +160,10 @@ class EdgeCaseTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             scripts = SKILLS / "odg" / "scripts"
-            spec = write_json(tmp_path / "drawing.json", {"pages": [{"name": "Diagram", "items": [{"type": "image", "path": str(FIXTURES / "image.svg")}]}]})
+            spec = write_json(
+                tmp_path / "drawing.json",
+                {"pages": [{"name": "Diagram", "items": [{"type": "image", "path": str(FIXTURES / "image.svg")}]}]},
+            )
             odg = tmp_path / "drawing.odg"
             run_script(scripts / "create_minimal_odg.py", spec, odg)
             with_image = tmp_path / "with-image.odg"
@@ -188,7 +193,8 @@ class EdgeCaseTests(unittest.TestCase):
             scripts = SKILLS / "odt" / "scripts"
             result = run_script(
                 scripts / "create_minimal_odt.py",
-                tmp_path / "nonexistent.json", tmp_path / "out.odt",
+                tmp_path / "nonexistent.json",
+                tmp_path / "out.odt",
                 check=False,
             )
             self.assertNotEqual(result.returncode, 0)
@@ -203,7 +209,8 @@ class EdgeCaseTests(unittest.TestCase):
             bad_json.write_text("{invalid json", encoding="utf-8")
             result = run_script(
                 scripts / "create_minimal_odt.py",
-                bad_json, tmp_path / "out.odt",
+                bad_json,
+                tmp_path / "out.odt",
                 check=False,
             )
             self.assertNotEqual(result.returncode, 0)

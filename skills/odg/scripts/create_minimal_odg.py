@@ -16,7 +16,17 @@ from odg_common import ODG_MIMETYPE, ensure_manifest_entry, media_type_for, pack
 
 def add_text(page: ET.Element, item: dict[str, object]) -> None:
     """Add a draw:frame with draw:text-box containing a single text:p."""
-    frame = ET.SubElement(page, q("draw", "frame"), {q("draw", "name"): str(item.get("name", "Text")), q("svg", "x"): str(item.get("x", "1cm")), q("svg", "y"): str(item.get("y", "1cm")), q("svg", "width"): str(item.get("width", "8cm")), q("svg", "height"): str(item.get("height", "2cm"))})
+    frame = ET.SubElement(
+        page,
+        q("draw", "frame"),
+        {
+            q("draw", "name"): str(item.get("name", "Text")),
+            q("svg", "x"): str(item.get("x", "1cm")),
+            q("svg", "y"): str(item.get("y", "1cm")),
+            q("svg", "width"): str(item.get("width", "8cm")),
+            q("svg", "height"): str(item.get("height", "2cm")),
+        },
+    )
     box = ET.SubElement(frame, q("draw", "text-box"))
     p = ET.SubElement(box, q("text", "p"))
     p.text = str(item.get("text", ""))
@@ -42,8 +52,10 @@ def add_shape(page: ET.Element, item: dict[str, object]) -> None:
 
 
 def add_image(
-    page: ET.Element, item: dict[str, object],
-    root_dir: Path, manifest_entries: list[tuple[str, str]],
+    page: ET.Element,
+    item: dict[str, object],
+    root_dir: Path,
+    manifest_entries: list[tuple[str, str]],
     existing: set[str],
 ) -> None:
     """Copy an image into the package, register it in the manifest, and add a draw:frame."""
@@ -54,8 +66,27 @@ def add_image(
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(source, target)
     manifest_entries.append((package_path, media_type_for(source)))
-    frame = ET.SubElement(page, q("draw", "frame"), {q("draw", "name"): str(item.get("name", "Image")), q("svg", "x"): str(item.get("x", "1cm")), q("svg", "y"): str(item.get("y", "1cm")), q("svg", "width"): str(item.get("width", "6cm")), q("svg", "height"): str(item.get("height", "4cm"))})
-    ET.SubElement(frame, q("draw", "image"), {q("xlink", "href"): package_path, q("xlink", "type"): "simple", q("xlink", "show"): "embed", q("xlink", "actuate"): "onLoad"})
+    frame = ET.SubElement(
+        page,
+        q("draw", "frame"),
+        {
+            q("draw", "name"): str(item.get("name", "Image")),
+            q("svg", "x"): str(item.get("x", "1cm")),
+            q("svg", "y"): str(item.get("y", "1cm")),
+            q("svg", "width"): str(item.get("width", "6cm")),
+            q("svg", "height"): str(item.get("height", "4cm")),
+        },
+    )
+    ET.SubElement(
+        frame,
+        q("draw", "image"),
+        {
+            q("xlink", "href"): package_path,
+            q("xlink", "type"): "simple",
+            q("xlink", "show"): "embed",
+            q("xlink", "actuate"): "onLoad",
+        },
+    )
 
 
 def build_styles() -> ET.Element:
@@ -65,9 +96,19 @@ def build_styles() -> ET.Element:
     ET.SubElement(styles, q("style", "style"), {q("style", "name"): "DefaultGraphic", q("style", "family"): "graphic"})
     automatic = ET.SubElement(root, q("office", "automatic-styles"))
     layout = ET.SubElement(automatic, q("style", "page-layout"), {q("style", "name"): "Screen"})
-    ET.SubElement(layout, q("style", "page-layout-properties"), {q("fo", "page-width"): "28cm", q("fo", "page-height"): "15.75cm", q("style", "print-orientation"): "landscape"})
+    ET.SubElement(
+        layout,
+        q("style", "page-layout-properties"),
+        {
+            q("fo", "page-width"): "28cm",
+            q("fo", "page-height"): "15.75cm",
+            q("style", "print-orientation"): "landscape",
+        },
+    )
     masters = ET.SubElement(root, q("office", "master-styles"))
-    ET.SubElement(masters, q("style", "master-page"), {q("style", "name"): "Default", q("style", "page-layout-name"): "Screen"})
+    ET.SubElement(
+        masters, q("style", "master-page"), {q("style", "name"): "Default", q("style", "page-layout-name"): "Screen"}
+    )
     return root
 
 
@@ -95,10 +136,19 @@ def main() -> None:
         content = ET.Element(q("office", "document-content"), {q("office", "version"): "1.3"})
         body = ET.SubElement(content, q("office", "body"))
         drawing = ET.SubElement(body, q("office", "drawing"))
-        manifest_entries = [("content.xml", "text/xml"), ("styles.xml", "text/xml"), ("meta.xml", "text/xml"), ("settings.xml", "text/xml")]
+        manifest_entries = [
+            ("content.xml", "text/xml"),
+            ("styles.xml", "text/xml"),
+            ("meta.xml", "text/xml"),
+            ("settings.xml", "text/xml"),
+        ]
         existing_media: set[str] = set()
         for idx, page_spec in enumerate(spec.get("pages", []), start=1):
-            page = ET.SubElement(drawing, q("draw", "page"), {q("draw", "name"): page_spec.get("name", f"Page {idx}"), q("draw", "master-page-name"): "Default"})
+            page = ET.SubElement(
+                drawing,
+                q("draw", "page"),
+                {q("draw", "name"): page_spec.get("name", f"Page {idx}"), q("draw", "master-page-name"): "Default"},
+            )
             for item in page_spec.get("items", []):
                 kind = item.get("type", "text")
                 if kind == "text":
@@ -110,7 +160,9 @@ def main() -> None:
                 else:
                     raise SystemExit(f"Unknown item type: {kind}")
         if not list(drawing):
-            ET.SubElement(drawing, q("draw", "page"), {q("draw", "name"): "Page 1", q("draw", "master-page-name"): "Default"})
+            ET.SubElement(
+                drawing, q("draw", "page"), {q("draw", "name"): "Page 1", q("draw", "master-page-name"): "Default"}
+            )
         meta = simple_doc("document-meta")
         meta_body = ET.SubElement(meta, q("office", "meta"))
         created = ET.SubElement(meta_body, q("meta", "creation-date"))

@@ -32,10 +32,18 @@ from lib.odf_common import (  # noqa: E402, I001
 
 # Direct re-exports.
 __all__ = [
-    "NS", "ODT_MIMETYPE", "q",
-    "clear_children", "copy_into_package", "ensure_manifest_entry",
-    "media_type_for", "pack_dir_as_odt", "parse_xml_from_zip",
-    "unique_picture_name", "write_odt_with_replacements", "xml_bytes",
+    "NS",
+    "ODT_MIMETYPE",
+    "q",
+    "clear_children",
+    "copy_into_package",
+    "ensure_manifest_entry",
+    "media_type_for",
+    "pack_dir_as_odt",
+    "parse_xml_from_zip",
+    "unique_picture_name",
+    "write_odt_with_replacements",
+    "xml_bytes",
 ]
 
 NS = {
@@ -63,17 +71,26 @@ def q(prefix: str, local: str) -> str:
 
 
 def ensure_manifest_entry(
-    manifest_root: ET.Element, full_path: str, media_type: str,
+    manifest_root: ET.Element,
+    full_path: str,
+    media_type: str,
 ) -> None:
     _ensure_base(manifest_root, full_path, media_type, NS, q)
 
 
 def copy_into_package(
-    input_odt: Path, output_odt: Path, package_path: str,
-    source: Path, replacements: dict[str, bytes],
+    input_odt: Path,
+    output_odt: Path,
+    package_path: str,
+    source: Path,
+    replacements: dict[str, bytes],
 ) -> None:
     _copy_base(
-        input_odt, output_odt, package_path, source, replacements,
+        input_odt,
+        output_odt,
+        package_path,
+        source,
+        replacements,
         ODT_MIMETYPE,
     )
 
@@ -83,6 +100,8 @@ def pack_dir_as_odt(source_dir: Path, output_odt: Path) -> None:
 
 
 def write_odt_with_replacements(
-    input_odt: Path, output_odt: Path, replacements: dict[str, bytes],
+    input_odt: Path,
+    output_odt: Path,
+    replacements: dict[str, bytes],
 ) -> None:
     _write_base(input_odt, output_odt, replacements, ODT_MIMETYPE)

@@ -28,7 +28,9 @@ def summarize(path: Path) -> dict[str, object]:
     pages = []
     for index, page in enumerate(iter_pages(content), start=1):
         shape_counts = Counter(local_name(shape.tag) for shape in iter_shapes(page))
-        pages.append({"index": index, "name": page.attrib.get(q("draw", "name")), "shapes": dict(sorted(shape_counts.items()))})
+        pages.append(
+            {"index": index, "name": page.attrib.get(q("draw", "name")), "shapes": dict(sorted(shape_counts.items()))}
+        )
     style_counts: Counter[str] = Counter()
     if styles is not None:
         for style in styles.findall(".//style:style", NS):
@@ -37,7 +39,11 @@ def summarize(path: Path) -> dict[str, object]:
         "file": str(path),
         "entries": len(names),
         "has_mimetype_first": bool(names and names[0] == "mimetype"),
-        "package_files": [name for name in names if name in {"content.xml", "styles.xml", "meta.xml", "settings.xml", "META-INF/manifest.xml"}],
+        "package_files": [
+            name
+            for name in names
+            if name in {"content.xml", "styles.xml", "meta.xml", "settings.xml", "META-INF/manifest.xml"}
+        ],
         "media_files": [name for name in names if name.startswith("Pictures/")],
         "media_refs": sorted(media_refs),
         "pages": pages,

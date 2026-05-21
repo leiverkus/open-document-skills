@@ -49,7 +49,14 @@ class InstallTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             dest = Path(tmp) / "opencode" / "skills"
             result = subprocess.run(
-                [sys.executable, str(ROOT / "scripts" / "install_skills.py"), "--target", "opencode", "--dest", str(dest)],
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "install_skills.py"),
+                    "--target",
+                    "opencode",
+                    "--dest",
+                    str(dest),
+                ],
                 cwd=ROOT,
                 check=True,
                 stdout=subprocess.PIPE,
@@ -63,7 +70,14 @@ class InstallTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             dest = Path(tmp) / "open-document-skills"
             result = subprocess.run(
-                [sys.executable, str(ROOT / "scripts" / "install_skills.py"), "--target", "claude", "--dest", str(dest)],
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "install_skills.py"),
+                    "--target",
+                    "claude",
+                    "--dest",
+                    str(dest),
+                ],
                 cwd=ROOT,
                 check=True,
                 stdout=subprocess.PIPE,

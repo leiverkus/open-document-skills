@@ -31,11 +31,24 @@ from lib.odf_common import (  # noqa: E402, I001
 
 # Direct re-exports.
 __all__ = [
-    "NS", "ODG_MIMETYPE", "SHAPE_TAGS", "q",
-    "copy_into_package", "element_text", "ensure_manifest_entry",
-    "find_soffice", "iter_pages", "iter_shapes", "local_name",
-    "media_type_for", "pack_dir_as_odg", "page_name", "parse_xml_from_zip",
-    "unique_picture_name", "write_odg_with_replacements", "xml_bytes",
+    "NS",
+    "ODG_MIMETYPE",
+    "SHAPE_TAGS",
+    "q",
+    "copy_into_package",
+    "element_text",
+    "ensure_manifest_entry",
+    "find_soffice",
+    "iter_pages",
+    "iter_shapes",
+    "local_name",
+    "media_type_for",
+    "pack_dir_as_odg",
+    "page_name",
+    "parse_xml_from_zip",
+    "unique_picture_name",
+    "write_odg_with_replacements",
+    "xml_bytes",
 ]
 
 NS = {
@@ -53,7 +66,13 @@ NS = {
 
 ODG_MIMETYPE = "application/vnd.oasis.opendocument.graphics"
 SHAPE_TAGS = {
-    "frame", "rect", "ellipse", "line", "connector", "path", "custom-shape",
+    "frame",
+    "rect",
+    "ellipse",
+    "line",
+    "connector",
+    "path",
+    "custom-shape",
 }
 
 for prefix, uri in NS.items():
@@ -65,17 +84,26 @@ def q(prefix: str, local: str) -> str:
 
 
 def ensure_manifest_entry(
-    manifest_root: ET.Element, full_path: str, media_type: str,
+    manifest_root: ET.Element,
+    full_path: str,
+    media_type: str,
 ) -> None:
     _ensure_base(manifest_root, full_path, media_type, NS, q)
 
 
 def copy_into_package(
-    input_odg: Path, output_odg: Path, package_path: str,
-    source: Path, replacements: dict[str, bytes],
+    input_odg: Path,
+    output_odg: Path,
+    package_path: str,
+    source: Path,
+    replacements: dict[str, bytes],
 ) -> None:
     _copy_base(
-        input_odg, output_odg, package_path, source, replacements,
+        input_odg,
+        output_odg,
+        package_path,
+        source,
+        replacements,
         ODG_MIMETYPE,
     )
 
@@ -85,7 +113,9 @@ def pack_dir_as_odg(source_dir: Path, output_odg: Path) -> None:
 
 
 def write_odg_with_replacements(
-    input_odg: Path, output_odg: Path, replacements: dict[str, bytes],
+    input_odg: Path,
+    output_odg: Path,
+    replacements: dict[str, bytes],
 ) -> None:
     _write_base(input_odg, output_odg, replacements, ODG_MIMETYPE)
 

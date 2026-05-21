@@ -46,7 +46,9 @@ def validate(path: Path) -> dict[str, object]:
 
     manifest_paths = set()
     if manifest is not None:
-        manifest_paths = {e.attrib.get(q("manifest", "full-path")) for e in manifest.findall(".//manifest:file-entry", NS)}
+        manifest_paths = {
+            e.attrib.get(q("manifest", "full-path")) for e in manifest.findall(".//manifest:file-entry", NS)
+        }
 
     for node in content.iter():
         href = node.attrib.get(q("xlink", "href"))

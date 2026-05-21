@@ -34,7 +34,9 @@ def table_rows(table: ET.Element) -> list[list[str]]:
 def collect_blocks(parent: ET.Element, items: list[dict[str, object]]) -> None:
     for node in list(parent):
         if node.tag == q("text", "h"):
-            items.append({"type": "heading", "level": node.attrib.get(q("text", "outline-level")), "text": element_text(node)})
+            items.append(
+                {"type": "heading", "level": node.attrib.get(q("text", "outline-level")), "text": element_text(node)}
+            )
         elif node.tag == q("text", "p"):
             value = element_text(node)
             if value:
@@ -53,7 +55,13 @@ def collect_blocks(parent: ET.Element, items: list[dict[str, object]]) -> None:
             collect_blocks(node, items)
         elif node.tag == q("text", "note"):
             body = node.find("text:note-body", NS)
-            items.append({"type": "note", "text": element_text(body if body is not None else node), "note_class": node.attrib.get(q("text", "note-class"))})
+            items.append(
+                {
+                    "type": "note",
+                    "text": element_text(body if body is not None else node),
+                    "note_class": node.attrib.get(q("text", "note-class")),
+                }
+            )
 
 
 def extract(path: Path) -> list[dict[str, object]]:

@@ -29,7 +29,9 @@ def run(command: list[str]) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--outdir", type=Path, default=EXAMPLES / "output")
-    parser.add_argument("--render", action="store_true", help="also render/recalculate with LibreOffice where supported")
+    parser.add_argument(
+        "--render", action="store_true", help="also render/recalculate with LibreOffice where supported"
+    )
     parser.add_argument("--png", action="store_true", help="render PDF pages to PNG for ODT/ODP")
     args = parser.parse_args()
 

@@ -44,7 +44,18 @@ class SmokeTests(unittest.TestCase):
             run_script(scripts / "validate_refs.py", odp)
             self.assertIn("Hello ODP", run_script(scripts / "extract_text.py", odp).stdout)
             cloned = tmp_path / "cloned.odp"
-            run_script(scripts / "clone_slide.py", odp, "--source-slide", "1", "--name", "Clone", "--replace", "Hello ODP=Cloned", "-o", cloned)
+            run_script(
+                scripts / "clone_slide.py",
+                odp,
+                "--source-slide",
+                "1",
+                "--name",
+                "Clone",
+                "--replace",
+                "Hello ODP=Cloned",
+                "-o",
+                cloned,
+            )
             self.assertIn("Cloned", run_script(scripts / "extract_text.py", cloned).stdout)
             with_image = tmp_path / "image.odp"
             run_script(scripts / "add_image.py", odp, FIXTURES / "image.svg", "-o", with_image)
