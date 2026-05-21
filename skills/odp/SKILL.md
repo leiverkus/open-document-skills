@@ -2,7 +2,7 @@
 name: odp
 description: "Use this skill whenever the user wants to create, read, edit, convert, repair, or inspect OpenDocument Presentation files (.odp). Trigger on mentions of .odp, ODP, OpenDocument Presentation, Open Office presentation, LibreOffice Impress, Impress deck, odp-Datei, OpenDocument-Präsentation, Folien, Präsentation, or slide decks meant for LibreOffice/OpenOffice. Use for extracting slide text, creating slide decks, editing layouts, speaker notes, images, charts, metadata, or converting between .odp and .pptx/.pdf/images. Do NOT use for text documents (.odt), spreadsheets (.ods), or general presentation advice when no .odp file is involved."
 license: MIT
-version: "0.1.2"
+version: "0.1.3"
 ---
 
 # ODP creation, editing, and analysis

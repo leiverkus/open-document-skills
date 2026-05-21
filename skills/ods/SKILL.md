@@ -2,7 +2,7 @@
 name: ods
 description: "Use this skill whenever the user wants to create, read, edit, convert, repair, inspect, analyze, or format OpenDocument Spreadsheet files (.ods). Trigger on mentions of .ods, ODS, OpenDocument Spreadsheet, Open Office spreadsheet, LibreOffice Calc, Calc sheet, ods-Datei, OpenDocument-Tabelle, Tabellenkalkulation, or spreadsheets meant for LibreOffice/OpenOffice. Use for extracting tables, cleaning data, formulas, formatting, charts where possible, multiple sheets, CSV/XLSX conversion, or producing an .ods deliverable. Do NOT use for text documents (.odt), presentations (.odp), or analysis where the deliverable is not a spreadsheet file."
 license: MIT
-version: "0.1.2"
+version: "0.1.3"
 ---
 
 # ODS creation, editing, and analysis

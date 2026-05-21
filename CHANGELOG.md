@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.1.3 - 2026-05-21
+
+Multi-agent and documentation release.
+
+### Added
+
+- Claude Code plugin metadata via `.claude-plugin/plugin.json`.
+- OpenCode and Claude Code installation targets in `scripts/install_skills.py`.
+- Agent compatibility documentation for Codex, Claude Code, and OpenCode.
+- Dedicated docs pages for installation, workflows, and script reference.
+- Documentation link tests.
+
+### Changed
+
+- Skill frontmatter now uses portable `license: MIT` and `version` metadata.
+- README now presents the repository as an agent skill pack for Codex, Claude Code, and OpenCode.
+- `pyproject.toml` metadata now describes the package as agent skills for OpenDocument files.
+
 ## v0.1.2 - 2026-05-21
 
 Documentation and installation release.

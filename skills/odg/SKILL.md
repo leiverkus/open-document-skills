@@ -2,7 +2,7 @@
 name: odg
 description: "Use this skill whenever the user wants to create, read, edit, convert, repair, inspect, or export OpenDocument Graphics/Drawing files (.odg). Trigger on mentions of .odg, ODG, OpenDocument Graphics, OpenDocument Drawing, LibreOffice Draw, OpenOffice Draw, Draw document, odg-Datei, OpenDocument-Grafik, Zeichnung, diagram, vector drawing, or drawings meant for LibreOffice/OpenOffice. Use for extracting or modifying drawing text, shapes, images, connectors, diagrams, metadata, page/canvas settings, or converting between .odg and .svg/.pdf/.png/.eps where supported. Do NOT use for text documents (.odt), spreadsheets (.ods), presentations (.odp), or generic image editing unless the input or output is an .odg file."
 license: MIT
-version: "0.1.2"
+version: "0.1.3"
 ---
 
 # ODG creation, editing, and analysis
