@@ -1,5 +1,28 @@
 # Changelog
 
+## v0.8.0 - 2026-05-21
+
+ODG depth: glue points, connectors with shape-to-shape binding, group/ungroup. Final format-depth release before the v0.9 corpus tests + v1.0 polish.
+
+### Added
+
+- **Glue points (ODG)**:
+  - `add_gluepoint.py` — `<draw:glue-point>` with `--position X,Y` (relative to shape size), `--escape direction` (up/down/left/right/auto/horizontal/vertical), `--id` (auto from 4; 0-3 are LibreOffice's built-in edge midpoints).
+- **Connectors (ODG)**:
+  - `connect_shapes.py` with `--from` / `--to` shape names, optional `--from-glue` / `--to-glue` glue-point IDs, types `standard`, `line`, `curve`, `--line-width`, `--page`.
+  - Auto-assigns unique `draw:id` to source/target shapes when missing.
+- **Groups (ODG)**:
+  - `group_shapes.py` — wraps named shapes into `<draw:g>` preserving document order.
+  - `ungroup.py` — dissolves a group by name or all groups on a page (`--all`).
+- **`list_structure.py` (ODG)** — combined JSON inventory of groups, connectors, and glue points per page.
+- **`validate_refs.py` (ODG)** extended: detects duplicate glue-point IDs per shape, dangling connector shape targets, dangling glue-point references on connectors, and empty groups.
+- **`odg_common.py`** helpers: `ensure_shape_id`, `find_shape_by_name`, `iter_glue_points`.
+- 14 new tests across `tests/test_odg_gluepoints.py`, `tests/test_odg_connectors.py`, `tests/test_odg_groups.py`. Total: 209 (was 197).
+
+### Changed
+
+- ODG `SKILL.md` description + triggers extended with glue point, Klebepunkt, connector, Verbinder, group, Gruppe, flowchart, Flussdiagramm, org chart, Organigramm, Mindmap.
+
 ## v0.7.0 - 2026-05-21
 
 ODP depth: animations, slide transitions, master-page customization.

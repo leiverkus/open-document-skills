@@ -23,7 +23,7 @@ python skills/odt/scripts/validate_refs.py out.odt
 | [`odt`](skills/odt) | Writer | [smithery.ai/skills/leiverkus/odt](https://smithery.ai/skills/leiverkus/odt) | edit ODT, footnotes, citations (BibTeX/CSL-JSON), bookmarks, cross-references, figure/table sequences, MathML formulas, render to PDF |
 | [`odp`](skills/odp) | Impress | [smithery.ai/skills/leiverkus/odp](https://smithery.ai/skills/leiverkus/odp) | clone slide, edit notes, add image, animations (entrance/exit/emphasis/motion), slide transitions, master-page customization (background, header/footer, logo), render deck |
 | [`ods`](skills/ods) | Calc | [smithery.ai/skills/leiverkus/ods](https://smithery.ai/skills/leiverkus/ods) | set cells/formulas, named ranges, dropdowns + data validation, embedded charts (bar/line/pie/scatter), export CSV, recalculate |
-| [`odg`](skills/odg) | Draw | [smithery.ai/skills/leiverkus/odg](https://smithery.ai/skills/leiverkus/odg) | edit labels, add shape image, export SVG/PNG |
+| [`odg`](skills/odg) | Draw | [smithery.ai/skills/leiverkus/odg](https://smithery.ai/skills/leiverkus/odg) | edit labels, add shape image, glue points, connectors with shape binding, groups, flowcharts, org charts, export SVG/PNG |
 
 ## Why use these
 
@@ -419,7 +419,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development and release chec
 
 ## Release Status
 
-Current release: `v0.7.0` — adds ODP depth: shape-level animations (entrance/exit/emphasis/motion paths), slide transitions, and master-page customization (backgrounds, headers/footers, logo embedding). See [ROADMAP.md](ROADMAP.md) for v0.8 (ODG depth + real-world corpus tests).
+Current release: `v0.8.0` — adds ODG depth: glue points, connectors with shape-to-shape binding, and group/ungroup operations. All four skills (ODT/ODP/ODS/ODG) now have production-level depth. See [ROADMAP.md](ROADMAP.md) for v0.9 (real-world corpus tests + final polish) and v1.0 (PyPI publication + ecosystem maturity).
 
 ## License
 

@@ -83,6 +83,11 @@ All scripts use the Python standard library.
 | `list_styles.py` | List Draw styles and page layouts. |
 | `replace_text.py` | XML-safe text replacement in drawing content. |
 | `add_image.py` | Add an image to a drawing page and update package references. |
+| `add_gluepoint.py` | Add a `draw:glue-point` (anchor for connectors) to a shape. |
+| `connect_shapes.py` | Connect two shapes with a `draw:connector` (standard/line/curve). |
+| `group_shapes.py` | Wrap shapes into a `draw:g` group container. |
+| `ungroup.py` | Dissolve groups (by name or all) on a page. |
+| `list_structure.py` | List groups, connectors, and glue points as JSON. |
 | `pack_odg.py` | Repack an unpacked ODG directory with correct `mimetype` handling. |
 | `pack_fodg.py` | Convert a zipped ODG to a flat `.fodg` (single XML, Git-friendly). |
 | `unpack_fodg.py` | Convert a flat `.fodg` back to a zipped `.odg` package. |

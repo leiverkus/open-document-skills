@@ -43,7 +43,10 @@ __all__ = [
     "copy_into_package",
     "element_text",
     "ensure_manifest_entry",
+    "ensure_shape_id",
+    "find_shape_by_name",
     "find_soffice",
+    "iter_glue_points",
     "iter_pages",
     "iter_shapes",
     "local_name",
@@ -143,6 +146,39 @@ def element_text(element: ET.Element) -> str:
         if node.tail:
             parts.append(node.tail)
     return " ".join("".join(parts).split())
+
+
+def find_shape_by_name(parent: ET.Element, name: str) -> ET.Element | None:
+    """Find a draw:* descendant with matching draw:name (recursive)."""
+    name_attr = q("draw", "name")
+    for descendant in parent.iter():
+        if descendant.attrib.get(name_attr) == name:
+            return descendant
+    return None
+
+
+def ensure_shape_id(shape: ET.Element, content_root: ET.Element) -> str:
+    """Return shape's draw:id, or assign a unique 'shape-N' and return that."""
+    id_attr = q("draw", "id")
+    existing = shape.attrib.get(id_attr)
+    if existing:
+        return existing
+    all_ids: set[str] = set()
+    for el in content_root.iter():
+        v = el.attrib.get(id_attr)
+        if v:
+            all_ids.add(v)
+    counter = 1
+    while f"shape-{counter}" in all_ids:
+        counter += 1
+    new_id = f"shape-{counter}"
+    shape.set(id_attr, new_id)
+    return new_id
+
+
+def iter_glue_points(shape: ET.Element):
+    """Yield all draw:glue-point children of a shape."""
+    yield from shape.findall(q("draw", "glue-point"))
 
 
 def iter_pages(root: ET.Element):

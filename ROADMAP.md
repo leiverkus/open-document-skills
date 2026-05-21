@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v0.7.0** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v0.8.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -57,10 +57,17 @@ Closed the largest gap relative to general-purpose tools (pandoc, docx skills): 
 - ✅ Master-page customization (background, header, footer, logo, clone-to)
 - ✅ validate_refs extended for animation target consistency
 
-## v0.8 — ODG depth + corpus tests (next)
+## v0.8 — ODG depth ✅ shipped (2026-05-21)
 
-- **ODG** — glue points, connector routing, group/ungroup operations.
-- **Real-world corpus tests** — kuratiertes MIT-Sample-Set (~15-20 ODF-Dateien) im Repo. Roundtrip-Tests für alle v0.2-v0.7-Helper gegen jede Fixture.
+- ✅ Glue points (`add_gluepoint.py`)
+- ✅ Connectors with shape-to-shape binding (`connect_shapes.py`)
+- ✅ Group / ungroup (`group_shapes.py`, `ungroup.py`)
+- ✅ Combined `list_structure.py` + validate_refs extensions
+
+## v0.9 — Corpus tests + polish (next)
+
+- **Real-world corpus tests** — kuratiertes MIT-Sample-Set (~15-20 ODF-Dateien, alle vier Formate, verschiedene Komplexitätsstufen) im Repo. Roundtrip-Tests für alle v0.2-v0.8-Helper gegen jede Fixture.
+- **Final polish** vor v1.0: dokumentations-Review, Skill-Trigger-Audit, Performance-Benchmarks für große Dokumente.
 
 ## v1.0 — Ecosystem maturity
 
