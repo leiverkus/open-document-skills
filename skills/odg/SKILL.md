@@ -1,0 +1,273 @@
+---
+name: odg
+description: "Use this skill whenever the user wants to create, read, edit, convert, repair, inspect, or export OpenDocument Graphics/Drawing files (.odg). Trigger on mentions of .odg, ODG, OpenDocument Graphics, OpenDocument Drawing, LibreOffice Draw, OpenOffice Draw, Draw document, odg-Datei, OpenDocument-Grafik, Zeichnung, diagram, vector drawing, or drawings meant for LibreOffice/OpenOffice. Use for extracting or modifying drawing text, shapes, images, connectors, diagrams, metadata, page/canvas settings, or converting between .odg and .svg/.pdf/.png/.eps where supported. Do NOT use for text documents (.odt), spreadsheets (.ods), presentations (.odp), or generic image editing unless the input or output is an .odg file."
+license: MIT. LICENSE.txt has complete terms
+---
+
+# ODG creation, editing, and analysis
+
+## Overview
+
+An `.odg` file is an OpenDocument ZIP package for vector drawings, diagrams, and LibreOffice Draw documents. Important package files:
+
+- `mimetype` - should be the first ZIP entry and stored uncompressed as `application/vnd.oasis.opendocument.graphics`
+- `content.xml` - pages, shapes, connectors, text boxes, images, and drawing content
+- `styles.xml` - drawing, text, page, and graphic styles
+- `meta.xml` - document metadata
+- `settings.xml` - application settings
+- `META-INF/manifest.xml` - package manifest
+- `Pictures/...` - embedded raster or vector media
+
+## Quick Reference
+
+| Task | Preferred approach |
+|------|--------------------|
+| Create simple drawing/diagram | Generate ODG package XML directly |
+| Create branded/repeated diagram | Start from an `.odg` template and edit XML |
+| Use SVG-first | Only when portable vector output matters more than Draw editability |
+| Extract visible text | Use `scripts/extract_text.py` or parse `content.xml` |
+| Inspect shapes/geometry | Use `scripts/extract_shapes.py` |
+| Convert ODG to PDF/SVG/PNG | LibreOffice headless export |
+| Visual QA | Export to PDF/PNG/SVG and inspect the rendered output |
+
+## Tool Checks
+
+Before starting a real ODG task, check available tools:
+
+```bash
+which pandoc
+```
+
+Resolve the LibreOffice command before running conversion examples. This works in common macOS/Linux shells and also in Git Bash/WSL-style Windows environments:
+
+```bash
+SOFFICE="$(command -v soffice || command -v libreoffice || true)"
+if [ -z "$SOFFICE" ]; then
+  for candidate in \
+    "/Applications/LibreOffice.app/Contents/MacOS/soffice" \
+    "/usr/bin/libreoffice" \
+    "/usr/local/bin/libreoffice" \
+    "/snap/bin/libreoffice" \
+    "/c/Program Files/LibreOffice/program/soffice.exe" \
+    "/mnt/c/Program Files/LibreOffice/program/soffice.exe"; do
+    if [ -x "$candidate" ]; then SOFFICE="$candidate"; break; fi
+  done
+fi
+test -n "$SOFFICE" || { echo "LibreOffice/soffice not found"; exit 1; }
+```
+
+On native Windows PowerShell, use `$Soffice` and call it with `& $Soffice`:
+
+```powershell
+$Soffice = (Get-Command soffice -ErrorAction SilentlyContinue).Source
+if (-not $Soffice) { $Soffice = "C:\Program Files\LibreOffice\program\soffice.exe" }
+if (-not (Test-Path $Soffice)) { throw "LibreOffice/soffice not found" }
+```
+
+## Reading and Inspecting
+
+For raw package inspection:
+
+```bash
+unzip -l input.odg
+python -m zipfile -e input.odg unpacked_odg
+```
+
+Drawing content is usually in `content.xml`. Inspect:
+
+- `draw:page` for pages/canvases
+- `draw:custom-shape`, `draw:rect`, `draw:ellipse`, `draw:path`, `draw:line`, and `draw:connector` for vector objects
+- `draw:frame` and `draw:image` for embedded media
+- `text:p` and `text:span` for visible text labels
+- `style:style` references for fill, stroke, text, and positioning behavior
+
+Use an XML parser with namespace support. Do not use regex for XML edits.
+
+Bundled scripts for common inspection tasks:
+
+```bash
+python scripts/extract_text.py input.odg
+python scripts/extract_shapes.py input.odg
+python scripts/inspect_package.py input.odg
+```
+
+## content.xml Structure
+
+An ODG drawing normally stores pages in `content.xml` under:
+
+```text
+office:document-content
+  office:body
+    office:drawing
+      draw:page
+```
+
+Important drawing elements and attributes:
+
+- `draw:page` - one canvas/page; usually has `draw:name` and `draw:master-page-name`
+- `draw:frame` - positioned container for images, text boxes, objects, or plugins
+- `draw:text-box` - text container, normally inside a frame
+- `text:p`, `text:span` - visible labels
+- `draw:image` - embedded or linked image via `xlink:href`
+- `draw:rect`, `draw:ellipse`, `draw:line`, `draw:path`, `draw:connector`, `draw:custom-shape` - vector objects
+- `svg:x`, `svg:y`, `svg:width`, `svg:height` - geometry for many positioned objects
+- `svg:x1`, `svg:y1`, `svg:x2`, `svg:y2` - line/connector endpoints
+- `draw:style-name`, `draw:text-style-name` - style references
+
+Styles and page layouts are usually defined in `styles.xml` and automatic styles in `content.xml`. Connector routing and glue points can be fragile; if you move connected shapes, visually verify connector positions after export.
+
+## Creating ODG Files
+
+ODG is an XML package and can be generated directly. Do not default to SVG conversion when the deliverable should remain editable in LibreOffice Draw.
+
+Choose the creation path by the user's goal:
+
+| Scenario | Use |
+|----------|-----|
+| Editable Draw diagram with simple shapes/connectors/text | Direct ODG XML generation |
+| Branded diagram, repeated canvas, institutional styling | Template-first ODG |
+| Portable vector graphic where Draw editability is secondary | SVG-first fallback |
+| Existing SVG/PDF/PNG source or explicit export request | LibreOffice conversion/export fallback |
+
+### Direct ODG XML Generation
+
+Use this for simple diagrams and Draw-editable vector drawings:
+
+```bash
+python scripts/create_minimal_odg.py drawing.json output.odg
+```
+
+Keep direct generation deliberately small: pages, text boxes, rectangles, ellipses, lines, connectors, and images. Add custom paths, groups, glue points, and advanced styles only when a real task needs them.
+
+### Template-First ODG
+
+Use this when visual identity, repeated layout, logos, or exact page size matter.
+
+1. Extract the template.
+2. Inspect `content.xml` pages and `styles.xml` graphic/text/page styles.
+3. Clone or edit known-good objects.
+4. Replace labels, coordinates, media references, and style names XML-safely.
+5. Add images under `Pictures/` and update `META-INF/manifest.xml`.
+6. Repack and run the full QA loop.
+
+### SVG-First Fallback
+
+If an ODG deliverable is not strictly required, offer SVG or PDF as a more portable vector output. Use SVG-first only when portability matters more than Draw editability.
+
+### Conversion Fallback
+
+```bash
+# Resolve SOFFICE as shown in Tool Checks.
+"$SOFFICE" --headless --convert-to odg diagram.svg --outdir out
+```
+
+Treat conversion as lossy until QA proves otherwise. Check text, fonts, shapes, connectors, image embedding, and page size.
+
+## Bundled Creation and Editing Scripts
+
+These scripts support direct ODG generation and XML-safe template workflows:
+
+| Script | Purpose |
+|--------|---------|
+| `create_minimal_odg.py` | Generate a valid minimal ODG from a JSON spec with pages, text, rectangles, ellipses, lines, connectors, and images |
+| `extract_text.py` | Extract visible drawing labels/text boxes |
+| `extract_shapes.py` | List shapes with page, type, name, coordinates, dimensions, style, and text |
+| `replace_text.py` | XML-safe text replacement in labels/text boxes |
+| `add_image.py` | Copy an image into `Pictures/`, update manifest, and insert a `draw:image` frame |
+| `inspect_package.py` | Inspect package files, pages, media, styles, and shape counts |
+| `list_styles.py` | Print graphic, text, drawing-page, and master-page styles |
+| `validate_refs.py` | Check media/style references and basic geometry issues |
+| `render.py` | Export to PDF/SVG/PNG with LibreOffice |
+| `pack_odg.py` | Repack an extracted ODG with `mimetype` first and uncompressed |
+
+Examples:
+
+```bash
+python scripts/create_minimal_odg.py drawing.json output.odg
+python scripts/extract_shapes.py output.odg
+python scripts/replace_text.py input.odg "{{LABEL}}" "Updated label" -o output.odg
+python scripts/add_image.py input.odg logo.png --x 1cm --y 1cm --width 4cm --height 2cm -o output.odg
+python scripts/render.py output.odg --outdir qa --png
+python scripts/validate_refs.py output.odg
+```
+
+## ODG Diagram Design Checklist
+
+- Set explicit page/canvas size in the template or generated styles.
+- Use consistent units such as `cm` for coordinates and dimensions.
+- Keep text boxes larger than the expected label text; font substitution can change fit.
+- Leave whitespace around connector endpoints so routing does not collide with labels.
+- Keep groups shallow; deeply nested groups are harder to edit safely.
+- Embed important images instead of linking local files.
+- Use consistent stroke widths, arrowheads, fills, and label styles.
+- For scientific diagrams, keep labels, legends, scales, and source notes readable after PDF/SVG export.
+- Avoid subtle effects that may not survive LibreOffice export: complex transparency, shadows, gradients, blend effects.
+- Verify PDF/SVG/PNG output before delivery.
+
+## Editing Existing ODG Files
+
+For layout-preserving edits:
+
+1. Extract the package.
+2. Parse `content.xml` and `styles.xml` with an XML library.
+3. Modify shapes, text, coordinates, style references, or media links while preserving namespaces.
+4. Add new media under `Pictures/` and update `META-INF/manifest.xml`.
+5. Repack with `mimetype` first and uncompressed.
+6. Export to PDF/SVG/PNG for visual QA.
+
+Repack pattern:
+
+```bash
+cd unpacked_odg
+zip -0 -X ../output.odg mimetype
+zip -r -X ../output.odg . -x mimetype
+```
+
+## QA (Required)
+
+Assume generated or edited ODG files have problems until proven otherwise. Draw rendering can change text fit, connector routing, image scaling, stroke widths, and page/canvas boundaries.
+
+### Content QA
+
+```bash
+python scripts/extract_text.py output.odg > qa/text.txt
+python scripts/extract_shapes.py output.odg > qa/shapes.json
+```
+
+Check labels, object counts, page names, expected shape types, and missing/duplicated text.
+
+### Package and Geometry QA
+
+```bash
+python scripts/inspect_package.py output.odg > qa/package.json
+python scripts/validate_refs.py output.odg
+```
+
+Check that `mimetype` is first, required XML files exist, media targets exist, manifest entries are present, style references are not broken, and geometry has no zero-size or suspicious negative-size objects.
+
+### Visual QA
+
+LibreOffice Draw export filters vary by installation. Prefer PDF for multi-page drawings, then SVG/PNG when useful:
+
+```bash
+python scripts/render.py output.odg --outdir qa --png
+```
+
+For multi-page ODG files, PDF export is usually the most reliable visual check. Inspect every page for missing images, shifted connectors, wrong fonts, clipped text, changed line widths, and page-size/canvas problems.
+
+### Verification Loop
+
+1. Extract text and shape summaries.
+2. Validate package references and geometry.
+3. Render to PDF/SVG/PNG as relevant.
+4. List concrete issues found.
+5. Fix XML, coordinates, styles, media, or source spec.
+6. Re-run the relevant checks until no unresolved issues remain.
+
+## ODG Notes
+
+- ODG is best for Draw-specific diagrams, not general raster image editing.
+- Coordinates and sizes may use units such as `cm`, `mm`, `in`, or `pt`; preserve units unless intentionally changing layout.
+- Connectors can depend on glue points and object IDs. After moving shapes, verify connector routing visually.
+- Embedded images require manifest entries and stable package paths.
+- Font substitution can change text fit. Always render/export before delivering a user-facing ODG.
