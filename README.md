@@ -132,10 +132,26 @@ Recommended optional tools:
 - `pdftoppm` from Poppler, when you want PDF pages rendered to images
 - Pandoc, for some conversion fallback workflows
 
-On macOS, install Poppler with Homebrew:
+Install all optional tools on macOS with Homebrew:
 
 ```bash
-brew install poppler
+brew install --cask libreoffice
+brew install poppler pandoc
+```
+
+Install all optional tools on Windows with winget:
+
+```powershell
+winget install --id TheDocumentFoundation.LibreOffice -e
+winget install --id oschwartz10612.Poppler -e
+winget install --id JohnMacFarlane.Pandoc -e
+```
+
+Install all optional tools on Ubuntu with apt:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y libreoffice poppler-utils pandoc
 ```
 
 LibreOffice usually provides `soffice` inside the app bundle, not directly on the shell `PATH`:
