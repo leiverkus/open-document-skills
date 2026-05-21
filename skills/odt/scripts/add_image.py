@@ -15,6 +15,7 @@ from odt_common import (
     parse_xml_from_zip,
     q,
     unique_picture_name,
+    update_meta_for_edit,
     xml_bytes,
 )
 
@@ -62,12 +63,18 @@ def main() -> None:
     )
 
     ensure_manifest_entry(manifest, package_path, media_type_for(args.image))
+    meta = parse_xml_from_zip(args.input_odt, "meta.xml")
+    update_meta_for_edit(meta)
     copy_into_package(
         args.input_odt,
         args.output,
         package_path,
         args.image,
-        {"content.xml": xml_bytes(content), "META-INF/manifest.xml": xml_bytes(manifest)},
+        {
+            "content.xml": xml_bytes(content),
+            "META-INF/manifest.xml": xml_bytes(manifest),
+            "meta.xml": xml_bytes(meta),
+        },
     )
     print(package_path)
 

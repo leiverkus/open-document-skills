@@ -24,9 +24,13 @@ from lib.odf_common import (  # noqa: E402, I001
     find_soffice,
     media_type_for,
     pack_dir_as_odf,
+    pack_flat_odf,
     parse_xml_from_zip,
+    replace_text_in_element,
     unique_picture_name,
+    unpack_flat_odf,
     unpack_to_temp,
+    update_meta_for_edit as _update_meta_base,
     write_odf_with_replacements as _write_base,
     xml_bytes,
 )
@@ -44,10 +48,14 @@ __all__ = [
     "find_slides",
     "media_type_for",
     "pack_dir_as_odp",
+    "pack_flat_odf",
     "parse_xml_from_zip",
+    "replace_text_in_element",
     "select_slide",
     "unique_picture_name",
+    "unpack_flat_odf",
     "unpack_to_temp",
+    "update_meta_for_edit",
     "write_odp_with_replacements",
     "xml_bytes",
 ]
@@ -115,6 +123,10 @@ def write_odp_with_replacements(
     replacements: dict[str, bytes],
 ) -> None:
     _write_base(input_odp, output_odp, replacements, ODP_MIMETYPE)
+
+
+def update_meta_for_edit(meta_root: ET.Element) -> None:
+    _update_meta_base(meta_root, NS, q)
 
 
 def find_slides(content_root: ET.Element) -> list[ET.Element]:

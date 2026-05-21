@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.2.0 - 2026-05-21
+
+Inline-preserving text edits, meta lifecycle, and flat ODF (Git-friendly) support.
+
+### Added
+
+- `replace_text_in_element()` in `lib/odf_common.py`: slot-based walker that preserves `text:span`, `text:note`, `text:bookmark`, `text:a`, and handles matches straddling child boundaries.
+- `update_meta_for_edit()` in `lib/odf_common.py`: writes `meta:modification-date`, `meta:generator` (`open-document-skills/<VERSION>`), and increments `meta:editing-cycles` on every edit operation.
+- `pack_flat_odf()` and `unpack_flat_odf()` in `lib/odf_common.py`: convert between zipped ODF packages and flat single-XML `.fodt`/`.fodp`/`.fods`/`.fodg` files. Pictures are embedded as base64 inside `<office:binary-data>` when packing, extracted back to `Pictures/` on unpack, manifest rebuilt.
+- Eight new CLI scripts (`pack_fodt.py`/`unpack_fodt.py` and the equivalents for ODP/ODS/ODG).
+- `VERSION` constant in `lib/odf_common.py` (kept in sync with `pyproject.toml` via release checklist).
+- Twelve new tests: walker structure preservation (inline span, straddle, footnote), `update_meta_for_edit` unit tests, meta lifecycle across all 8 edit scripts, flat-ODF roundtrips for all four formats, embedded-image base64 verification, manifest rebuild, LibreOffice opens `.fodt` integration test.
+
+### Changed
+
+- `replace_text.py` for ODT/ODP/ODG: switched from destructive `set_plain_text` (which called `clear_children`) to `replace_text_in_element`. Inline children are now preserved.
+- All eight edit scripts (`replace_text` ×3, `add_image` ×3, `clone_slide`, `replace_cells`) now update `meta.xml` on save.
+- `CONTRIBUTING.md` release checklist now requires bumping `VERSION` in `lib/odf_common.py` alongside `pyproject.toml`.
+- `README.md` and `docs/script-reference.md`: added the 8 flat-ODF scripts.
+- `docs/workflows.md`: added "Flat ODF (Git-friendly)" section.
+
 ## v0.1.6 - 2026-05-21
 
 Type hints, test coverage, and documentation slimming.

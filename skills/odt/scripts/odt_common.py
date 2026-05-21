@@ -24,8 +24,12 @@ from lib.odf_common import (  # noqa: E402, I001
     ensure_manifest_entry as _ensure_base,
     media_type_for,
     pack_dir_as_odf,
+    pack_flat_odf,
     parse_xml_from_zip,
+    replace_text_in_element,
     unique_picture_name,
+    unpack_flat_odf,
+    update_meta_for_edit as _update_meta_base,
     write_odf_with_replacements as _write_base,
     xml_bytes,
 )
@@ -40,8 +44,12 @@ __all__ = [
     "ensure_manifest_entry",
     "media_type_for",
     "pack_dir_as_odt",
+    "pack_flat_odf",
     "parse_xml_from_zip",
+    "replace_text_in_element",
     "unique_picture_name",
+    "unpack_flat_odf",
+    "update_meta_for_edit",
     "write_odt_with_replacements",
     "xml_bytes",
 ]
@@ -105,3 +113,7 @@ def write_odt_with_replacements(
     replacements: dict[str, bytes],
 ) -> None:
     _write_base(input_odt, output_odt, replacements, ODT_MIMETYPE)
+
+
+def update_meta_for_edit(meta_root: ET.Element) -> None:
+    _update_meta_base(meta_root, NS, q)

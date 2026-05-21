@@ -12,6 +12,7 @@ from ods_common import (
     parse_a1,
     parse_xml_from_zip,
     set_cell_value,
+    update_meta_for_edit,
     write_ods_with_replacements,
     xml_bytes,
 )
@@ -37,7 +38,13 @@ def main() -> None:
         else:
             set_cell_value(cell, value)
         count += 1
-    write_ods_with_replacements(args.input_ods, args.output, {"content.xml": xml_bytes(content)})
+    meta = parse_xml_from_zip(args.input_ods, "meta.xml")
+    update_meta_for_edit(meta)
+    write_ods_with_replacements(
+        args.input_ods,
+        args.output,
+        {"content.xml": xml_bytes(content), "meta.xml": xml_bytes(meta)},
+    )
     print(f"cells updated: {count}")
 
 

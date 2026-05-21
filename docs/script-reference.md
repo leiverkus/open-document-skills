@@ -13,6 +13,8 @@ All scripts use the Python standard library.
 | `replace_text.py` | XML-safe text replacement in document content. |
 | `add_image.py` | Add an image to the document package and manifest. |
 | `pack_odt.py` | Repack an unpacked ODT directory with correct `mimetype` handling. |
+| `pack_fodt.py` | Convert a zipped ODT to a flat `.fodt` (single XML, Git-friendly). |
+| `unpack_fodt.py` | Convert a flat `.fodt` back to a zipped `.odt` package. |
 | `render.py` | Render ODT to PDF, optionally PNG pages, through LibreOffice/Poppler. |
 | `validate_refs.py` | Validate manifest and embedded image references. |
 
@@ -28,6 +30,8 @@ All scripts use the Python standard library.
 | `replace_text.py` | XML-safe text replacement in slides and notes. |
 | `add_image.py` | Add an image to a slide and update package references. |
 | `pack_odp.py` | Repack an unpacked ODP directory with correct `mimetype` handling. |
+| `pack_fodp.py` | Convert a zipped ODP to a flat `.fodp` (single XML, Git-friendly). |
+| `unpack_fodp.py` | Convert a flat `.fodp` back to a zipped `.odp` package. |
 | `render.py` | Render ODP to PDF, optionally PNG pages, through LibreOffice/Poppler. |
 | `validate_refs.py` | Validate manifest and embedded image references. |
 
@@ -43,6 +47,8 @@ All scripts use the Python standard library.
 | `replace_cells.py` | Set values or formulas by sheet and A1 address. |
 | `export_csv.py` | Export one sheet to CSV. |
 | `pack_ods.py` | Repack an unpacked ODS directory with correct `mimetype` handling. |
+| `pack_fods.py` | Convert a zipped ODS to a flat `.fods` (single XML, Git-friendly). |
+| `unpack_fods.py` | Convert a flat `.fods` back to a zipped `.ods` package. |
 | `recalc.py` | Recalculate a workbook through LibreOffice and validate references. |
 | `validate_refs.py` | Validate manifest/package references and basic formula errors. |
 
@@ -58,6 +64,8 @@ All scripts use the Python standard library.
 | `replace_text.py` | XML-safe text replacement in drawing content. |
 | `add_image.py` | Add an image to a drawing page and update package references. |
 | `pack_odg.py` | Repack an unpacked ODG directory with correct `mimetype` handling. |
+| `pack_fodg.py` | Convert a zipped ODG to a flat `.fodg` (single XML, Git-friendly). |
+| `unpack_fodg.py` | Convert a flat `.fodg` back to a zipped `.odg` package. |
 | `render.py` | Export ODG to PDF, SVG, and/or PNG through LibreOffice. |
 | `validate_refs.py` | Validate manifest, embedded image references, and basic geometry values. |
 

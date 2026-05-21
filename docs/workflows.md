@@ -101,6 +101,18 @@ Export:
 python3 skills/odg/scripts/render.py example.odg --outdir qa --formats pdf,svg,png
 ```
 
+## Flat ODF (Git-friendly)
+
+Every format has `pack_*` and `unpack_*` scripts that convert between the zipped ODF package and a flat single-XML file (`.fodt`, `.fodp`, `.fods`, `.fodg`). Flat ODF is part of the OASIS specification, opens directly in LibreOffice, and produces readable diffs under Git.
+
+```bash
+python3 skills/odt/scripts/pack_fodt.py document.odt -o document.fodt
+git diff document.fodt
+python3 skills/odt/scripts/unpack_fodt.py document.fodt -o document.odt
+```
+
+Embedded images are inlined as base64 inside `<office:binary-data>` when packing, and extracted back to `Pictures/` on unpack. The mimetype is preserved via the `office:mimetype` attribute on the root.
+
 ## Examples
 
 Build all example files:

@@ -23,8 +23,12 @@ from lib.odf_common import (  # noqa: E402, I001
     local_name,
     media_type_for,
     pack_dir_as_odf,
+    pack_flat_odf,
     parse_xml_from_zip,
+    replace_text_in_element,
     unique_picture_name,
+    unpack_flat_odf,
+    update_meta_for_edit as _update_meta_base,
     write_odf_with_replacements as _write_base,
     xml_bytes,
 )
@@ -44,9 +48,13 @@ __all__ = [
     "local_name",
     "media_type_for",
     "pack_dir_as_odg",
+    "pack_flat_odf",
     "page_name",
     "parse_xml_from_zip",
+    "replace_text_in_element",
     "unique_picture_name",
+    "unpack_flat_odf",
+    "update_meta_for_edit",
     "write_odg_with_replacements",
     "xml_bytes",
 ]
@@ -118,6 +126,10 @@ def write_odg_with_replacements(
     replacements: dict[str, bytes],
 ) -> None:
     _write_base(input_odg, output_odg, replacements, ODG_MIMETYPE)
+
+
+def update_meta_for_edit(meta_root: ET.Element) -> None:
+    _update_meta_base(meta_root, NS, q)
 
 
 def element_text(element: ET.Element) -> str:

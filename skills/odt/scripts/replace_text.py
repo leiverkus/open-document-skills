@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Replace text in ODT XML, optionally scoped to content.xml or styles.xml."""
+"""Replace text in ODT XML, optionally scoped to content.xml or styles.xml.
+
+Preserves inline children (text:span, text:note, text:bookmark, text:a) and
+handles matches that straddle child element boundaries.
+"""
 
 from __future__ import annotations
 
@@ -7,35 +11,21 @@ import argparse
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from odt_common import clear_children, parse_xml_from_zip, q, write_odt_with_replacements, xml_bytes
-
-
-def element_text(element: ET.Element) -> str:
-    parts: list[str] = []
-    for node in element.iter():
-        if node.text:
-            parts.append(node.text)
-        if node.tail:
-            parts.append(node.tail)
-    return "".join(parts)
-
-
-def set_plain_text(element: ET.Element, value: str) -> None:
-    attrs = dict(element.attrib)
-    clear_children(element)
-    element.attrib.clear()
-    element.attrib.update(attrs)
-    element.text = value
+from odt_common import (
+    parse_xml_from_zip,
+    q,
+    replace_text_in_element,
+    update_meta_for_edit,
+    write_odt_with_replacements,
+    xml_bytes,
+)
 
 
 def replace_in_root(root: ET.Element, old: str, new: str) -> int:
     count = 0
     for node in root.iter():
         if node.tag in {q("text", "p"), q("text", "h")}:
-            current = element_text(node)
-            if old in current:
-                set_plain_text(node, current.replace(old, new))
-                count += 1
+            count += replace_text_in_element(node, old, new)
     return count
 
 
@@ -58,6 +48,10 @@ def main() -> None:
         styles = parse_xml_from_zip(args.input_odt, "styles.xml")
         total += replace_in_root(styles, args.old, args.new)
         replacements["styles.xml"] = xml_bytes(styles)
+
+    meta = parse_xml_from_zip(args.input_odt, "meta.xml")
+    update_meta_for_edit(meta)
+    replacements["meta.xml"] = xml_bytes(meta)
 
     write_odt_with_replacements(args.input_odt, args.output, replacements)
     print(f"replacements: {total}")

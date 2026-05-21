@@ -7,14 +7,50 @@ own NS dict, MIMETYPE constant, and format-specific helpers.
 
 from __future__ import annotations
 
+import base64
 import mimetypes
 import posixpath
 import shutil
 import tempfile
 import zipfile
 from collections.abc import Callable, Mapping, Set
+from datetime import datetime, timezone
 from pathlib import Path
 from xml.etree import ElementTree as ET
+
+VERSION = "0.2.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
+
+ODF_NAMESPACES: dict[str, str] = {
+    "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
+    "text": "urn:oasis:names:tc:opendocument:xmlns:text:1.0",
+    "draw": "urn:oasis:names:tc:opendocument:xmlns:drawing:1.0",
+    "style": "urn:oasis:names:tc:opendocument:xmlns:style:1.0",
+    "fo": "urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0",
+    "svg": "urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0",
+    "table": "urn:oasis:names:tc:opendocument:xmlns:table:1.0",
+    "meta": "urn:oasis:names:tc:opendocument:xmlns:meta:1.0",
+    "dc": "http://purl.org/dc/elements/1.1/",
+    "manifest": "urn:oasis:names:tc:opendocument:xmlns:manifest:1.0",
+    "xlink": "http://www.w3.org/1999/xlink",
+    "presentation": "urn:oasis:names:tc:opendocument:xmlns:presentation:1.0",
+    "config": "urn:oasis:names:tc:opendocument:xmlns:config:1.0",
+    "smil": "urn:oasis:names:tc:opendocument:xmlns:smil-compatible:1.0",
+    "anim": "urn:oasis:names:tc:opendocument:xmlns:animation:1.0",
+    "chart": "urn:oasis:names:tc:opendocument:xmlns:chart:1.0",
+    "form": "urn:oasis:names:tc:opendocument:xmlns:form:1.0",
+    "script": "urn:oasis:names:tc:opendocument:xmlns:script:1.0",
+    "math": "http://www.w3.org/1998/Math/MathML",
+    "number": "urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0",
+    "of": "urn:oasis:names:tc:opendocument:xmlns:of:1.2",
+    "loext": "urn:org:documentfoundation:names:experimental:office:xmlns:loext:1.0",
+}
+
+FLAT_EXTENSIONS: dict[str, str] = {
+    "application/vnd.oasis.opendocument.text": ".fodt",
+    "application/vnd.oasis.opendocument.presentation": ".fodp",
+    "application/vnd.oasis.opendocument.spreadsheet": ".fods",
+    "application/vnd.oasis.opendocument.graphics": ".fodg",
+}
 
 
 def parse_xml_from_zip(path: Path, member: str) -> ET.Element:
@@ -140,6 +176,60 @@ def ensure_manifest_entry(
     )
 
 
+def update_meta_for_edit(
+    meta_root: ET.Element,
+    ns: Mapping[str, str],
+    q_fn: Callable[[str, str], str],
+) -> None:
+    """Mark an edit in ``meta.xml``: modification-date, generator, editing-cycles.
+
+    Locates or creates the ``<meta:modification-date>``, ``<meta:generator>``,
+    and ``<meta:editing-cycles>`` elements under the document's ``<office:meta>``
+    node. Modification-date is set to the current UTC ISO timestamp.
+    Generator is set to ``open-document-skills/<VERSION>``. Editing-cycles is
+    incremented (or initialised to ``1`` if absent or unparseable).
+
+    Args:
+        meta_root: The root of ``meta.xml`` (typically ``office:document-meta``).
+        ns: Namespace prefix-to-URI mapping; must contain ``office`` and ``meta``.
+        q_fn: Qualified-name builder, e.g. ``q("meta", "generator")``.
+
+    Raises:
+        SystemExit: If no ``office:meta`` element can be located or created.
+    """
+    office_ns: str = ns.get("office", "")
+    meta_tag: str = f"{{{office_ns}}}meta"
+    meta_el: ET.Element | None = meta_root.find(meta_tag)
+    if meta_el is None:
+        if local_name(meta_root.tag) == "meta":
+            meta_el = meta_root
+        else:
+            raise SystemExit("office:meta element not found in meta.xml")
+
+    def _find_or_create(tag: str) -> ET.Element:
+        el: ET.Element | None = meta_el.find(tag)
+        if el is None:
+            el = ET.SubElement(meta_el, tag)
+        return el
+
+    mod_tag: str = q_fn("meta", "modification-date")
+    mod_el: ET.Element = _find_or_create(mod_tag)
+    mod_el.text = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+    gen_tag: str = q_fn("meta", "generator")
+    gen_el: ET.Element = _find_or_create(gen_tag)
+    gen_el.text = f"open-document-skills/{VERSION}"
+
+    cycles_tag: str = q_fn("meta", "editing-cycles")
+    cycles_el: ET.Element = _find_or_create(cycles_tag)
+    current: int
+    try:
+        current = int((cycles_el.text or "0").strip())
+    except ValueError:
+        current = 0
+    cycles_el.text = str(current + 1)
+
+
 def media_type_for(path: Path) -> str:
     """Guess the MIME type for a file path, falling back to octet-stream.
 
@@ -222,6 +312,89 @@ def clear_children(element: ET.Element) -> None:
     element[:] = []
 
 
+def replace_text_in_element(element: ET.Element, old: str, new: str) -> int:
+    """Replace ``old`` with ``new`` in *element*'s text, preserving children.
+
+    Walks all text nodes (``.text`` of *element* and every descendant, plus
+    ``.tail`` of every descendant) in document order. Inline children such as
+    ``text:span``, ``text:note``, ``text:bookmark``, ``text:a`` keep their
+    identity. Matches that straddle child boundaries are still replaced — the
+    new content is placed in the first containing slot, intermediate slots are
+    cleared, and the trailing slot keeps only the suffix after the match.
+
+    Args:
+        element: The element whose textual content should be searched.
+        old: Substring to search for. Empty string is a no-op.
+        new: Replacement string.
+
+    Returns:
+        Number of non-overlapping replacements performed.
+    """
+    if not old:
+        return 0
+
+    slots: list[tuple[ET.Element, str]] = []
+
+    def visit(node: ET.Element, is_root: bool) -> None:
+        slots.append((node, "text"))
+        for child in list(node):
+            visit(child, False)
+        if not is_root:
+            slots.append((node, "tail"))
+
+    visit(element, True)
+
+    values: list[str] = [getattr(n, a) or "" for n, a in slots]
+    combined: str = "".join(values)
+
+    matches: list[tuple[int, int]] = []
+    pos: int = 0
+    while True:
+        i: int = combined.find(old, pos)
+        if i < 0:
+            break
+        matches.append((i, i + len(old)))
+        pos = i + len(old)
+    if not matches:
+        return 0
+
+    offsets: list[int] = []
+    running: int = 0
+    for v in values:
+        offsets.append(running)
+        running += len(v)
+
+    def slot_for(offset: int) -> int:
+        lo: int = 0
+        hi: int = len(values) - 1
+        while lo < hi:
+            mid: int = (lo + hi + 1) // 2
+            if offsets[mid] <= offset:
+                lo = mid
+            else:
+                hi = mid - 1
+        return lo
+
+    for match_start, match_end in reversed(matches):
+        i_slot: int = slot_for(match_start)
+        j_slot: int = slot_for(match_end - 1) if match_end > match_start else i_slot
+        local_i: int = match_start - offsets[i_slot]
+        local_j: int = match_end - offsets[j_slot]
+        if i_slot == j_slot:
+            v = values[i_slot]
+            values[i_slot] = v[:local_i] + new + v[local_j:]
+        else:
+            values[i_slot] = values[i_slot][:local_i] + new
+            for k in range(i_slot + 1, j_slot):
+                values[k] = ""
+            values[j_slot] = values[j_slot][local_j:]
+
+    for (node, attr), value in zip(slots, values):
+        setattr(node, attr, value if value else None)
+
+    return len(matches)
+
+
 def find_soffice() -> str:
     """Locate the LibreOffice/soffice executable.
 
@@ -269,6 +442,219 @@ def unpack_to_temp(path: Path) -> tempfile.TemporaryDirectory[str]:
     with zipfile.ZipFile(path) as archive:
         archive.extractall(temp.name)
     return temp
+
+
+_IMAGE_MAGIC: list[tuple[bytes, str]] = [
+    (b"\x89PNG\r\n\x1a\n", ".png"),
+    (b"\xff\xd8\xff", ".jpg"),
+    (b"GIF87a", ".gif"),
+    (b"GIF89a", ".gif"),
+    (b"<?xml", ".svg"),
+    (b"<svg", ".svg"),
+    (b"BM", ".bmp"),
+    (b"RIFF", ".webp"),
+]
+
+
+def _sniff_image_extension(data: bytes) -> str:
+    for magic, ext in _IMAGE_MAGIC:
+        if data.startswith(magic):
+            return ext
+    return ".bin"
+
+
+def pack_flat_odf(input_zip: Path, output_flat: Path) -> None:
+    """Convert a zipped ODF package to flat (single-XML) ODF.
+
+    The resulting file has a single ``<office:document>`` root with merged
+    content, styles, meta, and settings, plus all embedded pictures encoded
+    inline as ``<office:binary-data>`` children of their ``<draw:image>``.
+
+    Args:
+        input_zip: Source ODF file (``.odt``/``.odp``/``.ods``/``.odg``).
+        output_flat: Destination flat ODF file (``.fodt``/``.fodp``/...).
+    """
+    for prefix, uri in ODF_NAMESPACES.items():
+        ET.register_namespace(prefix, uri)
+
+    office_ns: str = ODF_NAMESPACES["office"]
+    xlink_ns: str = ODF_NAMESPACES["xlink"]
+    draw_ns: str = ODF_NAMESPACES["draw"]
+
+    with zipfile.ZipFile(input_zip) as archive:
+        mimetype: str = archive.read("mimetype").decode("ascii").strip()
+        meta_root: ET.Element = ET.fromstring(archive.read("meta.xml"))
+        settings_root: ET.Element = ET.fromstring(archive.read("settings.xml"))
+        styles_root: ET.Element = ET.fromstring(archive.read("styles.xml"))
+        content_root: ET.Element = ET.fromstring(archive.read("content.xml"))
+        pictures: dict[str, bytes] = {
+            name: archive.read(name) for name in archive.namelist() if name.startswith("Pictures/")
+        }
+
+    flat_root: ET.Element = ET.Element(
+        f"{{{office_ns}}}document",
+        {
+            f"{{{office_ns}}}version": "1.3",
+            f"{{{office_ns}}}mimetype": mimetype,
+        },
+    )
+
+    def _children_matching(source: ET.Element, names: set[str]) -> list[ET.Element]:
+        return [child for child in source if local_name(child.tag) in names]
+
+    for child in _children_matching(meta_root, {"meta"}):
+        flat_root.append(child)
+    for child in _children_matching(settings_root, {"settings"}):
+        flat_root.append(child)
+    for child in _children_matching(content_root, {"scripts"}):
+        flat_root.append(child)
+    for child in _children_matching(styles_root, {"font-face-decls"}):
+        flat_root.append(child)
+    for child in _children_matching(styles_root, {"styles"}):
+        flat_root.append(child)
+
+    merged_auto: ET.Element = ET.SubElement(flat_root, f"{{{office_ns}}}automatic-styles")
+    for source in (styles_root, content_root):
+        for auto in _children_matching(source, {"automatic-styles"}):
+            for grandchild in list(auto):
+                merged_auto.append(grandchild)
+
+    for child in _children_matching(styles_root, {"master-styles"}):
+        flat_root.append(child)
+    for child in _children_matching(content_root, {"body"}):
+        flat_root.append(child)
+
+    for image in flat_root.iter(f"{{{draw_ns}}}image"):
+        href: str | None = image.attrib.get(f"{{{xlink_ns}}}href")
+        if href and href in pictures:
+            for attr in (
+                f"{{{xlink_ns}}}href",
+                f"{{{xlink_ns}}}type",
+                f"{{{xlink_ns}}}show",
+                f"{{{xlink_ns}}}actuate",
+            ):
+                image.attrib.pop(attr, None)
+            binary: ET.Element = ET.SubElement(image, f"{{{office_ns}}}binary-data")
+            binary.text = base64.b64encode(pictures[href]).decode("ascii")
+
+    output_flat.write_bytes(xml_bytes(flat_root))
+
+
+def unpack_flat_odf(input_flat: Path, output_zip: Path) -> None:
+    """Convert a flat ODF file back to a zipped ODF package.
+
+    Splits the single ``<office:document>`` root into the standard four
+    XML files (content/styles/meta/settings), extracts inline pictures
+    from ``<office:binary-data>`` blobs into ``Pictures/`` entries, and
+    rebuilds ``META-INF/manifest.xml``.
+
+    Args:
+        input_flat: Source flat ODF file.
+        output_zip: Destination zipped ODF file.
+    """
+    for prefix, uri in ODF_NAMESPACES.items():
+        ET.register_namespace(prefix, uri)
+
+    office_ns: str = ODF_NAMESPACES["office"]
+    xlink_ns: str = ODF_NAMESPACES["xlink"]
+    draw_ns: str = ODF_NAMESPACES["draw"]
+    style_ns: str = ODF_NAMESPACES["style"]
+    manifest_ns: str = ODF_NAMESPACES["manifest"]
+
+    flat_root: ET.Element = ET.parse(input_flat).getroot()
+    mimetype: str | None = flat_root.attrib.get(f"{{{office_ns}}}mimetype")
+    if not mimetype:
+        raise SystemExit("flat ODF root missing office:mimetype attribute")
+
+    meta_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-meta", {f"{{{office_ns}}}version": "1.3"})
+    settings_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-settings", {f"{{{office_ns}}}version": "1.3"})
+    styles_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-styles", {f"{{{office_ns}}}version": "1.3"})
+    content_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-content", {f"{{{office_ns}}}version": "1.3"})
+
+    styles_auto: ET.Element = ET.SubElement(styles_doc, f"{{{office_ns}}}automatic-styles")
+    content_auto: ET.Element = ET.SubElement(content_doc, f"{{{office_ns}}}automatic-styles")
+
+    for child in list(flat_root):
+        name: str = local_name(child.tag)
+        if name == "meta":
+            meta_doc.append(child)
+        elif name == "settings":
+            settings_doc.append(child)
+        elif name == "scripts":
+            content_doc.append(child)
+        elif name == "font-face-decls":
+            styles_doc.append(child)
+        elif name == "styles":
+            styles_doc.append(child)
+        elif name == "automatic-styles":
+            for grandchild in list(child):
+                if grandchild.tag == f"{{{style_ns}}}page-layout":
+                    styles_auto.append(grandchild)
+                else:
+                    content_auto.append(grandchild)
+        elif name == "master-styles":
+            styles_doc.append(child)
+        elif name == "body":
+            content_doc.append(child)
+
+    pictures: dict[str, bytes] = {}
+    existing_names: set[str] = set()
+    for image in content_doc.iter(f"{{{draw_ns}}}image"):
+        binary: ET.Element | None = image.find(f"{{{office_ns}}}binary-data")
+        if binary is None or not binary.text:
+            continue
+        data: bytes = base64.b64decode(binary.text.strip())
+        ext: str = _sniff_image_extension(data)
+        candidate: str = unique_picture_name(existing_names, Path(f"image{len(pictures) + 1}{ext}"))
+        existing_names.add(candidate)
+        pictures[candidate] = data
+        image.remove(binary)
+        image.set(f"{{{xlink_ns}}}href", candidate)
+        image.set(f"{{{xlink_ns}}}type", "simple")
+        image.set(f"{{{xlink_ns}}}show", "embed")
+        image.set(f"{{{xlink_ns}}}actuate", "onLoad")
+
+    manifest_doc: ET.Element = ET.Element(
+        f"{{{manifest_ns}}}manifest",
+        {f"{{{manifest_ns}}}version": "1.3"},
+    )
+    ET.SubElement(
+        manifest_doc,
+        f"{{{manifest_ns}}}file-entry",
+        {
+            f"{{{manifest_ns}}}full-path": "/",
+            f"{{{manifest_ns}}}media-type": mimetype,
+            f"{{{manifest_ns}}}version": "1.3",
+        },
+    )
+    for name in ("content.xml", "styles.xml", "meta.xml", "settings.xml"):
+        ET.SubElement(
+            manifest_doc,
+            f"{{{manifest_ns}}}file-entry",
+            {
+                f"{{{manifest_ns}}}full-path": name,
+                f"{{{manifest_ns}}}media-type": "text/xml",
+            },
+        )
+    for picture_path in pictures:
+        ET.SubElement(
+            manifest_doc,
+            f"{{{manifest_ns}}}file-entry",
+            {
+                f"{{{manifest_ns}}}full-path": picture_path,
+                f"{{{manifest_ns}}}media-type": media_type_for(Path(picture_path)),
+            },
+        )
+
+    with zipfile.ZipFile(output_zip, "w") as archive:
+        archive.writestr("mimetype", mimetype, compress_type=zipfile.ZIP_STORED)
+        archive.writestr("content.xml", xml_bytes(content_doc), compress_type=zipfile.ZIP_DEFLATED)
+        archive.writestr("styles.xml", xml_bytes(styles_doc), compress_type=zipfile.ZIP_DEFLATED)
+        archive.writestr("meta.xml", xml_bytes(meta_doc), compress_type=zipfile.ZIP_DEFLATED)
+        archive.writestr("settings.xml", xml_bytes(settings_doc), compress_type=zipfile.ZIP_DEFLATED)
+        archive.writestr("META-INF/manifest.xml", xml_bytes(manifest_doc), compress_type=zipfile.ZIP_DEFLATED)
+        for path, data in pictures.items():
+            archive.writestr(path, data, compress_type=zipfile.ZIP_DEFLATED)
 
 
 def local_name(tag: str) -> str:

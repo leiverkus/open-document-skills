@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Replace text in ODP slides, optionally scoped to a slide and/or notes."""
+"""Replace text in ODP slides, optionally scoped to a slide and/or notes.
+
+Preserves inline children (text:span, text:note, text:a) and handles matches
+that straddle child element boundaries.
+"""
 
 from __future__ import annotations
 
@@ -7,25 +11,15 @@ import argparse
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from odp_common import NS, clear_children, parse_xml_from_zip, select_slide, write_odp_with_replacements, xml_bytes
-
-
-def paragraph_text(paragraph: ET.Element) -> str:
-    parts: list[str] = []
-    for node in paragraph.iter():
-        if node.text:
-            parts.append(node.text)
-        if node.tail:
-            parts.append(node.tail)
-    return "".join(parts)
-
-
-def set_plain_text(paragraph: ET.Element, value: str) -> None:
-    attrs = dict(paragraph.attrib)
-    clear_children(paragraph)
-    paragraph.attrib.clear()
-    paragraph.attrib.update(attrs)
-    paragraph.text = value
+from odp_common import (
+    NS,
+    parse_xml_from_zip,
+    replace_text_in_element,
+    select_slide,
+    update_meta_for_edit,
+    write_odp_with_replacements,
+    xml_bytes,
+)
 
 
 def iter_target_paragraphs(root: ET.Element, slide: str | None, include_notes: bool, notes_only: bool):
@@ -36,7 +30,6 @@ def iter_target_paragraphs(root: ET.Element, slide: str | None, include_notes: b
             page_copy = ET.fromstring(ET.tostring(page))
             for copied_notes in page_copy.findall("presentation:notes", NS):
                 page_copy.remove(copied_notes)
-            # Match paragraphs by position in the original visible subtree.
             visible_count = len(page_copy.findall(".//text:p", NS))
             yield from page.findall(".//text:p", NS)[:visible_count]
         if include_notes or notes_only:
@@ -58,12 +51,15 @@ def main() -> None:
     content = parse_xml_from_zip(args.input_odp, "content.xml")
     count = 0
     for paragraph in iter_target_paragraphs(content, args.slide, args.include_notes, args.notes_only):
-        current = paragraph_text(paragraph)
-        if args.old in current:
-            set_plain_text(paragraph, current.replace(args.old, args.new))
-            count += 1
+        count += replace_text_in_element(paragraph, args.old, args.new)
 
-    write_odp_with_replacements(args.input_odp, args.output, {"content.xml": xml_bytes(content)})
+    meta = parse_xml_from_zip(args.input_odp, "meta.xml")
+    update_meta_for_edit(meta)
+    write_odp_with_replacements(
+        args.input_odp,
+        args.output,
+        {"content.xml": xml_bytes(content), "meta.xml": xml_bytes(meta)},
+    )
     print(f"replacements: {count}")
 
 

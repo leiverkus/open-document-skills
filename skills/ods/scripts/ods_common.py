@@ -21,7 +21,10 @@ if str(_repo_root) not in sys.path:
 from lib.odf_common import (  # noqa: E402, I001
     find_soffice,
     pack_dir_as_odf,
+    pack_flat_odf,
     parse_xml_from_zip,
+    unpack_flat_odf,
+    update_meta_for_edit as _update_meta_base,
     write_odf_with_replacements as _write_base,
     xml_bytes,
 )
@@ -42,11 +45,14 @@ __all__ = [
     "index_to_col",
     "iter_sheets",
     "pack_dir_as_ods",
+    "pack_flat_odf",
     "parse_a1",
     "parse_xml_from_zip",
     "repeated",
     "set_cell_value",
     "sheet_name",
+    "unpack_flat_odf",
+    "update_meta_for_edit",
     "write_csv",
     "write_ods_with_replacements",
     "xml_bytes",
@@ -84,6 +90,10 @@ def write_ods_with_replacements(
     replacements: dict[str, bytes],
 ) -> None:
     _write_base(input_ods, output_ods, replacements, ODS_MIMETYPE)
+
+
+def update_meta_for_edit(meta_root: ET.Element) -> None:
+    _update_meta_base(meta_root, NS, q)
 
 
 def col_to_index(col: str) -> int:

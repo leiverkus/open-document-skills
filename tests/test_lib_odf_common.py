@@ -14,6 +14,7 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 from lib.odf_common import (
+    VERSION,
     clear_children,
     copy_into_package,
     ensure_manifest_entry,
@@ -22,14 +23,18 @@ from lib.odf_common import (
     media_type_for,
     pack_dir_as_odf,
     parse_xml_from_zip,
+    replace_text_in_element,
     unique_picture_name,
     unpack_to_temp,
+    update_meta_for_edit,
     write_odf_with_replacements,
     xml_bytes,
 )
 
 NS = {
     "manifest": "urn:oasis:names:tc:opendocument:xmlns:manifest:1.0",
+    "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
+    "meta": "urn:oasis:names:tc:opendocument:xmlns:meta:1.0",
 }
 
 
@@ -170,6 +175,104 @@ class LibOdfCommonTests(unittest.TestCase):
         with unittest.mock.patch("lib.odf_common.shutil.which", return_value="/usr/bin/soffice"):
             result = find_soffice()
             self.assertEqual(result, "/usr/bin/soffice")
+
+    def test_replace_text_simple(self) -> None:
+        p = ET.fromstring("<p>Hello World</p>")
+        n = replace_text_in_element(p, "World", "ODF")
+        self.assertEqual(n, 1)
+        self.assertEqual(p.text, "Hello ODF")
+
+    def test_replace_text_preserves_child(self) -> None:
+        p = ET.fromstring("<p>Hi <span>bold</span> and rest</p>")
+        n = replace_text_in_element(p, "Hi", "Hello")
+        self.assertEqual(n, 1)
+        self.assertEqual(p.text, "Hello ")
+        span = p.find("span")
+        assert span is not None
+        self.assertEqual(span.text, "bold")
+        self.assertEqual(span.tail, " and rest")
+
+    def test_replace_text_in_child_tail(self) -> None:
+        p = ET.fromstring("<p>x<span>y</span>FOO bar</p>")
+        n = replace_text_in_element(p, "FOO", "BAZ")
+        self.assertEqual(n, 1)
+        span = p.find("span")
+        assert span is not None
+        self.assertEqual(span.tail, "BAZ bar")
+
+    def test_replace_text_straddles_child(self) -> None:
+        p = ET.fromstring("<p>{{NA<span>ME</span>}}</p>")
+        n = replace_text_in_element(p, "{{NAME}}", "Patrick")
+        self.assertEqual(n, 1)
+        self.assertEqual(p.text, "Patrick")
+        span = p.find("span")
+        assert span is not None
+        # span element is preserved structurally but its content/tail are emptied.
+        self.assertIsNone(span.text)
+        self.assertIsNone(span.tail)
+
+    def test_replace_text_multiple_non_overlapping(self) -> None:
+        p = ET.fromstring("<p>aaXaaXaa</p>")
+        n = replace_text_in_element(p, "X", "Y")
+        self.assertEqual(n, 2)
+        self.assertEqual(p.text, "aaYaaYaa")
+
+    def test_replace_text_empty_old_is_noop(self) -> None:
+        p = ET.fromstring("<p>Hello</p>")
+        n = replace_text_in_element(p, "", "x")
+        self.assertEqual(n, 0)
+        self.assertEqual(p.text, "Hello")
+
+    def test_replace_text_no_match(self) -> None:
+        p = ET.fromstring("<p>Hello <span>x</span></p>")
+        n = replace_text_in_element(p, "missing", "x")
+        self.assertEqual(n, 0)
+        self.assertEqual(p.text, "Hello ")
+
+    def test_replace_text_match_consumes_grandchild(self) -> None:
+        p = ET.fromstring("<p>A<x>B<y>C</y>D</x>E</p>")
+        n = replace_text_in_element(p, "ABCDE", "Z")
+        self.assertEqual(n, 1)
+        self.assertEqual(p.text, "Z")
+        # Structure preserved
+        x = p.find("x")
+        assert x is not None
+        y = x.find("y")
+        assert y is not None
+
+    def test_update_meta_creates_missing_elements(self) -> None:
+        root = ET.Element(q("office", "document-meta"))
+        ET.SubElement(root, q("office", "meta"))
+        update_meta_for_edit(root, NS, q)
+        meta = root.find(q("office", "meta"))
+        assert meta is not None
+        self.assertIsNotNone(meta.find(q("meta", "modification-date")).text)
+        self.assertEqual(
+            meta.find(q("meta", "generator")).text,
+            f"open-document-skills/{VERSION}",
+        )
+        self.assertEqual(meta.find(q("meta", "editing-cycles")).text, "1")
+
+    def test_update_meta_increments_existing_cycles(self) -> None:
+        root = ET.Element(q("office", "document-meta"))
+        meta = ET.SubElement(root, q("office", "meta"))
+        cycles = ET.SubElement(meta, q("meta", "editing-cycles"))
+        cycles.text = "5"
+        update_meta_for_edit(root, NS, q)
+        self.assertEqual(meta.find(q("meta", "editing-cycles")).text, "6")
+
+    def test_update_meta_unparseable_cycles_resets_to_one(self) -> None:
+        root = ET.Element(q("office", "document-meta"))
+        meta = ET.SubElement(root, q("office", "meta"))
+        cycles = ET.SubElement(meta, q("meta", "editing-cycles"))
+        cycles.text = "not-a-number"
+        update_meta_for_edit(root, NS, q)
+        self.assertEqual(meta.find(q("meta", "editing-cycles")).text, "1")
+
+    def test_update_meta_raises_without_meta_element(self) -> None:
+        root = ET.Element("garbage")
+        with self.assertRaises(SystemExit):
+            update_meta_for_edit(root, NS, q)
 
     def test_find_soffice_not_found(self) -> None:
         with (

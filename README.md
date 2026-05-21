@@ -184,6 +184,8 @@ python skills/odt/scripts/extract_text.py output.odt
 python skills/odt/scripts/inspect_package.py output.odt
 python skills/odt/scripts/replace_text.py input.odt "{{NAME}}" "Patrick Leiverkus" -o output.odt
 python skills/odt/scripts/add_image.py input.odt figure.png -o output.odt
+python skills/odt/scripts/pack_fodt.py output.odt -o output.fodt
+python skills/odt/scripts/unpack_fodt.py output.fodt -o output.odt
 python skills/odt/scripts/validate_refs.py output.odt
 ```
 
@@ -320,6 +322,18 @@ Some workflows are intentionally optional because they require LibreOffice:
 
 The skills treat these as QA or interoperability steps. Native ODF package generation and XML-safe edits remain the preferred path when the target deliverable is an ODF file.
 
+## Flat ODF (Git-friendly)
+
+Every format has `pack_*` and `unpack_*` scripts that convert between the zipped ODF package and a flat single-XML file (`.fodt`, `.fodp`, `.fods`, `.fodg`). The flat form is part of the OASIS specification, opens directly in LibreOffice, and produces readable diffs under Git. Embedded images are inlined as base64 on pack and extracted back to `Pictures/` on unpack.
+
+```bash
+python skills/odt/scripts/pack_fodt.py document.odt -o document.fodt
+git diff document.fodt
+python skills/odt/scripts/unpack_fodt.py document.fodt -o document.odt
+```
+
+See [docs/workflows.md](docs/workflows.md#flat-odf-git-friendly) for details.
+
 ## Current Limits
 
 The scripts are intentionally small and conservative.
@@ -329,9 +343,11 @@ They currently cover:
 - minimal direct generation
 - basic package validation
 - text/formula/shape extraction
-- XML-safe replacements
+- XML-safe replacements that preserve inline `text:span`, `text:note`, `text:bookmark`, and `text:a`
 - image embedding
 - repacking with `mimetype` first and uncompressed
+- `meta.xml` lifecycle updates on every edit (`modification-date`, `generator`, `editing-cycles`)
+- flat ODF (`.fodt`/`.fodp`/`.fods`/`.fodg`) roundtrip
 
 They do not yet attempt to fully model every OpenDocument feature, such as:
 
@@ -340,6 +356,7 @@ They do not yet attempt to fully model every OpenDocument feature, such as:
 - advanced Impress animations
 - complex Calc charts, named ranges, protection, and pivot tables
 - advanced Draw glue points, groups, and custom path editing
+- RelaxNG validation against the OASIS ODF 1.3 schema
 
 Those should be added incrementally with fixtures and tests.
 
@@ -363,7 +380,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development and release chec
 
 ## Release Status
 
-Current release: `v0.1.3`.
+Current release: `v0.2.0`.
 
 This version is intended as a practical starting point: useful for direct ODF generation and inspection, with conservative scripts and growing test coverage. More advanced ODF features should be added incrementally with fixtures and tests.
 

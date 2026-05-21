@@ -109,7 +109,8 @@ Each skill directory should contain:
 3. Run `ruff check . && ruff format --check .`.
 4. Run `python3 examples/build_examples.py --render --png` when LibreOffice and Poppler are available.
 5. Update `CHANGELOG.md` and `pyproject.toml` version.
-6. Update `version:` in all four `SKILL.md` files.
+6. Update `VERSION` in [lib/odf_common.py](lib/odf_common.py) to match `pyproject.toml` (used as the `meta:generator` string written into edited documents).
+7. Update `version:` in all four `SKILL.md` files.
 7. Commit the release notes.
 8. Create an annotated tag, for example:
 

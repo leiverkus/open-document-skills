@@ -6,7 +6,16 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from odp_common import NS, copy_slide, parse_xml_from_zip, q, select_slide, write_odp_with_replacements, xml_bytes
+from odp_common import (
+    NS,
+    copy_slide,
+    parse_xml_from_zip,
+    q,
+    select_slide,
+    update_meta_for_edit,
+    write_odp_with_replacements,
+    xml_bytes,
+)
 
 
 def apply_replacements(page, replacements: list[str]) -> None:
@@ -49,7 +58,13 @@ def main() -> None:
         raise SystemExit("office:presentation not found")
     presentation.append(clone)
 
-    write_odp_with_replacements(args.input_odp, args.output, {"content.xml": xml_bytes(content)})
+    meta = parse_xml_from_zip(args.input_odp, "meta.xml")
+    update_meta_for_edit(meta)
+    write_odp_with_replacements(
+        args.input_odp,
+        args.output,
+        {"content.xml": xml_bytes(content), "meta.xml": xml_bytes(meta)},
+    )
     print(args.output)
 
 

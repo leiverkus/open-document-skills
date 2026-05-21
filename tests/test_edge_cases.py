@@ -186,6 +186,91 @@ class EdgeCaseTests(unittest.TestCase):
             run_script(scripts / "validate_refs.py", replaced)
             self.assertIn("A & B < C > D", run_script(scripts / "extract_text.py", replaced).stdout)
 
+    def _make_odt_with_paragraph(self, tmp_path: Path, paragraph_xml: str) -> Path:
+        """Create a minimal ODT, then replace its body with a custom text:p element."""
+        scripts = SKILLS / "odt" / "scripts"
+        spec = write_json(tmp_path / "doc.json", {"title": "T", "paragraphs": ["placeholder"]})
+        odt = tmp_path / "doc.odt"
+        run_script(scripts / "create_minimal_odt.py", spec, odt)
+        content = read_zip_xml(odt, "content.xml")
+        text_el = content.find(".//office:text", NS)
+        assert text_el is not None
+        for child in list(text_el):
+            text_el.remove(child)
+        injected = ET.fromstring(paragraph_xml)
+        text_el.append(injected)
+        patched = tmp_path / "patched.odt"
+        write_zip_replacement(odt, patched, "content.xml", content)
+        return patched
+
+    def test_odt_replace_text_preserves_inline_span(self) -> None:
+        """text:span inside a paragraph must survive replacement of surrounding text."""
+        ns_attrs = (
+            'xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" '
+            'xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"'
+        )
+        paragraph = f"<text:p {ns_attrs}>Hallo <text:span>Welt</text:span>!</text:p>"
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odt" / "scripts"
+            patched = self._make_odt_with_paragraph(tmp_path, paragraph)
+            replaced = tmp_path / "replaced.odt"
+            run_script(scripts / "replace_text.py", patched, "Hallo", "Hi", "-o", replaced)
+            content = read_zip_xml(replaced, "content.xml")
+            p = content.find(".//text:p", NS)
+            assert p is not None
+            spans = p.findall("text:span", NS)
+            self.assertEqual(len(spans), 1, "text:span must be preserved")
+            self.assertEqual(spans[0].text, "Welt")
+            self.assertEqual(p.text, "Hi ")
+
+    def test_odt_replace_text_straddles_span_boundary(self) -> None:
+        """A match that crosses an inline element boundary still replaces, span consumed."""
+        ns_attrs = (
+            'xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" '
+            'xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"'
+        )
+        paragraph = f"<text:p {ns_attrs}>{{{{NA<text:span>ME</text:span>}}}}</text:p>"
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odt" / "scripts"
+            patched = self._make_odt_with_paragraph(tmp_path, paragraph)
+            replaced = tmp_path / "replaced.odt"
+            run_script(scripts / "replace_text.py", patched, "{{NAME}}", "Patrick", "-o", replaced)
+            content = read_zip_xml(replaced, "content.xml")
+            p = content.find(".//text:p", NS)
+            assert p is not None
+            self.assertEqual(p.text, "Patrick")
+            run_script(scripts / "validate_refs.py", replaced)
+
+    def test_odt_replace_text_preserves_footnote_ref(self) -> None:
+        """text:note (footnote) inside a paragraph must survive surrounding text edits."""
+        ns_attrs = (
+            'xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" '
+            'xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"'
+        )
+        paragraph = (
+            f'<text:p {ns_attrs}>Hallo <text:note text:id="ftn0" text:note-class="footnote">'
+            f"<text:note-citation>1</text:note-citation>"
+            f"<text:note-body><text:p>Quelle: A</text:p></text:note-body>"
+            f"</text:note> Welt</text:p>"
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odt" / "scripts"
+            patched = self._make_odt_with_paragraph(tmp_path, paragraph)
+            replaced = tmp_path / "replaced.odt"
+            run_script(scripts / "replace_text.py", patched, "Hallo", "Hi", "-o", replaced)
+            content = read_zip_xml(replaced, "content.xml")
+            p = content.find(".//text:p", NS)
+            assert p is not None
+            notes = p.findall("text:note", NS)
+            self.assertEqual(len(notes), 1, "footnote element must be preserved")
+            citation = notes[0].find("text:note-citation", NS)
+            assert citation is not None
+            self.assertEqual(citation.text, "1")
+            self.assertEqual(p.text, "Hi ")
+
     def test_odt_create_fails_on_missing_spec(self) -> None:
         """create_minimal_odt.py must fail cleanly when spec file is missing."""
         with tempfile.TemporaryDirectory() as tmp:

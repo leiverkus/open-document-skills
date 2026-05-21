@@ -64,6 +64,27 @@ class LibreOfficeIntegrationTests(unittest.TestCase):
             self.assertTrue(pdf.exists())
             self.assertGreater(pdf.stat().st_size, 0)
 
+    def test_libreoffice_opens_flat_fodt(self) -> None:
+        import subprocess
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odt" / "scripts"
+            odt = tmp_path / "doc.odt"
+            run_script(scripts / "create_minimal_odt.py", FIXTURES / "odt_document.json", odt)
+            fodt = tmp_path / "doc.fodt"
+            run_script(scripts / "pack_fodt.py", odt, "-o", fodt)
+            outdir = tmp_path / "qa"
+            outdir.mkdir()
+            subprocess.run(
+                [SOFFICE, "--headless", "--convert-to", "pdf", "--outdir", str(outdir), str(fodt)],
+                check=True,
+                capture_output=True,
+            )
+            pdf = outdir / "doc.pdf"
+            self.assertTrue(pdf.exists())
+            self.assertGreater(pdf.stat().st_size, 0)
+
     def test_ods_recalc_smoke(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
