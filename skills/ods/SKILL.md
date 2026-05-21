@@ -4,7 +4,7 @@ description: "Create, read, edit, convert, repair, inspect, analyze, or format O
 triggers: [".ods", "ODS", "OpenDocument Spreadsheet", "Open Office spreadsheet", "LibreOffice Calc", "Calc sheet", "ods-Datei", "OpenDocument-Tabelle", "Tabellenkalkulation"]
 dont_use_for: ["text documents (.odt)", "presentations (.odp)", "analysis where deliverable is not a spreadsheet"]
 license: MIT
-version: "0.2.0"
+version: "0.2.1"
 ---
 
 # ODS creation, editing, and analysis

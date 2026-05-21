@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.2.1 - 2026-05-21
+
+Documentation polish for skill-registry listings (skills.sh).
+
+### Changed
+
+- README hero rewritten: one-line pitch lead, four-line code sample showing the create/edit/pack/validate loop, "Skills at a glance" table with trigger keywords, "Why use these" bullets (stdlib core, structure-preserving, audit-friendly, tested), explicit "What this is not" non-goals section.
+- Added release badge to README.
+
 ## v0.2.0 - 2026-05-21
 
 Inline-preserving text edits, meta lifecycle, and flat ODF (Git-friendly) support.
