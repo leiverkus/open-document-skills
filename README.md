@@ -416,9 +416,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development and release chec
 
 ## Release Status
 
-Current release: `v0.2.0`.
-
-This version is intended as a practical starting point: useful for direct ODF generation and inspection, with conservative scripts and growing test coverage. More advanced ODF features should be added incrementally with fixtures and tests.
+Current release: `v0.2.1`. See [ROADMAP.md](ROADMAP.md) for planned work — next priority is scholarly authoring (citations, cross-references, MathML, footnote API) in v0.3.
 
 ## License
 
