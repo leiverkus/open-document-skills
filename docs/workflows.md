@@ -101,6 +101,38 @@ Export:
 python3 skills/odg/scripts/render.py example.odg --outdir qa --formats pdf,svg,png
 ```
 
+## Scholarly authoring (ODT)
+
+ODT supports footnotes, endnotes, and citation insertion natively. The skill ships direct ODF-native helpers — no DOCX or pandoc-citeproc round-trip needed.
+
+### Footnotes and endnotes
+
+```bash
+python3 skills/odt/scripts/add_footnote.py input.odt \
+    --anchor "claim text" --body "Source: Müller 2020, p. 42" -o output.odt
+python3 skills/odt/scripts/list_notes.py output.odt --json
+```
+
+IDs auto-increment (`ftn0`, `ftn1`, ... or `edn0`, `edn1`, ... for endnotes). Inline children (`text:span`, `text:bookmark`) around the anchor are preserved by the structure-preserving walker introduced in v0.2.0.
+
+### Citations from BibTeX or CSL-JSON
+
+```bash
+# Bulk pandoc-style placeholder replacement (recommended for prose templates):
+python3 skills/odt/scripts/fill_citations.py template.odt \
+    --source refs.bib -o output.odt
+# Scans for [@bibkey] markers and replaces each with text:bibliography-mark.
+
+# Single citation by text anchor:
+python3 skills/odt/scripts/add_citation.py input.odt \
+    --anchor "earlier studies" --source refs.json --key Mueller2020 -o output.odt
+
+# Inspect:
+python3 skills/odt/scripts/list_citations.py output.odt --json
+```
+
+LibreOffice renders citations through its bibliography style and generates the bibliography index from the inserted `text:bibliography-mark` elements. BibTeX support requires `pip install open-document-skills[scholarly]`; CSL-JSON uses stdlib only.
+
 ## Flat ODF (Git-friendly)
 
 Every format has `pack_*` and `unpack_*` scripts that convert between the zipped ODF package and a flat single-XML file (`.fodt`, `.fodp`, `.fods`, `.fodg`). Flat ODF is part of the OASIS specification, opens directly in LibreOffice, and produces readable diffs under Git.

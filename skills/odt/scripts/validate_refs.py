@@ -5,10 +5,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import zipfile
 from pathlib import Path
 
 from odt_common import NS, parse_xml_from_zip, q
+
+PANDOC_PLACEHOLDER = re.compile(r"\[@([A-Za-z0-9_:\-]+)\]")
 
 STYLE_ATTRS = [
     q("text", "style-name"),
@@ -62,6 +65,51 @@ def validate(path: Path) -> dict[str, object]:
             style = node.attrib.get(attr)
             if style and style not in style_names:
                 warnings.append(f"Unknown style reference {style}")
+
+    # Citation checks: duplicate identifiers, leftover pandoc-style placeholders.
+    citation_ids: dict[str, int] = {}
+    for mark in content.iter(q("text", "bibliography-mark")):
+        ident = mark.attrib.get(q("text", "identifier"))
+        if ident:
+            citation_ids[ident] = citation_ids.get(ident, 0) + 1
+    for ident, count in citation_ids.items():
+        if count > 1:
+            warnings.append(f"Duplicate text:bibliography-mark identifier {ident!r} ({count} occurrences)")
+
+    leftover_keys: set[str] = set()
+    for paragraph in content.iter():
+        if paragraph.tag not in {q("text", "p"), q("text", "h")}:
+            continue
+        para_text_parts: list[str] = []
+        if paragraph.text:
+            para_text_parts.append(paragraph.text)
+        for descendant in paragraph.iter():
+            if descendant is paragraph:
+                continue
+            if descendant.text:
+                para_text_parts.append(descendant.text)
+            if descendant.tail:
+                para_text_parts.append(descendant.tail)
+        for match in PANDOC_PLACEHOLDER.finditer("".join(para_text_parts)):
+            leftover_keys.add(match.group(1))
+    for key in sorted(leftover_keys):
+        warnings.append(f"Unfilled citation placeholder [@{key}] (run fill_citations.py)")
+
+    # Note structure checks: duplicate ids, missing body, empty citation.
+    note_ids: dict[str, int] = {}
+    for note in content.iter(q("text", "note")):
+        note_id = note.attrib.get(q("text", "id"))
+        if note_id:
+            note_ids[note_id] = note_ids.get(note_id, 0) + 1
+        body = note.find("text:note-body", NS)
+        if body is None:
+            errors.append(f"text:note missing text:note-body (id={note_id or '?'})")
+        citation = note.find("text:note-citation", NS)
+        if citation is None or not (citation.text or "").strip():
+            warnings.append(f"text:note has empty text:note-citation (id={note_id or '?'})")
+    for note_id, count in note_ids.items():
+        if count > 1:
+            errors.append(f"Duplicate text:note id {note_id!r} ({count} occurrences)")
 
     return {"status": "ok" if not errors else "errors_found", "errors": errors, "warnings": sorted(set(warnings))}
 

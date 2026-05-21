@@ -20,7 +20,7 @@ python skills/odt/scripts/validate_refs.py out.odt
 
 | Skill | LibreOffice app | Smithery | Triggers |
 | --- | --- | --- | --- |
-| [`odt`](skills/odt) | Writer | [smithery.ai/skills/leiverkus/odt](https://smithery.ai/skills/leiverkus/odt) | edit ODT, fill template, add figure, render to PDF |
+| [`odt`](skills/odt) | Writer | [smithery.ai/skills/leiverkus/odt](https://smithery.ai/skills/leiverkus/odt) | edit ODT, fill template, add figure, footnotes, citations, bibliography, render to PDF |
 | [`odp`](skills/odp) | Impress | [smithery.ai/skills/leiverkus/odp](https://smithery.ai/skills/leiverkus/odp) | clone slide, edit notes, add image, render deck |
 | [`ods`](skills/ods) | Calc | [smithery.ai/skills/leiverkus/ods](https://smithery.ai/skills/leiverkus/ods) | set cells/formulas, export CSV, recalculate |
 | [`odg`](skills/odg) | Draw | [smithery.ai/skills/leiverkus/odg](https://smithery.ai/skills/leiverkus/odg) | edit labels, add shape image, export SVG/PNG |
@@ -220,6 +220,8 @@ python skills/odt/scripts/extract_text.py output.odt
 python skills/odt/scripts/inspect_package.py output.odt
 python skills/odt/scripts/replace_text.py input.odt "{{NAME}}" "Patrick Leiverkus" -o output.odt
 python skills/odt/scripts/add_image.py input.odt figure.png -o output.odt
+python skills/odt/scripts/add_footnote.py input.odt --anchor "claim" --body "Source: ..." -o output.odt
+python skills/odt/scripts/fill_citations.py template.odt --source refs.bib -o output.odt
 python skills/odt/scripts/pack_fodt.py output.odt -o output.fodt
 python skills/odt/scripts/unpack_fodt.py output.fodt -o output.odt
 python skills/odt/scripts/validate_refs.py output.odt
@@ -416,7 +418,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development and release chec
 
 ## Release Status
 
-Current release: `v0.2.1`. See [ROADMAP.md](ROADMAP.md) for planned work — next priority is scholarly authoring (citations, cross-references, MathML, footnote API) in v0.3.
+Current release: `v0.3.0` — adds scholarly authoring (footnotes, citations from BibTeX or CSL-JSON, pandoc-style `[@bibkey]` placeholders). See [ROADMAP.md](ROADMAP.md) for what's next: cross-references, MathML, and a DAO template example in v0.4.
 
 ## License
 

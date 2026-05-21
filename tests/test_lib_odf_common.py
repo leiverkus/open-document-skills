@@ -19,6 +19,9 @@ from lib.odf_common import (
     copy_into_package,
     ensure_manifest_entry,
     find_soffice,
+    find_text_position_in_element,
+    insert_after_text_in_element,
+    insert_in_paragraph,
     local_name,
     media_type_for,
     pack_dir_as_odf,
@@ -239,6 +242,107 @@ class LibOdfCommonTests(unittest.TestCase):
         assert x is not None
         y = x.find("y")
         assert y is not None
+
+    def test_find_text_position_simple_text(self) -> None:
+        p = ET.fromstring("<p>Hello World</p>")
+        result = find_text_position_in_element(p, "World")
+        assert result is not None
+        node, attr, offset = result
+        self.assertEqual(node, p)
+        self.assertEqual(attr, "text")
+        self.assertEqual(offset, 6)
+
+    def test_find_text_position_in_child_tail(self) -> None:
+        p = ET.fromstring("<p>x<span>y</span>FOO bar</p>")
+        result = find_text_position_in_element(p, "FOO")
+        assert result is not None
+        node, attr, offset = result
+        self.assertEqual(node.tag, "span")
+        self.assertEqual(attr, "tail")
+        self.assertEqual(offset, 0)
+
+    def test_find_text_position_in_child_text(self) -> None:
+        p = ET.fromstring("<p>Hi <span>marker here</span> tail</p>")
+        result = find_text_position_in_element(p, "marker")
+        assert result is not None
+        node, attr, offset = result
+        self.assertEqual(node.tag, "span")
+        self.assertEqual(attr, "text")
+        self.assertEqual(offset, 0)
+
+    def test_find_text_position_no_match(self) -> None:
+        p = ET.fromstring("<p>Hello</p>")
+        self.assertIsNone(find_text_position_in_element(p, "missing"))
+
+    def test_find_text_position_empty_needle(self) -> None:
+        p = ET.fromstring("<p>Hello</p>")
+        self.assertIsNone(find_text_position_in_element(p, ""))
+
+    def test_insert_after_in_text_slot(self) -> None:
+        p = ET.fromstring("<p>Hello World</p>")
+        note = ET.Element("note")
+        note.text = "x"
+        ok = insert_after_text_in_element(p, "Hello", note)
+        self.assertTrue(ok)
+        self.assertEqual(p.text, "Hello")
+        children = list(p)
+        self.assertEqual(len(children), 1)
+        self.assertEqual(children[0].tag, "note")
+        self.assertEqual(children[0].tail, " World")
+
+    def test_insert_after_in_child_tail_slot(self) -> None:
+        p = ET.fromstring("<p>x<span>y</span>FOO bar</p>")
+        note = ET.Element("note")
+        ok = insert_after_text_in_element(p, "FOO", note)
+        self.assertTrue(ok)
+        # After insertion: <p>x<span>y</span>FOO<note/> bar</p>
+        # — anchor "FOO" is preserved, note comes immediately after.
+        children = list(p)
+        self.assertEqual([c.tag for c in children], ["span", "note"])
+        span = children[0]
+        self.assertEqual(span.tail, "FOO")
+        self.assertEqual(children[1].tail, " bar")
+
+    def test_insert_after_preserves_existing_children(self) -> None:
+        p = ET.fromstring("<p>Hi <span>bold</span> tail FOO end</p>")
+        note = ET.Element("note")
+        ok = insert_after_text_in_element(p, "FOO", note)
+        self.assertTrue(ok)
+        children = list(p)
+        # Span must still be there
+        spans = [c for c in children if c.tag == "span"]
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(spans[0].text, "bold")
+        # Note must be after span
+        self.assertEqual([c.tag for c in children], ["span", "note"])
+
+    def test_insert_after_no_match_returns_false(self) -> None:
+        p = ET.fromstring("<p>Hello</p>")
+        note = ET.Element("note")
+        ok = insert_after_text_in_element(p, "missing", note)
+        self.assertFalse(ok)
+        self.assertEqual(len(list(p)), 0)
+
+    def test_insert_in_paragraph_end_empty(self) -> None:
+        p = ET.fromstring("<p>Hello</p>")
+        note = ET.Element("note")
+        insert_in_paragraph(p, "end", note)
+        self.assertEqual(p.text, "Hello")
+        self.assertEqual(list(p)[-1].tag, "note")
+
+    def test_insert_in_paragraph_start(self) -> None:
+        p = ET.fromstring("<p>Hello world</p>")
+        note = ET.Element("note")
+        insert_in_paragraph(p, "start", note)
+        self.assertIsNone(p.text)
+        children = list(p)
+        self.assertEqual(children[0].tag, "note")
+        self.assertEqual(children[0].tail, "Hello world")
+
+    def test_insert_in_paragraph_invalid_position(self) -> None:
+        p = ET.fromstring("<p>Hello</p>")
+        with self.assertRaises(ValueError):
+            insert_in_paragraph(p, "middle", ET.Element("x"))
 
     def test_update_meta_creates_missing_elements(self) -> None:
         root = ET.Element(q("office", "document-meta"))

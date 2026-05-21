@@ -1,0 +1,18 @@
+{
+  "title": "Template with citation placeholders",
+  "blocks": [
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "Einleitung"
+    },
+    {
+      "type": "paragraph",
+      "text": "Frühere Studien [@Mueller2020] zeigen eine deutliche Tendenz, die auch in [@Schmidt1998] beobachtet wird."
+    },
+    {
+      "type": "paragraph",
+      "text": "Eine differenzierte Sicht findet sich bei [@Weber2015], während [@UnknownKey] noch zu prüfen ist."
+    }
+  ]
+}

@@ -55,11 +55,14 @@ def collect_blocks(parent: ET.Element, items: list[dict[str, object]]) -> None:
             collect_blocks(node, items)
         elif node.tag == q("text", "note"):
             body = node.find("text:note-body", NS)
+            citation_el = node.find("text:note-citation", NS)
             items.append(
                 {
                     "type": "note",
                     "text": element_text(body if body is not None else node),
                     "note_class": node.attrib.get(q("text", "note-class")),
+                    "id": node.attrib.get(q("text", "id")),
+                    "citation": citation_el.text if citation_el is not None else None,
                 }
             )
 

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "Mueller2020",
+    "type": "article-journal",
+    "author": [{"family": "Müller", "given": "Klaus"}],
+    "title": "Beispieltitel zur biblischen Archäologie",
+    "container-title": "Zeitschrift für die alttestamentliche Wissenschaft",
+    "issued": {"date-parts": [[2020]]},
+    "volume": "132",
+    "issue": "2",
+    "page": "245-267"
+  },
+  {
+    "id": "Schmidt1998",
+    "type": "book",
+    "author": [{"family": "Schmidt", "given": "Anna"}],
+    "title": "Studien zum Alten Testament",
+    "publisher": "Mohr Siebeck",
+    "publisher-place": "Tübingen",
+    "issued": {"date-parts": [[1998]]}
+  },
+  {
+    "id": "Weber2015",
+    "type": "chapter",
+    "author": [{"family": "Weber", "given": "Max"}],
+    "editor": [{"family": "Berger", "given": "Klaus"}],
+    "title": "Eine Fallstudie",
+    "container-title": "Handbuch der biblischen Forschung",
+    "publisher": "de Gruyter",
+    "publisher-place": "Berlin",
+    "issued": {"date-parts": [[2015]]},
+    "page": "123-156"
+  }
+]

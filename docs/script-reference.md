@@ -12,11 +12,16 @@ All scripts use the Python standard library.
 | `list_styles.py` | List styles found in `styles.xml` and `content.xml`. |
 | `replace_text.py` | XML-safe text replacement in document content. |
 | `add_image.py` | Add an image to the document package and manifest. |
+| `add_footnote.py` | Insert a footnote (or endnote) via text anchor or paragraph index. |
+| `list_notes.py` | List all footnotes/endnotes as JSON with id, class, citation, body, anchor context. |
+| `add_citation.py` | Insert a `text:bibliography-mark` from BibTeX, CSL-JSON, or inline `--field` arguments. |
+| `fill_citations.py` | Bulk-replace pandoc-style `[@bibkey]` placeholders with `text:bibliography-mark`. |
+| `list_citations.py` | List all `text:bibliography-mark` entries as JSON. |
 | `pack_odt.py` | Repack an unpacked ODT directory with correct `mimetype` handling. |
 | `pack_fodt.py` | Convert a zipped ODT to a flat `.fodt` (single XML, Git-friendly). |
 | `unpack_fodt.py` | Convert a flat `.fodt` back to a zipped `.odt` package. |
 | `render.py` | Render ODT to PDF, optionally PNG pages, through LibreOffice/Poppler. |
-| `validate_refs.py` | Validate manifest and embedded image references. |
+| `validate_refs.py` | Validate manifest, embedded image references, note id consistency, citation field completeness, and leftover citation placeholders. |
 
 ## ODP
 

@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.3.0 - 2026-05-21
+
+Scholarly authoring: footnote/endnote API + BibTeX/CSL-JSON citation API.
+
+### Added
+
+- `add_footnote.py` (ODT): insert `text:note` via text-anchor or paragraph index, auto-increments ids (`ftn0`/`edn0`...), supports footnote and endnote classes.
+- `list_notes.py` (ODT): JSON output of every note with id, class, citation marker, body text, paragraph index, and ±40-char anchor context.
+- `add_citation.py` (ODT): insert `text:bibliography-mark` from a CSL-JSON file, BibTeX file (via optional `bibtexparser`), or inline `--field` arguments. Auto-detects source format by file extension.
+- `fill_citations.py` (ODT): bulk-replace pandoc-style `[@bibkey]` placeholders throughout a template ODT. Idempotent; unknown keys stay with a warning.
+- `list_citations.py` (ODT): JSON output of every `text:bibliography-mark` with all its attribute fields.
+- New optional dependency group `[scholarly] = ["bibtexparser>=1.4,<2"]`.
+- `lib/citation_mapping.py`: BibTeX/CSL-JSON → ODF field mapping tables, plus author/date normalisation helpers.
+- New `lib/odf_common.py` helpers reused across the new scripts:
+  - `find_text_position_in_element` — locator returning slot + offset for the first occurrence of a substring.
+  - `insert_after_text_in_element` — splice an element in immediately after a text anchor (anchor preserved).
+  - `replace_pattern_with_element_in_element` — regex-driven replacement of placeholders with elements.
+  - `insert_in_paragraph` — start/end insertion helper.
+  - Internal `_collect_text_slots` extracted from the v0.2.0 walker for reuse.
+- `validate_refs.py` (ODT) extended: duplicate `text:note` id detection (error), duplicate `text:bibliography-mark` identifier detection (warning), leftover `[@key]` placeholder detection (warning), missing `text:note-body` (error), empty `text:note-citation` (warning).
+- `extract_text.py` (ODT) JSON output for notes now includes `id` and `citation` fields (non-breaking).
+- 33 new tests across `tests/test_footnotes.py`, `tests/test_citations.py`, and unit tests in `tests/test_lib_odf_common.py`. Total: 110 tests (was 76); CI installs `bibtexparser` so the BibTeX path is exercised.
+
+### Changed
+
+- ODT `SKILL.md` triggers expanded with citation/footnote/bibliography keywords in English and German.
+- CI workflow installs `bibtexparser` in the smoke and coverage jobs.
+
 ## v0.2.1 - 2026-05-21
 
 Documentation polish for skill-registry listings (skills.sh).

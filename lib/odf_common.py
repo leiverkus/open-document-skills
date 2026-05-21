@@ -10,6 +10,7 @@ from __future__ import annotations
 import base64
 import mimetypes
 import posixpath
+import re
 import shutil
 import tempfile
 import zipfile
@@ -18,7 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-VERSION = "0.2.1"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
+VERSION = "0.3.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
 
 ODF_NAMESPACES: dict[str, str] = {
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
@@ -312,6 +313,265 @@ def clear_children(element: ET.Element) -> None:
     element[:] = []
 
 
+def _collect_text_slots(element: ET.Element) -> list[tuple[ET.Element, str]]:
+    """Collect (node, attr) text-slot pairs in document order.
+
+    Walker and locator helpers share this structure. For *element*, yields
+    ``(element, "text")`` first; then for every descendant in DFS order,
+    yields ``(node, "text")`` before recursing and ``(node, "tail")`` after.
+    The root's ``.tail`` is intentionally not included (it lives outside the
+    element's content).
+
+    Args:
+        element: Root of the subtree to collect from.
+
+    Returns:
+        Ordered list of ``(node, attr)`` pairs where ``attr`` is ``"text"`` or ``"tail"``.
+    """
+    slots: list[tuple[ET.Element, str]] = []
+
+    def visit(node: ET.Element, is_root: bool) -> None:
+        slots.append((node, "text"))
+        for child in list(node):
+            visit(child, False)
+        if not is_root:
+            slots.append((node, "tail"))
+
+    visit(element, True)
+    return slots
+
+
+def _build_parent_map(element: ET.Element) -> dict[ET.Element, ET.Element]:
+    """Build a descendant → parent mapping for *element*'s subtree.
+
+    The root *element* is not present as a key (it has no parent within the subtree).
+
+    Args:
+        element: Root of the subtree.
+
+    Returns:
+        Dict mapping each descendant to its direct parent.
+    """
+    parent_map: dict[ET.Element, ET.Element] = {}
+    for parent in element.iter():
+        for child in parent:
+            parent_map[child] = parent
+    return parent_map
+
+
+def find_text_position_in_element(element: ET.Element, needle: str) -> tuple[ET.Element, str, int] | None:
+    """Find the FIRST occurrence of *needle* in *element*'s text content.
+
+    Walks ``.text`` of *element* and every descendant, plus ``.tail`` of every
+    descendant, in document order. Returns the slot (node, attr) and local
+    offset where the match BEGINS. A match may span multiple slots — only the
+    starting slot is reported.
+
+    Args:
+        element: The element to search.
+        needle: Substring to look for. Empty string returns None.
+
+    Returns:
+        ``(node, attr, local_offset)`` where ``attr`` is ``"text"`` or ``"tail"``,
+        or ``None`` if not found.
+    """
+    if not needle:
+        return None
+    slots: list[tuple[ET.Element, str]] = _collect_text_slots(element)
+    values: list[str] = [getattr(n, a) or "" for n, a in slots]
+    combined: str = "".join(values)
+    idx: int = combined.find(needle)
+    if idx < 0:
+        return None
+    running: int = 0
+    for (node, attr), value in zip(slots, values):
+        if running <= idx < running + len(value):
+            return node, attr, idx - running
+        running += len(value)
+    return None
+
+
+def insert_after_text_in_element(element: ET.Element, anchor: str, new_element: ET.Element) -> bool:
+    """Insert *new_element* immediately after the first occurrence of *anchor*.
+
+    Splits the slot containing the END of the match, then inserts *new_element*
+    either as a child (when the match ends in a ``.text`` slot) or as a sibling
+    (when it ends in a ``.tail`` slot). The remainder of the slot becomes
+    *new_element*'s ``.tail``. Other inline children of *element* are preserved.
+
+    Args:
+        element: The container in which to search.
+        anchor: Substring that locates the insertion point.
+        new_element: The element to insert.
+
+    Returns:
+        ``True`` if the anchor was found and the element inserted, else ``False``.
+    """
+    if not anchor:
+        return False
+    slots: list[tuple[ET.Element, str]] = _collect_text_slots(element)
+    values: list[str] = [getattr(n, a) or "" for n, a in slots]
+    combined: str = "".join(values)
+    idx: int = combined.find(anchor)
+    if idx < 0:
+        return False
+    end: int = idx + len(anchor)
+    running: int = 0
+    target_index: int = -1
+    for i, value in enumerate(values):
+        if running <= end - 1 < running + len(value):
+            target_index = i
+            break
+        running += len(value)
+    if target_index < 0:
+        return False
+    target_node, target_attr = slots[target_index]
+    local_end: int = end - running
+    current_value: str = values[target_index]
+    prefix: str = current_value[:local_end]
+    suffix: str = current_value[local_end:]
+
+    if target_attr == "text":
+        target_node.text = prefix if prefix else None
+        target_node.insert(0, new_element)
+        new_element.tail = suffix if suffix else None
+        return True
+
+    target_node.tail = prefix if prefix else None
+    parent_map: dict[ET.Element, ET.Element] = _build_parent_map(element)
+    parent: ET.Element | None = parent_map.get(target_node)
+    if parent is None:
+        return False
+    sibling_index: int = list(parent).index(target_node)
+    parent.insert(sibling_index + 1, new_element)
+    new_element.tail = suffix if suffix else None
+    return True
+
+
+def replace_pattern_with_element_in_element(
+    element: ET.Element,
+    pattern: re.Pattern[str],
+    factory: Callable[[re.Match[str]], ET.Element],
+) -> int:
+    """Replace every regex match in *element*'s text content with a built element.
+
+    For each non-overlapping match of *pattern* against the concatenated text
+    content (``.text`` of *element* and descendants, plus ``.tail`` of every
+    descendant), the match is removed and replaced with the element returned
+    by ``factory(match)``. The element is inserted either as a child (when
+    the match falls in a ``.text`` slot) or as a sibling (when in a ``.tail``
+    slot). The new element's ``.tail`` carries the remainder of the original
+    slot.
+
+    Matches that straddle multiple slots are silently skipped — short
+    placeholder patterns like ``[@bibkey]`` virtually never straddle inline
+    children, and skipping is safer than corrupting structure.
+
+    Args:
+        element: Container to scan.
+        pattern: Compiled regex.
+        factory: Callable returning a new ET.Element per match.
+
+    Returns:
+        Number of replacements performed.
+    """
+    slots: list[tuple[ET.Element, str]] = _collect_text_slots(element)
+    values: list[str] = [getattr(n, a) or "" for n, a in slots]
+    offsets: list[int] = []
+    running: int = 0
+    for v in values:
+        offsets.append(running)
+        running += len(v)
+    combined: str = "".join(values)
+
+    matches: list[re.Match[str]] = list(pattern.finditer(combined))
+    if not matches:
+        return 0
+
+    def slot_for(global_offset: int) -> int:
+        lo, hi = 0, len(values) - 1
+        while lo < hi:
+            mid = (lo + hi + 1) // 2
+            if offsets[mid] <= global_offset:
+                lo = mid
+            else:
+                hi = mid - 1
+        return lo
+
+    parent_map: dict[ET.Element, ET.Element] = _build_parent_map(element)
+    replaced: int = 0
+
+    # Work right-to-left so earlier modifications don't shift later positions
+    # within the paragraph structure.
+    for match in reversed(matches):
+        start, end = match.start(), match.end()
+        i_slot = slot_for(start)
+        j_slot = slot_for(end - 1) if end > start else i_slot
+        if i_slot != j_slot:
+            # Straddle — skip silently.
+            continue
+        target_node, target_attr = slots[i_slot]
+        local_start = start - offsets[i_slot]
+        local_end = end - offsets[i_slot]
+        current = values[i_slot]
+        prefix = current[:local_start]
+        suffix = current[local_end:]
+        new_element = factory(match)
+
+        if target_attr == "text":
+            target_node.text = prefix if prefix else None
+            target_node.insert(0, new_element)
+            new_element.tail = suffix if suffix else None
+        else:
+            target_node.tail = prefix if prefix else None
+            parent = parent_map.get(target_node)
+            if parent is None:
+                continue
+            sibling_index = list(parent).index(target_node)
+            parent.insert(sibling_index + 1, new_element)
+            new_element.tail = suffix if suffix else None
+
+        # Update tracking so subsequent (earlier) matches see the new state.
+        # We pessimistically rebuild slots; simpler than incremental updates.
+        slots = _collect_text_slots(element)
+        values = [getattr(n, a) or "" for n, a in slots]
+        offsets = []
+        running = 0
+        for v in values:
+            offsets.append(running)
+            running += len(v)
+        parent_map = _build_parent_map(element)
+        replaced += 1
+
+    return replaced
+
+
+def insert_in_paragraph(paragraph: ET.Element, position: str, new_element: ET.Element) -> None:
+    """Insert *new_element* at the start or end of *paragraph*.
+
+    ``"end"`` appends; ``"start"`` inserts as first child and pushes any
+    existing ``paragraph.text`` to ``new_element.tail``.
+
+    Args:
+        paragraph: The container element (typically ``text:p`` or ``text:h``).
+        position: Either ``"start"`` or ``"end"``.
+        new_element: Element to insert.
+
+    Raises:
+        ValueError: If *position* is not ``"start"`` or ``"end"``.
+    """
+    if position == "end":
+        paragraph.append(new_element)
+        new_element.tail = None
+    elif position == "start":
+        old_text: str | None = paragraph.text
+        paragraph.text = None
+        paragraph.insert(0, new_element)
+        new_element.tail = old_text
+    else:
+        raise ValueError(f"position must be 'start' or 'end', got {position!r}")
+
+
 def replace_text_in_element(element: ET.Element, old: str, new: str) -> int:
     """Replace ``old`` with ``new`` in *element*'s text, preserving children.
 
@@ -333,17 +593,7 @@ def replace_text_in_element(element: ET.Element, old: str, new: str) -> int:
     if not old:
         return 0
 
-    slots: list[tuple[ET.Element, str]] = []
-
-    def visit(node: ET.Element, is_root: bool) -> None:
-        slots.append((node, "text"))
-        for child in list(node):
-            visit(child, False)
-        if not is_root:
-            slots.append((node, "tail"))
-
-    visit(element, True)
-
+    slots: list[tuple[ET.Element, str]] = _collect_text_slots(element)
     values: list[str] = [getattr(n, a) or "" for n, a in slots]
     combined: str = "".join(values)
 

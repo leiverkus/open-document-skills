@@ -1,10 +1,10 @@
 ---
 name: odt
-description: "Create, read, edit, convert, repair, or inspect OpenDocument Text files (.odt)."
-triggers: [".odt", "ODT", "OpenDocument Text", "Open Office document", "LibreOffice Writer", "Writer document", "odt-Datei", "OpenDocument-Text"]
+description: "Create, read, edit, convert, repair, or inspect OpenDocument Text files (.odt). Includes scholarly authoring: footnotes, endnotes, and citations from BibTeX or CSL-JSON."
+triggers: [".odt", "ODT", "OpenDocument Text", "Open Office document", "LibreOffice Writer", "Writer document", "odt-Datei", "OpenDocument-Text", "footnote", "endnote", "citation", "bibliography", "BibTeX", "CSL-JSON", "Fußnote", "Zitation", "Bibliographie", "Quellenangabe"]
 dont_use_for: ["spreadsheets (.ods)", "presentations (.odp)", "PDFs as primary deliverable", "general prose editing"]
 license: MIT
-version: "0.2.1"
+version: "0.3.0"
 ---
 
 # ODT creation, editing, and analysis
@@ -260,6 +260,60 @@ Inspect page breaks, headers/footers, table overflow, footnote placement, missin
 4. Fix the ODT source, package XML, or template edits.
 5. Re-run the relevant extraction/inspection/rendering steps.
 6. Do not deliver until a final pass shows no unresolved content, package, or visual issues relevant to the user's request.
+
+## Scholarly authoring (footnotes, citations, bibliography)
+
+For scholarly prose with apparatus, the suite provides direct ODF-native helpers — no DOCX or pandoc-citeproc round-trip needed.
+
+### Footnotes and endnotes
+
+```bash
+# Insert a footnote after a text anchor:
+python scripts/add_footnote.py input.odt --anchor "strittige Behauptung" \
+    --body "Quelle: Müller 2020, S. 42" -o output.odt
+
+# Append to the third paragraph:
+python scripts/add_footnote.py input.odt --paragraph 3 --position end \
+    --body "Lange Anmerkung." --class endnote -o output.odt
+
+# Inspect all notes:
+python scripts/list_notes.py output.odt --json
+```
+
+IDs auto-increment (`ftn0`, `ftn1`, … / `edn0`, `edn1`, …) unless `--id` is given. Inline children (`text:span`, `text:bookmark`) around the anchor are preserved.
+
+### Citations (BibTeX or CSL-JSON)
+
+```bash
+# Insert a single citation, source auto-detected from extension:
+python scripts/add_citation.py input.odt --anchor "frühere Studien" \
+    --source refs.bib --key Mueller2020 -o output.odt
+python scripts/add_citation.py input.odt --anchor "frühere Studien" \
+    --source refs.json --key Mueller2020 -o output.odt
+
+# Manually:
+python scripts/add_citation.py input.odt --anchor "frühere Studien" \
+    --identifier Mueller2020 --field bibliography-type=article \
+    --field author="Müller, K." --field year=2020 \
+    --field title="Beispieltitel" --field journal="ZAW" -o output.odt
+
+# Bulk-fill pandoc-style placeholders:
+python scripts/fill_citations.py template.odt --source refs.bib -o output.odt
+# Scans for `[@bibkey]` markers, replaces each with text:bibliography-mark.
+
+# Inspect citations:
+python scripts/list_citations.py output.odt --json
+```
+
+LibreOffice renders the citation through the bibliography style. The bibliography index at document end is *not* generated here — let LibreOffice build it from the inserted `text:bibliography-mark` elements.
+
+BibTeX support requires the optional `bibtexparser` dependency:
+
+```bash
+pip install open-document-skills[scholarly]
+```
+
+CSL-JSON works with stdlib only.
 
 ## ODT Notes
 

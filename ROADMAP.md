@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v0.2.1** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v0.3.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -12,19 +12,26 @@ Current release: **v0.2.1** — see [CHANGELOG.md](CHANGELOG.md).
 4. **Audit-friendly by default.** Every edit operation updates `meta.xml`; every helper that touches the manifest stays idempotent.
 5. **LibreOffice stays optional.** It is a render/QA/recalc helper, never a hard runtime dependency.
 
-## v0.3 — Scholarly authoring (priority for academic/DAO workflows)
+## v0.3 — Scholarly authoring ✅ shipped (2026-05-21)
 
-The largest current gap relative to general-purpose tools (pandoc, docx skills) is academic authoring with a proper apparatus. v0.3 closes it.
+Closed the largest gap relative to general-purpose tools (pandoc, docx skills): academic authoring with a proper apparatus.
 
-- **`text:bibliography-mark` API** — read/write/list helpers; BibTeX and CSL-JSON ingestion; `add_citation.py`, `list_citations.py`, `validate_citations.py`.
-- **`text:reference-ref` / `text:bookmark-ref`** — programmatic cross-references; `add_reference.py`, `list_bookmarks.py`, link validation in `validate_refs.py`.
-- **MathML embedding** — `draw:object` with Math content; LaTeX-to-MathML via optional Pandoc fallback; round-trip with LibreOffice math formula objects.
-- **Footnote/endnote API** — `add_footnote.py` producing correct `text:note` structure (citation, body, numbering); `list_notes.py` extracting structured citations.
-- **DAO example** — `examples/dao/` with a Nunito Sans / `#02416C` template, a grant-proposal snippet, and an end-to-end walkthrough demonstrating citation insertion, cross-references, and footnote-rich prose. Becomes the canonical "is this useful for me?" demo in the README.
+- ✅ **`text:bibliography-mark` API** — `add_citation.py`, `list_citations.py`, `validate_refs.py` extension. BibTeX (via optional `bibtexparser`) and CSL-JSON (stdlib) ingestion.
+- ✅ **Bulk citation flow** — `fill_citations.py` replaces pandoc-style `[@bibkey]` placeholders.
+- ✅ **Footnote/endnote API** — `add_footnote.py`, `list_notes.py`, validate-refs duplicate-id check.
+- ⏳ **`text:reference-ref` / `text:bookmark-ref`** — deferred to v0.4.
+- ⏳ **MathML embedding** — deferred to v0.4.
+- ⏳ **DAO example template** — deferred to v0.4.
 
-Estimated scope: ~6 new CLI scripts + ~3 new lib helpers + 10–15 tests per skill.
+## v0.4 — Authoring depth + DAO template (next)
 
-## v0.4 — Robustness
+Continues the scholarly authoring track from v0.3 with the remaining items:
+
+- **Cross-references** — `add_reference.py`, `list_bookmarks.py`; LibreOffice-compatible `text:reference-ref` and `text:bookmark-ref` insertion.
+- **MathML embedding** — `add_math.py` accepting LaTeX (via optional Pandoc) or raw MathML; emits `draw:object` with MathML payload.
+- **DAO template example** — `examples/dao/` with a Nunito Sans / `#02416C` template, grant-proposal snippet, end-to-end walkthrough using citations + footnotes + references.
+
+## v0.5 — Robustness
 
 Polish the existing surface before adding new format depth.
 
@@ -33,9 +40,9 @@ Polish the existing surface before adding new format depth.
 - **Real-world corpus tests** — ~20 ODF fixtures harvested from LibreOffice/Collabora/AbiWord/Calligra exports (different versions). Round-trip each through pack/unpack and verify content equivalence.
 - **Image probing** — magic-byte MIME sniffing in `add_image.py` (so `.png` with `.jpg` extension lands correctly in the manifest); optional Pillow-based aspect-ratio detection so `--width`/`--height` can be inferred.
 
-## v0.5 — Format depth
+## v0.6 — Format depth
 
-Adds the most-requested features inside each format. Driven by what users actually ask for after v0.3 ships.
+Adds the most-requested features inside each format. Driven by what users actually ask for.
 
 - **ODS** — named ranges (`table:named-range`), basic chart objects (line, bar), data validation (`table:content-validation`).
 - **ODP** — animation primitives (entrance/exit on shape level), slide transitions.
