@@ -69,13 +69,19 @@ Recommended optional tools:
 - `pdftoppm` from Poppler, when you want PDF pages rendered to images
 - Pandoc, for some conversion fallback workflows
 
-On macOS, LibreOffice usually provides `soffice` at:
+On macOS, install Poppler with Homebrew:
+
+```bash
+brew install poppler
+```
+
+LibreOffice usually provides `soffice` inside the app bundle, not directly on the shell `PATH`:
 
 ```bash
 /Applications/LibreOffice.app/Contents/MacOS/soffice
 ```
 
-The render/recalc scripts also look for common Linux and Windows locations.
+The render/recalc scripts look for that macOS path automatically. They also check common Linux and Windows locations.
 
 ## Skills
 
@@ -184,7 +190,7 @@ The tests create minimal ODT, ODP, ODS, and ODG files, then exercise extraction,
 
 LibreOffice integration tests are included. They render ODT/ODP/ODG files and recalculate ODS files when `soffice` is available. If LibreOffice is not available, those tests are skipped.
 
-GitHub Actions runs the same smoke test suite on every push and pull request.
+GitHub Actions runs the same suite on every push and pull request. The workflow installs LibreOffice and Poppler with `apt` on Ubuntu so the LibreOffice integration tests run in CI instead of being skipped.
 
 Reusable example inputs live in `tests/fixtures/`:
 
