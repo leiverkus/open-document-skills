@@ -6,6 +6,14 @@ Thanks for helping improve the Open Document Skills repository.
 
 The scripts use only the Python standard library. Optional QA workflows require LibreOffice and, for PNG page previews, Poppler.
 
+```bash
+# Create a virtual environment and install dev dependencies
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+pre-commit install
+```
+
 On macOS:
 
 ```bash
@@ -26,11 +34,20 @@ sudo apt-get install -y libreoffice poppler-utils
 
 ## Local Checks
 
-Run the full test suite:
+Run the full test suite with coverage:
 
 ```bash
-python3 -m unittest discover -s tests
+pytest tests/ --cov=lib
 ```
+
+Lint and format:
+
+```bash
+ruff check .
+ruff format --check .
+```
+
+Pre-commit hooks run both automatically on every commit.
 
 Build the runnable examples:
 
@@ -88,11 +105,13 @@ Each skill directory should contain:
 ## Release Checklist
 
 1. Ensure `main` is clean.
-2. Run `python3 -m unittest discover -s tests`.
-3. Run `python3 examples/build_examples.py --render --png` when LibreOffice and Poppler are available.
-4. Update `CHANGELOG.md`.
-5. Commit the release notes.
-6. Create an annotated tag, for example:
+2. Run `pytest tests/ --cov=lib --cov-fail-under=30`.
+3. Run `ruff check . && ruff format --check .`.
+4. Run `python3 examples/build_examples.py --render --png` when LibreOffice and Poppler are available.
+5. Update `CHANGELOG.md` and `pyproject.toml` version.
+6. Update `version:` in all four `SKILL.md` files.
+7. Commit the release notes.
+8. Create an annotated tag, for example:
 
 ```bash
 git tag -a v0.1.2 -m "v0.1.2"
