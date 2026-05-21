@@ -2,27 +2,40 @@
 
 [![Tests](https://github.com/leiverkus/open-document-skills/actions/workflows/tests.yml/badge.svg)](https://github.com/leiverkus/open-document-skills/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/leiverkus/open-document-skills)](https://github.com/leiverkus/open-document-skills/releases)
 
-Agent skills for working with OpenDocument Format files directly. The repository is structured for Codex, Claude Code, and OpenCode:
+**Native ODT / ODP / ODS / ODG generation and editing for agents — no DOCX round-trips, no LibreOffice dependency for the core path.**
 
-- `odt` - OpenDocument Text / LibreOffice Writer
-- `odp` - OpenDocument Presentation / LibreOffice Impress
-- `ods` - OpenDocument Spreadsheet / LibreOffice Calc
-- `odg` - OpenDocument Graphics / LibreOffice Draw
+Four self-contained skills for Codex, Claude Code, and OpenCode that teach an agent to create, inspect, and edit OpenDocument files directly via Python (stdlib only). Edits preserve inline structure (`text:span`, `text:note`, `text:bookmark`, `text:a`), `meta.xml` is updated on every save, and flat single-XML formats (`.fodt`/`.fodp`/`.fods`/`.fodg`) give you Git-friendly diffs. LibreOffice is optional and only needed for rendering, recalculation, and PDF export.
 
-The skills favor native ODF package/XML workflows over unnecessary DOCX/PPTX/XLSX round trips. Each skill includes small Python helper scripts for direct generation, package inspection, XML-safe edits, validation, and rendering/export workflows where LibreOffice is available.
+```bash
+# Generate, edit, validate, version — all from the agent shell:
+python skills/odt/scripts/create_minimal_odt.py spec.json doc.odt
+python skills/odt/scripts/replace_text.py doc.odt "{{NAME}}" "Patrick" -o out.odt
+python skills/odt/scripts/pack_fodt.py out.odt -o out.fodt   # diff-friendly XML
+python skills/odt/scripts/validate_refs.py out.odt
+```
 
-## What This Is
+## Skills at a glance
 
-These are agent skills: self-contained folders with a `SKILL.md` file and optional scripts. They teach Codex, Claude Code, OpenCode, and compatible agents how to handle a specific file family with repeatable workflows and bundled tools.
+| Skill | LibreOffice app | Triggers |
+| --- | --- | --- |
+| [`odt`](skills/odt) | Writer | edit ODT, fill template, add figure, render to PDF |
+| [`odp`](skills/odp) | Impress | clone slide, edit notes, add image, render deck |
+| [`ods`](skills/ods) | Calc | set cells/formulas, export CSV, recalculate |
+| [`odg`](skills/odg) | Draw | edit labels, add shape image, export SVG/PNG |
 
-The goal is not to replace LibreOffice. The goal is to make automated ODF work safer by combining:
+## Why use these
 
-- format-specific instructions
-- small deterministic scripts
-- package/manifest validation
-- smoke tests
-- optional LibreOffice rendering/recalculation checks
+- **Native ODF, not converted from DOCX.** No font drift, no lost styles, no PDF round-trips.
+- **Stdlib-only core.** Every generator, validator, and edit script runs without `pip install` — `xml.etree.ElementTree` and `zipfile` only. LibreOffice is needed only for rendering and recalculation.
+- **Structure-preserving edits.** `replace_text` keeps footnotes, hyperlinks, and inline formatting intact. `add_image` updates the manifest and `meta.xml`. `replace_cells` handles typed values and formulas.
+- **Audit-friendly.** Every edit writes `meta:modification-date`, `meta:generator`, and increments `meta:editing-cycles`. Pack to `.fodt` and `git diff` works.
+- **Tested.** 76 unit + integration tests run on every push; CI installs LibreOffice so the render/recalc paths are exercised too.
+
+## What this is not
+
+Not a LibreOffice replacement. Not a substitute for full ODF feature coverage (tracked changes, complex TOCs, Impress animations, Calc pivots, Draw glue points, RelaxNG schema validation are explicit non-goals — see [Current Limits](#current-limits)). The goal is to make the 80% of ODF automation that agents need safe, repeatable, and dependency-light.
 
 ## Repository Layout
 
