@@ -1,0 +1,18 @@
+{
+  "title": "Forschungsantrag: Biblische Archäologie im digitalen Zeitalter",
+  "blocks": [
+    {"type": "heading", "level": 1, "text": "1. Zusammenfassung"},
+    {"type": "paragraph", "text": "Das vorliegende Vorhaben verbindet biblische Archäologie und Digital Humanities. Frühere Studien [@Mueller2020] zeigen die Notwendigkeit interdisziplinärer Methoden; [@Schmidt1998] beschreibt frühe Ansätze. Die Datierungsformel"},
+    {"type": "paragraph", "text": "lässt sich aus der bekannten Zerfallsbeziehung herleiten und liefert die Grundlage der Methodik."},
+    {"type": "heading", "level": 1, "text": "2. Forschungsstand"},
+    {"type": "paragraph", "text": "Der Forschungsstand zur Region zeigt drei Schwerpunkte. Eine differenzierte Sicht findet sich bei [@Weber2015], die wir hier weiterführen."},
+    {"type": "paragraph", "text": "Methodisch greifen wir auf die in Kapitel zurück (siehe Methodik), um konsistente Vergleiche zu ermöglichen."},
+    {"type": "heading", "level": 1, "text": "3. Methodik"},
+    {"type": "paragraph", "text": "Die archäologische Erhebung folgt einem dreistufigen Vorgehen: Feldsurvey, GIS-gestützte Auswertung, Publikation. Abbildung zeigt das Untersuchungsgebiet (siehe Abbildung)."},
+    {"type": "paragraph", "text": "Die Datierung erfolgt mit dem Standardverfahren, ergänzt um Bayesianische Modellierung."},
+    {"type": "heading", "level": 1, "text": "4. Arbeitsprogramm und Zeitplan"},
+    {"type": "paragraph", "text": "Das Vorhaben erstreckt sich über 36 Monate und gliedert sich in vier Arbeitspakete."},
+    {"type": "heading", "level": 1, "text": "5. Literatur"},
+    {"type": "paragraph", "text": "Die Bibliographie wird von LibreOffice aus den eingefügten Citation-Markern generiert."}
+  ]
+}

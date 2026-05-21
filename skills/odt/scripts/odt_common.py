@@ -21,19 +21,25 @@ if str(_repo_root) not in sys.path:
 from lib.odf_common import (  # noqa: E402, I001
     clear_children,
     copy_into_package as _copy_base,
+    copy_with_multiple_members as _copy_members_base,
     ensure_manifest_entry as _ensure_base,
+    ensure_sequence_declarations as _ensure_seq_base,
+    find_pandoc,
     find_text_position_in_element,
     insert_after_text_in_element,
     insert_in_paragraph,
+    latex_to_mathml,
     media_type_for,
     pack_dir_as_odf,
     pack_flat_odf,
     parse_xml_from_zip,
     replace_pattern_with_element_in_element,
     replace_text_in_element,
+    unique_object_name,
     unique_picture_name,
     unpack_flat_odf,
     update_meta_for_edit as _update_meta_base,
+    wrap_text_with_pair_in_element,
     write_odf_with_replacements as _write_base,
     xml_bytes,
 )
@@ -45,19 +51,25 @@ __all__ = [
     "q",
     "clear_children",
     "copy_into_package",
+    "copy_with_multiple_members",
     "ensure_manifest_entry",
+    "ensure_sequence_declarations",
+    "find_pandoc",
     "find_text_position_in_element",
     "insert_after_text_in_element",
     "insert_in_paragraph",
+    "latex_to_mathml",
     "media_type_for",
     "pack_dir_as_odt",
     "pack_flat_odf",
     "parse_xml_from_zip",
     "replace_pattern_with_element_in_element",
     "replace_text_in_element",
+    "unique_object_name",
     "unique_picture_name",
     "unpack_flat_odf",
     "update_meta_for_edit",
+    "wrap_text_with_pair_in_element",
     "write_odt_with_replacements",
     "xml_bytes",
 ]
@@ -125,3 +137,16 @@ def write_odt_with_replacements(
 
 def update_meta_for_edit(meta_root: ET.Element) -> None:
     _update_meta_base(meta_root, NS, q)
+
+
+def copy_with_multiple_members(
+    input_odt: Path,
+    output_odt: Path,
+    new_members: dict[str, bytes],
+    replacements: dict[str, bytes],
+) -> None:
+    _copy_members_base(input_odt, output_odt, new_members, replacements, ODT_MIMETYPE)
+
+
+def ensure_sequence_declarations(text_root: ET.Element, names: list[str]) -> None:
+    _ensure_seq_base(text_root, names, NS)

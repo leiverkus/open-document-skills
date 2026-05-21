@@ -17,6 +17,11 @@ All scripts use the Python standard library.
 | `add_citation.py` | Insert a `text:bibliography-mark` from BibTeX, CSL-JSON, or inline `--field` arguments. |
 | `fill_citations.py` | Bulk-replace pandoc-style `[@bibkey]` placeholders with `text:bibliography-mark`. |
 | `list_citations.py` | List all `text:bibliography-mark` entries as JSON. |
+| `add_bookmark.py` | Insert `text:bookmark` (point or range) via text anchor or paragraph index. |
+| `add_reference.py` | Insert `text:reference-mark` (point/range), `text:bookmark-ref`, or `text:reference-ref`. |
+| `add_sequence.py` | Auto-numbered `text:sequence` (Figure/Table/Equation) with on-demand `text:sequence-decls`; also `text:sequence-ref`. |
+| `list_refs.py` | List bookmarks, reference-marks, sequences, and references as JSON. |
+| `add_math.py` | Embed a MathML formula via LaTeX (Pandoc), MathML file, or inline MathML; uses LibreOffice-native `Object N/` sub-packages. |
 | `pack_odt.py` | Repack an unpacked ODT directory with correct `mimetype` handling. |
 | `pack_fodt.py` | Convert a zipped ODT to a flat `.fodt` (single XML, Git-friendly). |
 | `unpack_fodt.py` | Convert a flat `.fodt` back to a zipped `.odt` package. |

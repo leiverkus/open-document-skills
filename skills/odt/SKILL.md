@@ -1,10 +1,10 @@
 ---
 name: odt
-description: "Create, read, edit, convert, repair, or inspect OpenDocument Text files (.odt). Includes scholarly authoring: footnotes, endnotes, and citations from BibTeX or CSL-JSON."
-triggers: [".odt", "ODT", "OpenDocument Text", "Open Office document", "LibreOffice Writer", "Writer document", "odt-Datei", "OpenDocument-Text", "footnote", "endnote", "citation", "bibliography", "BibTeX", "CSL-JSON", "Fußnote", "Zitation", "Bibliographie", "Quellenangabe"]
+description: "Create, read, edit, convert, repair, or inspect OpenDocument Text files (.odt). Includes scholarly authoring: footnotes, endnotes, citations (BibTeX/CSL-JSON), cross-references (bookmarks, reference-marks, figure/table sequences), and MathML formulas (from LaTeX)."
+triggers: [".odt", "ODT", "OpenDocument Text", "Open Office document", "LibreOffice Writer", "Writer document", "odt-Datei", "OpenDocument-Text", "footnote", "endnote", "citation", "bibliography", "BibTeX", "CSL-JSON", "Fußnote", "Zitation", "Bibliographie", "Quellenangabe", "cross-reference", "Querverweis", "bookmark", "Lesezeichen", "figure", "Abbildung", "Table", "Tabelle", "equation", "Gleichung", "Formel", "MathML", "LaTeX"]
 dont_use_for: ["spreadsheets (.ods)", "presentations (.odp)", "PDFs as primary deliverable", "general prose editing"]
 license: MIT
-version: "0.3.0"
+version: "0.4.0"
 ---
 
 # ODT creation, editing, and analysis
@@ -314,6 +314,50 @@ pip install open-document-skills[scholarly]
 ```
 
 CSL-JSON works with stdlib only.
+
+### Cross-references and figure numbering
+
+```bash
+# Mark a target with a bookmark:
+python scripts/add_bookmark.py input.odt --name "Kapitel3" \
+    --anchor "3. Methodik" -o output.odt
+
+# Reference the target later:
+python scripts/add_reference.py input.odt --ref-to "Kapitel3" --kind bookmark \
+    --anchor "siehe Kapitel" --display chapter -o output.odt
+
+# Auto-numbered figure caption:
+python scripts/add_sequence.py input.odt --sequence Figure --name "fig:karte" \
+    --anchor "Karte zeigt" -o output.odt
+
+# Reference to the figure:
+python scripts/add_sequence.py input.odt --ref-to "fig:karte" \
+    --anchor "siehe Abbildung" -o output.odt
+
+# Inspect everything (bookmarks, ranges, sequences, refs):
+python scripts/list_refs.py output.odt --json
+```
+
+`text:bookmark` (point + range), `text:reference-mark` (point + range), and `text:sequence` (Figure/Table/Equation) are supported. Display modes for refs: `page`, `chapter`, `number`, `direction`, `text`. The validator detects dangling references and duplicate names.
+
+### Math formulas (MathML, via LaTeX or raw)
+
+```bash
+# LaTeX → MathML (requires pandoc):
+python scripts/add_math.py input.odt --latex "E = mc^2" \
+    --anchor "Einstein-Gleichung" -o output.odt
+
+# Raw MathML from a file:
+python scripts/add_math.py input.odt --mathml formula.mml \
+    --anchor "Datierungsformel" -o output.odt
+
+# Inline MathML XML:
+python scripts/add_math.py input.odt --paragraph 3 \
+    --mathml-inline '<math xmlns="http://www.w3.org/1998/Math/MathML"><mi>x</mi></math>' \
+    -o output.odt
+```
+
+Formulas are embedded as `Object N/` sub-packages — the LibreOffice-native convention — with proper manifest entries (`application/vnd.oasis.opendocument.formula`). LibreOffice opens, renders, and roundtrips them.
 
 ## ODT Notes
 

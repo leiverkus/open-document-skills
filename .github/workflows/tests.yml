@@ -20,10 +20,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6.0.2
-      - name: Install LibreOffice and Poppler
+      - name: Install LibreOffice, Poppler, and Pandoc
         run: |
           sudo apt-get update
-          sudo apt-get install -y libreoffice poppler-utils
+          sudo apt-get install -y libreoffice poppler-utils pandoc
       - uses: actions/setup-python@v6.2.0
         with:
           python-version: "3.12"
@@ -34,8 +34,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6.0.2
-      - name: Install LibreOffice
-        run: sudo apt-get install -y libreoffice
+      - name: Install LibreOffice and Pandoc
+        run: sudo apt-get install -y libreoffice pandoc
       - uses: actions/setup-python@v6.2.0
         with:
           python-version: "3.12"

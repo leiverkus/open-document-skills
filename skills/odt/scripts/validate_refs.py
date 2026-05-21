@@ -57,6 +57,11 @@ def validate(path: Path) -> dict[str, object]:
         href = node.attrib.get(q("xlink", "href"))
         if href and not href.startswith("#") and "://" not in href:
             package_path = href.lstrip("./")
+            # Sub-package directory references (e.g. './Object 1/') resolve
+            # via the directory contents, not as a single file. Validate them
+            # in the dedicated draw:object loop below.
+            if package_path.endswith("/"):
+                continue
             if package_path not in names:
                 errors.append(f"Missing package media target: {href}")
             if manifest_paths and package_path not in manifest_paths:
@@ -94,6 +99,86 @@ def validate(path: Path) -> dict[str, object]:
             leftover_keys.add(match.group(1))
     for key in sorted(leftover_keys):
         warnings.append(f"Unfilled citation placeholder [@{key}] (run fill_citations.py)")
+
+    # Cross-reference checks: bookmark/reference-mark/sequence inventory and dangling refs.
+    bookmark_names: dict[str, int] = {}
+    bookmark_starts: dict[str, int] = {}
+    bookmark_ends: dict[str, int] = {}
+    refmark_names: dict[str, int] = {}
+    refmark_starts: dict[str, int] = {}
+    refmark_ends: dict[str, int] = {}
+    sequence_names: dict[str, int] = {}
+
+    for el in content.iter():
+        tag = el.tag
+        name = el.attrib.get(q("text", "name")) or el.attrib.get(q("text", "ref-name"))
+        if tag == q("text", "bookmark"):
+            if name:
+                bookmark_names[name] = bookmark_names.get(name, 0) + 1
+        elif tag == q("text", "bookmark-start"):
+            if name:
+                bookmark_starts[name] = bookmark_starts.get(name, 0) + 1
+        elif tag == q("text", "bookmark-end"):
+            if name:
+                bookmark_ends[name] = bookmark_ends.get(name, 0) + 1
+        elif tag == q("text", "reference-mark"):
+            if name:
+                refmark_names[name] = refmark_names.get(name, 0) + 1
+        elif tag == q("text", "reference-mark-start"):
+            if name:
+                refmark_starts[name] = refmark_starts.get(name, 0) + 1
+        elif tag == q("text", "reference-mark-end"):
+            if name:
+                refmark_ends[name] = refmark_ends.get(name, 0) + 1
+        elif tag == q("text", "sequence"):
+            seq_name = el.attrib.get(q("text", "ref-name"))
+            if seq_name:
+                sequence_names[seq_name] = sequence_names.get(seq_name, 0) + 1
+
+    all_bookmark_names = set(bookmark_names) | set(bookmark_starts) | set(bookmark_ends)
+    all_refmark_names = set(refmark_names) | set(refmark_starts) | set(refmark_ends)
+
+    for name, count in bookmark_names.items():
+        if count > 1:
+            errors.append(f"Duplicate text:bookmark name {name!r} ({count} occurrences)")
+    for name, count in refmark_names.items():
+        if count > 1:
+            errors.append(f"Duplicate text:reference-mark name {name!r} ({count} occurrences)")
+    for name, count in sequence_names.items():
+        if count > 1:
+            errors.append(f"Duplicate text:sequence ref-name {name!r} ({count} occurrences)")
+    # Range pair consistency
+    for name in set(bookmark_starts) ^ set(bookmark_ends):
+        errors.append(f"Unmatched text:bookmark range {name!r} (start without end or vice versa)")
+    for name in set(refmark_starts) ^ set(refmark_ends):
+        errors.append(f"Unmatched text:reference-mark range {name!r} (start without end or vice versa)")
+
+    # Dangling references
+    for ref in content.iter(q("text", "bookmark-ref")):
+        rn = ref.attrib.get(q("text", "ref-name"))
+        if rn and rn not in all_bookmark_names:
+            errors.append(f"Dangling text:bookmark-ref to {rn!r}")
+    for ref in content.iter(q("text", "reference-ref")):
+        rn = ref.attrib.get(q("text", "ref-name"))
+        if rn and rn not in all_refmark_names:
+            errors.append(f"Dangling text:reference-ref to {rn!r}")
+    for ref in content.iter(q("text", "sequence-ref")):
+        rn = ref.attrib.get(q("text", "ref-name"))
+        if rn and rn not in sequence_names:
+            errors.append(f"Dangling text:sequence-ref to {rn!r}")
+
+    # MathML/draw:object targets
+    object_targets: set[str] = set()
+    for obj in content.iter(q("draw", "object")):
+        href = obj.attrib.get(q("xlink", "href"))
+        if href:
+            target = href.lstrip("./").rstrip("/")
+            object_targets.add(target)
+            # Confirm the target sub-path exists in the package
+            if target + "/" not in {n if n.endswith("/") else n for n in names} and not any(
+                n.startswith(target + "/") for n in names
+            ):
+                errors.append(f"Missing draw:object package target: {href}")
 
     # Note structure checks: duplicate ids, missing body, empty citation.
     note_ids: dict[str, int] = {}

@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v0.3.0** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v0.4.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -23,15 +23,17 @@ Closed the largest gap relative to general-purpose tools (pandoc, docx skills): 
 - ⏳ **MathML embedding** — deferred to v0.4.
 - ⏳ **DAO example template** — deferred to v0.4.
 
-## v0.4 — Authoring depth + DAO template (next)
+## v0.4 — Authoring depth + DAO example ✅ shipped (2026-05-21)
 
-Continues the scholarly authoring track from v0.3 with the remaining items:
+- ✅ **Cross-references** — `add_bookmark.py`, `add_reference.py`, `add_sequence.py`, `list_refs.py`. Bookmarks (point + range), reference-marks, sequence numbering (Figure/Table/Equation), refs in all three flavors with display modes.
+- ✅ **MathML embedding** — `add_math.py` with LaTeX (via optional Pandoc), raw MathML, or inline MathML; Object N/ sub-package convention.
+- ✅ **DAO grant-proposal example** — `examples/dao/build_grant_proposal.py` end-to-end pipeline combining all v0.3 + v0.4 features.
+- ⏳ **DAO branded template** (Nunito Sans, `#02416C`, master pages) — deferred to v0.5; the DAO example currently uses default styles.
 
-- **Cross-references** — `add_reference.py`, `list_bookmarks.py`; LibreOffice-compatible `text:reference-ref` and `text:bookmark-ref` insertion.
-- **MathML embedding** — `add_math.py` accepting LaTeX (via optional Pandoc) or raw MathML; emits `draw:object` with MathML payload.
-- **DAO template example** — `examples/dao/` with a Nunito Sans / `#02416C` template, grant-proposal snippet, end-to-end walkthrough using citations + footnotes + references.
+## v0.5 — DAO branding + Robustness (next)
 
-## v0.5 — Robustness
+- **DAO branded template** — `examples/dao/styles.xml` with Nunito Sans, `#02416C`, master pages (Header/Footer with logo placeholder, A4 with DFG-standard margins). Inject step in `build_grant_proposal.py`.
+- **Cross-paragraph range bookmarks/refs** — extend `wrap_text_with_pair_in_element` to handle ranges spanning multiple paragraphs.
 
 Polish the existing surface before adding new format depth.
 

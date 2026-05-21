@@ -115,6 +115,44 @@ python3 skills/odt/scripts/list_notes.py output.odt --json
 
 IDs auto-increment (`ftn0`, `ftn1`, ... or `edn0`, `edn1`, ... for endnotes). Inline children (`text:span`, `text:bookmark`) around the anchor are preserved by the structure-preserving walker introduced in v0.2.0.
 
+### Cross-references and figure numbering
+
+```bash
+# Point bookmark + reference to it (with chapter display):
+python3 skills/odt/scripts/add_bookmark.py input.odt \
+    --name "Methodik" --anchor "3. Methodik" -o output.odt
+python3 skills/odt/scripts/add_reference.py output.odt \
+    --ref-to "Methodik" --kind bookmark \
+    --anchor "siehe Kapitel" --display chapter -o output.odt
+
+# Auto-numbered figure caption + ref:
+python3 skills/odt/scripts/add_sequence.py input.odt \
+    --sequence Figure --name "fig:karte" \
+    --anchor "Karte zeigt" -o output.odt
+python3 skills/odt/scripts/add_sequence.py output.odt \
+    --ref-to "fig:karte" --anchor "siehe Abbildung" -o output.odt
+
+# Inspect everything:
+python3 skills/odt/scripts/list_refs.py output.odt --json
+```
+
+`text:bookmark` (point + intra-paragraph range), `text:reference-mark` (point + range), and `text:sequence` (Figure/Table/Equation auto-numbering) are all supported. The validator detects dangling refs and duplicate names. See [examples/dao/build_grant_proposal.py](../examples/dao/build_grant_proposal.py) for an end-to-end pipeline combining citations, footnotes, cross-references, sequences, and MathML.
+
+### Math formulas (LaTeX → MathML)
+
+```bash
+# LaTeX (requires pandoc):
+python3 skills/odt/scripts/add_math.py input.odt \
+    --latex "N(t) = N_0 e^{-\\lambda t}" \
+    --anchor "Datierungsformel" -o output.odt
+
+# Raw MathML file:
+python3 skills/odt/scripts/add_math.py input.odt \
+    --mathml formula.mml --anchor "Equation" -o output.odt
+```
+
+Formulas are embedded as `Object N/` sub-packages — LibreOffice's native convention. Each formula adds two manifest entries (`application/vnd.oasis.opendocument.formula` for the folder, `text/xml` for its content). LibreOffice renders inline math correctly without further editing.
+
 ### Citations from BibTeX or CSL-JSON
 
 ```bash

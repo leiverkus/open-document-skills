@@ -1,5 +1,32 @@
 # Changelog
 
+## v0.4.0 - 2026-05-21
+
+Cross-references, MathML, and an end-to-end DAO grant-proposal example.
+
+### Added
+
+- **Cross-references (ODT)** — five new scripts:
+  - `add_bookmark.py` — `text:bookmark` (point) and `text:bookmark-start`/`text:bookmark-end` (intra-paragraph range) via text anchor or paragraph index.
+  - `add_reference.py` — `text:reference-mark` (point/range), `text:bookmark-ref` (to a bookmark), `text:reference-ref` (to a reference-mark). Supports `--display page|chapter|number|direction|text`.
+  - `add_sequence.py` — auto-numbered `text:sequence` (Figure/Table/Equation/…) with on-demand `text:sequence-decls` injection; `text:sequence-ref` for references.
+  - `list_refs.py` — JSON inventory of bookmarks, reference-marks, sequences, and all kinds of refs with paragraph index and context.
+- **MathML embedding (ODT)** — `add_math.py` accepting `--latex` (via optional `pandoc`), `--mathml PATH`, or `--mathml-inline XML`. Formulas are embedded as `Object N/` sub-packages (LibreOffice-native convention) with proper manifest entries.
+- **DAO grant-proposal example** — `examples/dao/{spec.json, refs.bib, build_grant_proposal.py, README.md}`. End-to-end pipeline that produces a German grant proposal with citations, footnote, bookmark+ref, figure sequence, and a Carbon-14 LaTeX formula. ~50 KB PDF when LibreOffice is present.
+- **Library helpers in `lib/odf_common.py`**:
+  - `wrap_text_with_pair_in_element` — bracket a text region with a start/end element pair, with rollback on failure.
+  - `ensure_sequence_declarations` — idempotent insertion of `text:sequence-decls`/`text:sequence-decl` under `office:text`.
+  - `unique_object_name` — `Object 1`, `Object 2`, … picker, parallel to `unique_picture_name`.
+  - `copy_with_multiple_members` — ZIP-write helper accepting an arbitrary `{path: bytes}` mapping of new members plus replacements.
+  - `find_pandoc`, `latex_to_mathml` — LaTeX → MathML conversion via pandoc subprocess.
+- **`validate_refs.py` (ODT)** extended with 8 new checks: duplicate bookmark/reference-mark/sequence names, unmatched range pairs, dangling refs (bookmark-ref/reference-ref/sequence-ref), missing draw:object package targets.
+- 26 new tests across `tests/test_cross_refs.py`, `tests/test_math.py`, `tests/test_examples.py` extension, and unit tests in `tests/test_lib_odf_common.py`. Total: 136 tests (was 110).
+
+### Changed
+
+- CI workflow installs `pandoc` so the LaTeX→MathML code path is exercised in tests.
+- ODT `SKILL.md` description and trigger list extended with cross-reference, figure, equation, MathML, LaTeX, Querverweis, Lesezeichen, Abbildung, Gleichung keywords.
+
 ## v0.3.0 - 2026-05-21
 
 Scholarly authoring: footnote/endnote API + BibTeX/CSL-JSON citation API.

@@ -17,7 +17,9 @@ from lib.odf_common import (
     VERSION,
     clear_children,
     copy_into_package,
+    copy_with_multiple_members,
     ensure_manifest_entry,
+    ensure_sequence_declarations,
     find_soffice,
     find_text_position_in_element,
     insert_after_text_in_element,
@@ -27,9 +29,11 @@ from lib.odf_common import (
     pack_dir_as_odf,
     parse_xml_from_zip,
     replace_text_in_element,
+    unique_object_name,
     unique_picture_name,
     unpack_to_temp,
     update_meta_for_edit,
+    wrap_text_with_pair_in_element,
     write_odf_with_replacements,
     xml_bytes,
 )
@@ -38,6 +42,7 @@ NS = {
     "manifest": "urn:oasis:names:tc:opendocument:xmlns:manifest:1.0",
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
     "meta": "urn:oasis:names:tc:opendocument:xmlns:meta:1.0",
+    "text": "urn:oasis:names:tc:opendocument:xmlns:text:1.0",
 }
 
 
@@ -343,6 +348,87 @@ class LibOdfCommonTests(unittest.TestCase):
         p = ET.fromstring("<p>Hello</p>")
         with self.assertRaises(ValueError):
             insert_in_paragraph(p, "middle", ET.Element("x"))
+
+    def test_wrap_text_with_pair_simple(self) -> None:
+        p = ET.fromstring("<p>before START middle END after</p>")
+        start = ET.Element("bms")
+        end = ET.Element("bme")
+        ok = wrap_text_with_pair_in_element(p, "START", "END", start, end)
+        self.assertTrue(ok)
+        children = list(p)
+        self.assertEqual([c.tag for c in children], ["bms", "bme"])
+        # bms.tail must contain " middle " (between start and end)
+        self.assertIn("middle", children[0].tail)
+        self.assertIn("after", children[1].tail)
+
+    def test_wrap_text_with_pair_no_start_anchor(self) -> None:
+        p = ET.fromstring("<p>Hello world</p>")
+        ok = wrap_text_with_pair_in_element(p, "nope", "world", ET.Element("a"), ET.Element("b"))
+        self.assertFalse(ok)
+        self.assertEqual(len(list(p)), 0)
+
+    def test_wrap_text_with_pair_no_end_anchor(self) -> None:
+        p = ET.fromstring("<p>Hello world</p>")
+        ok = wrap_text_with_pair_in_element(p, "Hello", "missing", ET.Element("a"), ET.Element("b"))
+        self.assertFalse(ok)
+        self.assertEqual(len(list(p)), 0)
+
+    def test_wrap_text_with_pair_end_before_start_fails(self) -> None:
+        p = ET.fromstring("<p>END marker then START marker</p>")
+        # 'START' appears AFTER 'END' in the text — wrap_text_with_pair will
+        # find 'END' first looking AFTER start_idx, so it actually depends on
+        # implementation. Our impl uses combined.find(end_anchor, start_idx+len(start_anchor)).
+        # Here START is at position 17, END is at 0 → find END after position 22 fails → returns False.
+        ok = wrap_text_with_pair_in_element(p, "START", "END", ET.Element("a"), ET.Element("b"))
+        self.assertFalse(ok)
+
+    def test_ensure_sequence_declarations_creates_block(self) -> None:
+        text = ET.Element(f"{{{NS['office']}}}text")
+        ET.SubElement(text, f"{{{NS['text']}}}p")
+        ensure_sequence_declarations(text, ["Figure", "Table"], NS)
+        decls = text.find(f"{{{NS['text']}}}sequence-decls")
+        assert decls is not None
+        names = {d.attrib.get(f"{{{NS['text']}}}name") for d in decls.findall(f"{{{NS['text']}}}sequence-decl")}
+        self.assertEqual(names, {"Figure", "Table"})
+        # The decls block must be the FIRST child of office:text
+        self.assertIs(list(text)[0], decls)
+
+    def test_ensure_sequence_declarations_idempotent(self) -> None:
+        text = ET.Element(f"{{{NS['office']}}}text")
+        ensure_sequence_declarations(text, ["Figure"], NS)
+        ensure_sequence_declarations(text, ["Figure", "Table"], NS)
+        decls = text.find(f"{{{NS['text']}}}sequence-decls")
+        assert decls is not None
+        names = {d.attrib.get(f"{{{NS['text']}}}name") for d in decls.findall(f"{{{NS['text']}}}sequence-decl")}
+        self.assertEqual(names, {"Figure", "Table"})
+
+    def test_unique_object_name_first(self) -> None:
+        self.assertEqual(unique_object_name(set()), "Object 1")
+
+    def test_unique_object_name_collision(self) -> None:
+        existing = {"Object 1/", "Object 1/content.xml", "Object 2/content.xml"}
+        self.assertEqual(unique_object_name(existing), "Object 3")
+
+    def test_copy_with_multiple_members(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            src = _make_minimal_odf(Path(tmp), "src.odf")
+            dst = Path(tmp) / "dst.odf"
+            copy_with_multiple_members(
+                src,
+                dst,
+                new_members={
+                    "Object 1/content.xml": b"<math:math xmlns:math='http://www.w3.org/1998/Math/MathML'/>",
+                    "Object 1/styles.xml": b"<styles/>",
+                },
+                replacements={"content.xml": b"<root/>"},
+                mimetype_value="application/vnd.oasis.opendocument.text",
+            )
+            with zipfile.ZipFile(dst) as archive:
+                names = archive.namelist()
+                self.assertIn("Object 1/content.xml", names)
+                self.assertIn("Object 1/styles.xml", names)
+                self.assertEqual(archive.read("content.xml"), b"<root/>")
+                self.assertEqual(names[0], "mimetype")
 
     def test_update_meta_creates_missing_elements(self) -> None:
         root = ET.Element(q("office", "document-meta"))

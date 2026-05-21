@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-VERSION = "0.3.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
+VERSION = "0.4.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
 
 ODF_NAMESPACES: dict[str, str] = {
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
@@ -304,6 +304,111 @@ def copy_into_package(
             dst.write(source, package_path, compress_type=zipfile.ZIP_DEFLATED)
 
 
+def copy_with_multiple_members(
+    input_path: Path,
+    output_path: Path,
+    new_members: Mapping[str, bytes],
+    replacements: Mapping[str, bytes],
+    mimetype_value: str,
+) -> None:
+    """Copy an ODF ZIP with both replacements and arbitrary new members.
+
+    Like :func:`copy_into_package` but for adding *several* new internal files
+    (e.g. ``Object 1/content.xml`` plus its directory entry) in one pass.
+
+    Args:
+        input_path: Source ODF file.
+        output_path: Destination ODF file (overwritten).
+        new_members: Mapping ``{package_path: bytes}`` of files to add.
+        replacements: Mapping of existing member names to replacement bytes.
+        mimetype_value: The mimetype string to write if not in *replacements*.
+    """
+    with zipfile.ZipFile(input_path) as src:
+        names: list[str] = src.namelist()
+        with zipfile.ZipFile(output_path, "w") as dst:
+            if "mimetype" in names:
+                dst.writestr(
+                    "mimetype",
+                    replacements.get("mimetype", mimetype_value.encode()),
+                    compress_type=zipfile.ZIP_STORED,
+                )
+            for name in names:
+                if name == "mimetype" or name in new_members:
+                    continue
+                dst.writestr(
+                    name,
+                    replacements.get(name, src.read(name)),
+                    compress_type=zipfile.ZIP_DEFLATED,
+                )
+            for path, payload in new_members.items():
+                dst.writestr(path, payload, compress_type=zipfile.ZIP_DEFLATED)
+
+
+def unique_object_name(existing: Set[str]) -> str:
+    """Return the first ``Object N`` (N=1,2,3,...) that is not present in *existing*.
+
+    Used for MathML/formula sub-packages. Match is on prefix — an existing
+    ``Object 3/content.xml`` causes ``Object 3`` to be considered taken.
+
+    Args:
+        existing: Set of already-used package paths.
+
+    Returns:
+        The chosen ``Object N`` (no trailing slash).
+    """
+    counter: int = 1
+    while True:
+        candidate: str = f"Object {counter}"
+        if not any(name == candidate or name.startswith(candidate + "/") for name in existing):
+            return candidate
+        counter += 1
+
+
+def find_pandoc() -> str | None:
+    """Locate the pandoc executable on PATH. Returns None if not found."""
+    return shutil.which("pandoc")
+
+
+def latex_to_mathml(latex: str) -> bytes:
+    """Convert a LaTeX snippet to MathML bytes via pandoc.
+
+    Args:
+        latex: LaTeX source (without surrounding ``$`` delimiters).
+
+    Returns:
+        UTF-8 encoded MathML XML.
+
+    Raises:
+        SystemExit: If pandoc is not on PATH, with install hints.
+    """
+    import subprocess
+
+    pandoc: str | None = find_pandoc()
+    if pandoc is None:
+        raise SystemExit(
+            "LaTeX → MathML requires pandoc.\n"
+            "  macOS:  brew install pandoc\n"
+            "  Ubuntu: sudo apt-get install pandoc\n"
+            "  Windows: winget install JohnMacFarlane.Pandoc\n"
+            "Or supply --mathml or --mathml-inline directly."
+        )
+    # Wrap in math mode so pandoc emits a <math> element.
+    wrapped: str = f"${latex}$"
+    result = subprocess.run(
+        [pandoc, "-f", "latex", "-t", "html5", "--mathml"],
+        input=wrapped.encode("utf-8"),
+        capture_output=True,
+        check=True,
+    )
+    # Pandoc's html5+mathml output wraps in <p>...</p>; extract the <math>...</math> element.
+    html_out: str = result.stdout.decode("utf-8")
+    math_start: int = html_out.find("<math")
+    math_end: int = html_out.rfind("</math>")
+    if math_start < 0 or math_end < 0:
+        raise SystemExit(f"pandoc did not emit a <math> element. Output was:\n{html_out}")
+    return html_out[math_start : math_end + len("</math>")].encode("utf-8")
+
+
 def clear_children(element: ET.Element) -> None:
     """Remove all child elements from *element* in-place.
 
@@ -570,6 +675,94 @@ def insert_in_paragraph(paragraph: ET.Element, position: str, new_element: ET.El
         new_element.tail = old_text
     else:
         raise ValueError(f"position must be 'start' or 'end', got {position!r}")
+
+
+def wrap_text_with_pair_in_element(
+    element: ET.Element,
+    start_anchor: str,
+    end_anchor: str,
+    start_element: ET.Element,
+    end_element: ET.Element,
+) -> bool:
+    """Bracket a text region with two empty marker elements (e.g. range bookmarks).
+
+    Finds *start_anchor* and *end_anchor* in *element*'s text content; inserts
+    *start_element* immediately after the start anchor and *end_element*
+    immediately after the end anchor. The end anchor must occur after the
+    start anchor in document order. Rolls back on failure: nothing is inserted
+    unless both anchors were found and the order is correct.
+
+    Args:
+        element: The paragraph (or similar) to search.
+        start_anchor: Substring marking the start of the bracketed region.
+        end_anchor: Substring marking the end. Must come after *start_anchor*.
+        start_element: Element to insert after the start anchor (e.g. ``text:bookmark-start``).
+        end_element: Element to insert after the end anchor (e.g. ``text:bookmark-end``).
+
+    Returns:
+        ``True`` if both insertions succeeded, ``False`` otherwise (and no
+        change is made to *element*).
+    """
+    slots: list[tuple[ET.Element, str]] = _collect_text_slots(element)
+    values: list[str] = [getattr(n, a) or "" for n, a in slots]
+    combined: str = "".join(values)
+    start_idx: int = combined.find(start_anchor)
+    if start_idx < 0:
+        return False
+    end_idx: int = combined.find(end_anchor, start_idx + len(start_anchor))
+    if end_idx < 0:
+        return False
+    # Insert end first so positions of start_anchor remain stable.
+    if not insert_after_text_in_element(element, end_anchor, end_element):
+        return False
+    if not insert_after_text_in_element(element, start_anchor, start_element):
+        # Rollback end insertion.
+        parent_map: dict[ET.Element, ET.Element] = _build_parent_map(element)
+        parent: ET.Element | None = parent_map.get(end_element)
+        if parent is not None:
+            # Restore the tail before removing.
+            siblings: list[ET.Element] = list(parent)
+            idx: int = siblings.index(end_element)
+            preceding_tail: str | None = end_element.tail
+            if idx == 0:
+                parent.text = (parent.text or "") + (preceding_tail or "") or None
+            else:
+                prev: ET.Element = siblings[idx - 1]
+                prev.tail = (prev.tail or "") + (preceding_tail or "") or None
+            parent.remove(end_element)
+        return False
+    return True
+
+
+def ensure_sequence_declarations(text_root: ET.Element, names: list[str], ns: Mapping[str, str]) -> None:
+    """Ensure ``text:sequence-decls`` exists under *text_root* and contains *names*.
+
+    *text_root* is typically the ``office:text`` element. If a
+    ``text:sequence-decls`` block is missing, it is prepended as the first
+    child. Missing ``text:sequence-decl`` entries for each ``NAME`` in *names*
+    are appended.
+
+    Args:
+        text_root: The ``office:text`` element (parent of body content).
+        names: Sequence names (e.g. ``["Figure", "Table", "Illustration"]``).
+        ns: Namespace map (must contain ``text``).
+    """
+    text_ns: str = ns["text"]
+    decls_tag: str = f"{{{text_ns}}}sequence-decls"
+    decl_tag: str = f"{{{text_ns}}}sequence-decl"
+    name_attr: str = f"{{{text_ns}}}name"
+    display_attr: str = f"{{{text_ns}}}display-outline-level"
+
+    decls: ET.Element | None = text_root.find(decls_tag)
+    if decls is None:
+        decls = ET.Element(decls_tag)
+        text_root.insert(0, decls)
+
+    existing: set[str] = {child.attrib.get(name_attr, "") for child in decls.findall(decl_tag)}
+    for name in names:
+        if name in existing:
+            continue
+        ET.SubElement(decls, decl_tag, {name_attr: name, display_attr: "0"})
 
 
 def replace_text_in_element(element: ET.Element, old: str, new: str) -> int:
