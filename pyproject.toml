@@ -1,12 +1,13 @@
 [project]
 name = "open-document-skills"
-version = "0.1.3"
+version = "0.1.5"
 description = "Agent skills for OpenDocument Format files"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 
 [project.optional-dependencies]
 odf = ["odfpy>=1.4.0"]
+dev = ["pytest>=8.0", "ruff>=0.9"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.5 - 2026-05-21
+
+Dev dependencies and pre-commit hooks.
+
+### Added
+
+- `dev` optional dependency group in `pyproject.toml` (`pytest>=8.0`, `ruff>=0.9`).
+- `.pre-commit-config.yaml` with `ruff-check --fix` and `ruff-format` hooks.
+
 ## v0.1.4 - 2026-05-21
 
 Refactoring, shared library, and CI improvements.
