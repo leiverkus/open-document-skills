@@ -65,72 +65,102 @@ def build_odt(tmp: Path, soffice: str) -> None:
     odt = SKILLS / "odt" / "scripts"
 
     # odt-minimal
-    spec = write_json(tmp / "odt_min.json", {
-        "title": "Minimal Document",
-        "blocks": [
-            {"type": "heading", "level": 1, "text": "Introduction"},
-            {"type": "paragraph", "text": "A simple paragraph with plain text."},
-            {"type": "list", "items": ["First", "Second", "Third"]},
-        ],
-    })
+    spec = write_json(
+        tmp / "odt_min.json",
+        {
+            "title": "Minimal Document",
+            "blocks": [
+                {"type": "heading", "level": 1, "text": "Introduction"},
+                {"type": "paragraph", "text": "A simple paragraph with plain text."},
+                {"type": "list", "items": ["First", "Second", "Third"]},
+            ],
+        },
+    )
     base = tmp / "odt_min.odt"
     run(odt / "create_minimal_odt.py", spec, base)
     _emit(soffice, base, "odt", "odt-minimal.odt")
 
     # odt-footnotes
-    spec = write_json(tmp / "odt_fn.json", {
-        "title": "Document with Footnotes",
-        "blocks": [{"type": "paragraph", "text": "Claims need evidence and support."}],
-    })
+    spec = write_json(
+        tmp / "odt_fn.json",
+        {
+            "title": "Document with Footnotes",
+            "blocks": [{"type": "paragraph", "text": "Claims need evidence and support."}],
+        },
+    )
     base = tmp / "odt_fn.odt"
     run(odt / "create_minimal_odt.py", spec, base)
     noted = tmp / "odt_fn_noted.odt"
-    run(odt / "add_footnote.py", base, "--anchor", "evidence",
-        "--body", "See Mueller 2020.", "-o", noted)
+    run(odt / "add_footnote.py", base, "--anchor", "evidence", "--body", "See Mueller 2020.", "-o", noted)
     _emit(soffice, noted, "odt", "odt-footnotes.odt")
 
     # odt-citations
-    spec = write_json(tmp / "odt_cit.json", {
-        "title": "Document with Citations",
-        "blocks": [{"type": "paragraph",
-                    "text": "Earlier studies [@Mueller2020] established the baseline."}],
-    })
+    spec = write_json(
+        tmp / "odt_cit.json",
+        {
+            "title": "Document with Citations",
+            "blocks": [{"type": "paragraph", "text": "Earlier studies [@Mueller2020] established the baseline."}],
+        },
+    )
     base = tmp / "odt_cit.odt"
     run(odt / "create_minimal_odt.py", spec, base)
     cited = tmp / "odt_cit_filled.odt"
-    run(odt / "fill_citations.py", base, "--source",
-        ROOT / "tests" / "fixtures" / "refs.csl.json", "-o", cited)
+    run(odt / "fill_citations.py", base, "--source", ROOT / "tests" / "fixtures" / "refs.csl.json", "-o", cited)
     _emit(soffice, cited, "odt", "odt-citations.odt")
 
     # odt-crossrefs
-    spec = write_json(tmp / "odt_xr.json", {
-        "title": "Document with Cross-References",
-        "blocks": [
-            {"type": "heading", "level": 1, "text": "Methods"},
-            {"type": "paragraph", "text": "As discussed in the methods section earlier."},
-        ],
-    })
+    spec = write_json(
+        tmp / "odt_xr.json",
+        {
+            "title": "Document with Cross-References",
+            "blocks": [
+                {"type": "heading", "level": 1, "text": "Methods"},
+                {"type": "paragraph", "text": "As discussed in the methods section earlier."},
+            ],
+        },
+    )
     base = tmp / "odt_xr.odt"
     run(odt / "create_minimal_odt.py", spec, base)
     bm = tmp / "odt_xr_bm.odt"
-    run(odt / "add_bookmark.py", base, "--name", "MethodsSec",
-        "--anchor", "Methods", "-o", bm)
+    run(odt / "add_bookmark.py", base, "--name", "MethodsSec", "--anchor", "Methods", "-o", bm)
     ref = tmp / "odt_xr_ref.odt"
-    run(odt / "add_reference.py", bm, "--ref-to", "MethodsSec", "--kind", "bookmark",
-        "--anchor", "methods section", "--display", "chapter", "-o", ref)
+    run(
+        odt / "add_reference.py",
+        bm,
+        "--ref-to",
+        "MethodsSec",
+        "--kind",
+        "bookmark",
+        "--anchor",
+        "methods section",
+        "--display",
+        "chapter",
+        "-o",
+        ref,
+    )
     _emit(soffice, ref, "odt", "odt-crossrefs.odt")
 
     # odt-math
-    spec = write_json(tmp / "odt_math.json", {
-        "title": "Document with Math",
-        "blocks": [{"type": "paragraph", "text": "The decay equation governs dating."}],
-    })
+    spec = write_json(
+        tmp / "odt_math.json",
+        {
+            "title": "Document with Math",
+            "blocks": [{"type": "paragraph", "text": "The decay equation governs dating."}],
+        },
+    )
     base = tmp / "odt_math.odt"
     run(odt / "create_minimal_odt.py", spec, base)
     mathed = tmp / "odt_math_eq.odt"
-    run(odt / "add_math.py", base, "--mathml",
+    run(
+        odt / "add_math.py",
+        base,
+        "--mathml",
         ROOT / "tests" / "fixtures" / "sample_formula.mml",
-        "--anchor", "decay equation", "-o", mathed)
+        "--anchor",
+        "decay equation",
+        "-o",
+        mathed,
+    )
     _emit(soffice, mathed, "odt", "odt-math.odt")
 
 
@@ -140,42 +170,52 @@ def build_odt(tmp: Path, soffice: str) -> None:
 def build_ods(tmp: Path, soffice: str) -> None:
     ods = SKILLS / "ods" / "scripts"
 
-    spec = write_json(tmp / "ods_min.json", {
-        "sheets": [{"name": "Data", "rows": [["Name", "Value"], ["Alpha", "10"], ["Beta", "20"]]}]
-    })
+    spec = write_json(
+        tmp / "ods_min.json",
+        {"sheets": [{"name": "Data", "rows": [["Name", "Value"], ["Alpha", "10"], ["Beta", "20"]]}]},
+    )
     base = tmp / "ods_min.ods"
     run(ods / "create_minimal_ods.py", spec, base)
     _emit(soffice, base, "ods", "ods-minimal.ods")
 
-    spec = write_json(tmp / "ods_f.json", {
-        "sheets": [{"name": "Calc", "rows": [["A", "B"], ["3", "4"]]}]
-    })
+    spec = write_json(tmp / "ods_f.json", {"sheets": [{"name": "Calc", "rows": [["A", "B"], ["3", "4"]]}]})
     base = tmp / "ods_f.ods"
     run(ods / "create_minimal_ods.py", spec, base)
     cells = tmp / "ods_f_cells.ods"
     run(ods / "replace_cells.py", base, "Calc!C2=formula:of:=[.A2]+[.B2]", "-o", cells)
     _emit(soffice, cells, "ods", "ods-formulas.ods")
 
-    spec = write_json(tmp / "ods_nr.json", {
-        "sheets": [{"name": "Sales", "rows": [["Month", "Revenue"],
-                                              ["Jan", "1000"], ["Feb", "1500"]]}]
-    })
+    spec = write_json(
+        tmp / "ods_nr.json",
+        {"sheets": [{"name": "Sales", "rows": [["Month", "Revenue"], ["Jan", "1000"], ["Feb", "1500"]]}]},
+    )
     base = tmp / "ods_nr.ods"
     run(ods / "create_minimal_ods.py", spec, base)
     nr = tmp / "ods_nr_named.ods"
-    run(ods / "add_named_range.py", base, "--name", "Revenue",
-        "--range", "Sales.B2:B3", "-o", nr)
+    run(ods / "add_named_range.py", base, "--name", "Revenue", "--range", "Sales.B2:B3", "-o", nr)
     _emit(soffice, nr, "ods", "ods-named-ranges.ods")
 
-    spec = write_json(tmp / "ods_ch.json", {
-        "sheets": [{"name": "Chart", "rows": [["Q", "Sales"],
-                                              ["Q1", "100"], ["Q2", "150"], ["Q3", "120"]]}]
-    })
+    spec = write_json(
+        tmp / "ods_ch.json",
+        {"sheets": [{"name": "Chart", "rows": [["Q", "Sales"], ["Q1", "100"], ["Q2", "150"], ["Q3", "120"]]}]},
+    )
     base = tmp / "ods_ch.ods"
     run(ods / "create_minimal_ods.py", spec, base)
     charted = tmp / "ods_ch_bar.ods"
-    run(ods / "add_chart.py", base, "--type", "bar", "--data", "Chart.A1:B4",
-        "--cell", "Chart.D1", "--title", "Quarterly Sales", "-o", charted)
+    run(
+        ods / "add_chart.py",
+        base,
+        "--type",
+        "bar",
+        "--data",
+        "Chart.A1:B4",
+        "--cell",
+        "Chart.D1",
+        "--title",
+        "Quarterly Sales",
+        "-o",
+        charted,
+    )
     _emit(soffice, charted, "ods", "ods-chart.ods")
 
 
@@ -185,40 +225,45 @@ def build_ods(tmp: Path, soffice: str) -> None:
 def build_odp(tmp: Path, soffice: str) -> None:
     odp = SKILLS / "odp" / "scripts"
 
-    spec = write_json(tmp / "odp_min.json", {
-        "slides": [{"name": "Intro", "title": "Hello"}, {"name": "Body", "title": "Content"}]
-    })
+    spec = write_json(
+        tmp / "odp_min.json", {"slides": [{"name": "Intro", "title": "Hello"}, {"name": "Body", "title": "Content"}]}
+    )
     base = tmp / "odp_min.odp"
     run(odp / "create_minimal_odp.py", spec, base)
     _emit(soffice, base, "odp", "odp-minimal.odp")
 
-    spec = write_json(tmp / "odp_an.json", {
-        "slides": [{"name": "Animated", "title": "Title"}]
-    })
+    spec = write_json(tmp / "odp_an.json", {"slides": [{"name": "Animated", "title": "Title"}]})
     base = tmp / "odp_an.odp"
     run(odp / "create_minimal_odp.py", spec, base)
     animated = tmp / "odp_an_fx.odp"
-    run(odp / "add_animation.py", base, "--slide", "1", "--shape", "Animated",
-        "--effect", "entrance:fade-in", "-o", animated)
+    run(
+        odp / "add_animation.py",
+        base,
+        "--slide",
+        "1",
+        "--shape",
+        "Animated",
+        "--effect",
+        "entrance:fade-in",
+        "-o",
+        animated,
+    )
     _emit(soffice, animated, "odp", "odp-animation.odp")
 
-    spec = write_json(tmp / "odp_tr.json", {
-        "slides": [{"name": "A", "title": "First"}, {"name": "B", "title": "Second"}]
-    })
+    spec = write_json(
+        tmp / "odp_tr.json", {"slides": [{"name": "A", "title": "First"}, {"name": "B", "title": "Second"}]}
+    )
     base = tmp / "odp_tr.odp"
     run(odp / "create_minimal_odp.py", spec, base)
     trans = tmp / "odp_tr_wipe.odp"
     run(odp / "add_transition.py", base, "--slide", "all", "--type", "wipe", "-o", trans)
     _emit(soffice, trans, "odp", "odp-transition.odp")
 
-    spec = write_json(tmp / "odp_ma.json", {
-        "slides": [{"name": "Slide", "title": "Branded"}]
-    })
+    spec = write_json(tmp / "odp_ma.json", {"slides": [{"name": "Slide", "title": "Branded"}]})
     base = tmp / "odp_ma.odp"
     run(odp / "create_minimal_odp.py", spec, base)
     master = tmp / "odp_ma_bg.odp"
-    run(odp / "customize_master.py", base, "--master", "Default",
-        "--background-color", "#02416C", "-o", master)
+    run(odp / "customize_master.py", base, "--master", "Default", "--background-color", "#02416C", "-o", master)
     _emit(soffice, master, "odp", "odp-master.odp")
 
 
@@ -229,13 +274,21 @@ def build_odg(tmp: Path, soffice: str) -> None:
     odg = SKILLS / "odg" / "scripts"
 
     def three_rects(name: str) -> Path:
-        spec = write_json(tmp / f"{name}.json", {
-            "pages": [{"name": "Flow", "items": [
-                {"type": "rect", "x": "1cm", "y": "1cm", "width": "3cm", "height": "1.5cm", "name": "A"},
-                {"type": "rect", "x": "6cm", "y": "1cm", "width": "3cm", "height": "1.5cm", "name": "B"},
-                {"type": "rect", "x": "11cm", "y": "1cm", "width": "3cm", "height": "1.5cm", "name": "C"},
-            ]}]
-        })
+        spec = write_json(
+            tmp / f"{name}.json",
+            {
+                "pages": [
+                    {
+                        "name": "Flow",
+                        "items": [
+                            {"type": "rect", "x": "1cm", "y": "1cm", "width": "3cm", "height": "1.5cm", "name": "A"},
+                            {"type": "rect", "x": "6cm", "y": "1cm", "width": "3cm", "height": "1.5cm", "name": "B"},
+                            {"type": "rect", "x": "11cm", "y": "1cm", "width": "3cm", "height": "1.5cm", "name": "C"},
+                        ],
+                    }
+                ]
+            },
+        )
         out = tmp / f"{name}.odg"
         run(odg / "create_minimal_odg.py", spec, out)
         return out
@@ -257,8 +310,7 @@ def build_odg(tmp: Path, soffice: str) -> None:
 
     base = three_rects("odg_gp")
     gp = tmp / "odg_gp_pts.odg"
-    run(odg / "add_gluepoint.py", base, "--shape", "A", "--position", "0.5,0",
-        "--escape", "up", "-o", gp)
+    run(odg / "add_gluepoint.py", base, "--shape", "A", "--position", "0.5,0", "--escape", "up", "-o", gp)
     _emit(soffice, gp, "odg", "odg-gluepoints.odg")
 
 

@@ -19,10 +19,8 @@ from helpers import ROOT, SKILLS, run_script
 CORPUS = ROOT / "tests" / "fixtures" / "corpus"
 
 FORMAT_DIR = {".odt": "odt", ".odp": "odp", ".ods": "ods", ".odg": "odg"}
-PACK_SCRIPT = {".odt": "pack_fodt.py", ".odp": "pack_fodp.py",
-               ".ods": "pack_fods.py", ".odg": "pack_fodg.py"}
-UNPACK_SCRIPT = {".odt": "unpack_fodt.py", ".odp": "unpack_fodp.py",
-                 ".ods": "unpack_fods.py", ".odg": "unpack_fodg.py"}
+PACK_SCRIPT = {".odt": "pack_fodt.py", ".odp": "pack_fodp.py", ".ods": "pack_fods.py", ".odg": "pack_fodg.py"}
+UNPACK_SCRIPT = {".odt": "unpack_fodt.py", ".odp": "unpack_fodp.py", ".ods": "unpack_fods.py", ".odg": "unpack_fodg.py"}
 FLAT_EXT = {".odt": ".fodt", ".odp": ".fodp", ".ods": ".fods", ".odg": ".fodg"}
 
 
@@ -40,7 +38,8 @@ class CorpusRoundtripTests(unittest.TestCase):
 
     def test_corpus_size(self) -> None:
         self.assertGreaterEqual(
-            len(self.fixtures), 12,
+            len(self.fixtures),
+            12,
             "corpus too small — run build_corpus.py to regenerate",
         )
 
@@ -49,12 +48,11 @@ class CorpusRoundtripTests(unittest.TestCase):
         for fixture in self.fixtures:
             with self.subTest(fixture=fixture.name):
                 skill = FORMAT_DIR[fixture.suffix]
-                result = run_script(
-                    SKILLS / skill / "scripts" / "validate_refs.py", fixture, check=False
-                )
+                result = run_script(SKILLS / skill / "scripts" / "validate_refs.py", fixture, check=False)
                 payload = json.loads(result.stdout)
                 self.assertEqual(
-                    payload["status"], "ok",
+                    payload["status"],
+                    "ok",
                     f"{fixture.name}: validation errors {payload.get('errors')}",
                 )
 
@@ -73,7 +71,8 @@ class CorpusRoundtripTests(unittest.TestCase):
                     result = run_script(scripts / "validate_refs.py", back, check=False)
                     payload = json.loads(result.stdout)
                     self.assertEqual(
-                        payload["status"], "ok",
+                        payload["status"],
+                        "ok",
                         f"{fixture.name}: flat-ODF roundtrip broke validation: {payload.get('errors')}",
                     )
 
@@ -95,11 +94,13 @@ class CorpusRoundtripTests(unittest.TestCase):
                     result = run_script(scripts / "extract_text.py", fixture, "--json")
                     json.loads(result.stdout)
                     # add_footnote at the document's first paragraph
-                    run_script(scripts / "add_footnote.py", fixture,
-                               "--paragraph", "1", "--body", "corpus note", "-o", out)
+                    run_script(
+                        scripts / "add_footnote.py", fixture, "--paragraph", "1", "--body", "corpus note", "-o", out
+                    )
                     vr = run_script(scripts / "validate_refs.py", out, check=False)
-                    self.assertEqual(json.loads(vr.stdout)["status"], "ok",
-                                     f"{fixture.name}: add_footnote broke validation")
+                    self.assertEqual(
+                        json.loads(vr.stdout)["status"], "ok", f"{fixture.name}: add_footnote broke validation"
+                    )
 
     def test_ods_edits(self) -> None:
         scripts = SKILLS / "ods" / "scripts"
@@ -107,16 +108,14 @@ class CorpusRoundtripTests(unittest.TestCase):
             with self.subTest(fixture=fixture.name):
                 with tempfile.TemporaryDirectory() as tmp:
                     out = Path(tmp) / "out.ods"
-                    sheets = json.loads(
-                        run_script(scripts / "extract_sheets.py", fixture, "--json").stdout
-                    )
+                    sheets = json.loads(run_script(scripts / "extract_sheets.py", fixture, "--json").stdout)
                     self.assertGreaterEqual(len(sheets), 1)
                     sheet_name = sheets[0]["name"]
-                    run_script(scripts / "replace_cells.py", fixture,
-                               f"{sheet_name}!Z1=corpus", "-o", out)
+                    run_script(scripts / "replace_cells.py", fixture, f"{sheet_name}!Z1=corpus", "-o", out)
                     vr = run_script(scripts / "validate_refs.py", out, check=False)
-                    self.assertEqual(json.loads(vr.stdout)["status"], "ok",
-                                     f"{fixture.name}: replace_cells broke validation")
+                    self.assertEqual(
+                        json.loads(vr.stdout)["status"], "ok", f"{fixture.name}: replace_cells broke validation"
+                    )
 
     def test_odp_edits(self) -> None:
         scripts = SKILLS / "odp" / "scripts"

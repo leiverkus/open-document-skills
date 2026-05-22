@@ -1226,9 +1226,7 @@ def _flatten_object(members: dict[str, bytes], mimetype: str | None) -> ET.Eleme
         ``<draw:object>``.
     """
     office_ns: str = ODF_NAMESPACES["office"]
-    doc: ET.Element = ET.Element(
-        f"{{{office_ns}}}document", {f"{{{office_ns}}}version": "1.3"}
-    )
+    doc: ET.Element = ET.Element(f"{{{office_ns}}}document", {f"{{{office_ns}}}version": "1.3"})
     if mimetype:
         doc.set(f"{{{office_ns}}}mimetype", mimetype)
     roots: dict[str, ET.Element] = {}
@@ -1276,21 +1274,11 @@ def _split_object_flat(doc: ET.Element) -> tuple[dict[str, bytes], str | None]:
     """
     office_ns: str = ODF_NAMESPACES["office"]
     mimetype: str | None = doc.attrib.get(f"{{{office_ns}}}mimetype")
-    content_doc: ET.Element = ET.Element(
-        f"{{{office_ns}}}document-content", {f"{{{office_ns}}}version": "1.3"}
-    )
-    styles_doc: ET.Element = ET.Element(
-        f"{{{office_ns}}}document-styles", {f"{{{office_ns}}}version": "1.3"}
-    )
-    meta_doc: ET.Element = ET.Element(
-        f"{{{office_ns}}}document-meta", {f"{{{office_ns}}}version": "1.3"}
-    )
-    settings_doc: ET.Element = ET.Element(
-        f"{{{office_ns}}}document-settings", {f"{{{office_ns}}}version": "1.3"}
-    )
-    content_auto: ET.Element = ET.SubElement(
-        content_doc, f"{{{office_ns}}}automatic-styles"
-    )
+    content_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-content", {f"{{{office_ns}}}version": "1.3"})
+    styles_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-styles", {f"{{{office_ns}}}version": "1.3"})
+    meta_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-meta", {f"{{{office_ns}}}version": "1.3"})
+    settings_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-settings", {f"{{{office_ns}}}version": "1.3"})
+    content_auto: ET.Element = ET.SubElement(content_doc, f"{{{office_ns}}}automatic-styles")
     has_styles = has_meta = has_settings = False
     for child in list(doc):
         name: str = local_name(child.tag)
@@ -1414,9 +1402,7 @@ def pack_flat_odf(input_zip: Path, output_flat: Path) -> None:
             continue
         obj_dir: str = href_obj.lstrip("./").rstrip("/")
         members: dict[str, bytes] = {
-            name[len(obj_dir) + 1:]: data
-            for name, data in object_members.items()
-            if name.startswith(obj_dir + "/")
+            name[len(obj_dir) + 1 :]: data for name, data in object_members.items() if name.startswith(obj_dir + "/")
         }
         if "content.xml" not in members:
             continue
