@@ -40,4 +40,4 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install pytest pytest-cov 'bibtexparser>=1.4,<2' 'lxml>=4.9' 'hypothesis>=6.0'
-      - run: pytest tests/ --cov=lib --cov-fail-under=30 --cov-report=term-missing
+      - run: pytest tests/ --cov=odf_lib --cov-fail-under=30 --cov-report=term-missing
