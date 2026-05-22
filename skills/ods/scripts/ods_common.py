@@ -1,6 +1,6 @@
 """Shared helpers for small ODS scripts.
 
-All format-agnostic functions live in lib.odf_common.
+All format-agnostic functions live in odf_lib.odf_common.
 This module adds the ODS namespace, MIMETYPE, and spreadsheet-specific helpers.
 """
 
@@ -17,8 +17,8 @@ _repo_root = Path(__file__).resolve().parents[3]
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
 
-# Single consolidated import block from lib.odf_common.
-from lib.odf_common import (  # noqa: E402, I001
+# Single consolidated import block from odf_lib.odf_common.
+from odf_lib.odf_common import (  # noqa: E402, I001
     copy_with_multiple_members as _copy_members_base,
     ensure_manifest_entry as _ensure_base,
     find_soffice,

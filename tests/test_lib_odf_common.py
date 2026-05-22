@@ -1,4 +1,4 @@
-"""Direct unit tests for lib.odf_common functions.
+"""Direct unit tests for odf_lib.odf_common functions.
 
 These tests call library functions directly (no subprocess) so that
 pytest-cov can track coverage.
@@ -13,7 +13,7 @@ import zipfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from lib.odf_common import (
+from odf_lib.odf_common import (
     VERSION,
     clear_children,
     copy_into_package,
@@ -182,7 +182,7 @@ class LibOdfCommonTests(unittest.TestCase):
         self.assertEqual(local_name("p"), "p")
 
     def test_find_soffice_which_path(self) -> None:
-        with unittest.mock.patch("lib.odf_common.shutil.which", return_value="/usr/bin/soffice"):
+        with unittest.mock.patch("odf_lib.odf_common.shutil.which", return_value="/usr/bin/soffice"):
             result = find_soffice()
             self.assertEqual(result, "/usr/bin/soffice")
 
@@ -552,7 +552,7 @@ class LibOdfCommonTests(unittest.TestCase):
 
     def test_find_soffice_not_found(self) -> None:
         with (
-            unittest.mock.patch("lib.odf_common.shutil.which", return_value=None),
+            unittest.mock.patch("odf_lib.odf_common.shutil.which", return_value=None),
             unittest.mock.patch.object(Path, "exists", return_value=False),
         ):
             with self.assertRaises(SystemExit):

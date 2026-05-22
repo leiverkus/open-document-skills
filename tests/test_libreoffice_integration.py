@@ -13,7 +13,7 @@ _repo_root = Path(__file__).resolve().parents[1]
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
 
-from lib.odf_common import find_soffice  # noqa: E402
+from odf_lib.odf_common import find_soffice  # noqa: E402
 
 SOFFICE = find_soffice()
 

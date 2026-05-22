@@ -30,10 +30,10 @@ if (-not (Test-Path $Soffice)) { throw "LibreOffice/soffice not found" }
 
 ## Python
 
-The bundled `lib/odf_common.py` provides a `find_soffice()` function that performs the same lookup programmatically:
+The bundled `odf_lib/odf_common.py` provides a `find_soffice()` function that performs the same lookup programmatically:
 
 ```python
-from lib.odf_common import find_soffice
+from odf_lib.odf_common import find_soffice
 
 soffice = find_soffice()  # raises SystemExit if not found
 ```

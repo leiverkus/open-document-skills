@@ -221,7 +221,7 @@ def main() -> None:
     result = validate(args.odt)
     if args.strict:
         sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
-        from lib.odf_common import validate_against_schema
+        from odf_lib.odf_common import validate_against_schema
 
         with zipfile.ZipFile(args.odt) as archive:
             content_bytes = archive.read("content.xml")

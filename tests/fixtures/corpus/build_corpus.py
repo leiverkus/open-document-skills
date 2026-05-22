@@ -28,7 +28,7 @@ SKILLS = ROOT / "skills"
 CORPUS = ROOT / "tests" / "fixtures" / "corpus"
 
 sys.path.insert(0, str(ROOT))
-from lib.odf_common import find_soffice  # noqa: E402
+from odf_lib.odf_common import find_soffice  # noqa: E402
 
 
 def run(script: Path, *args: object) -> None:

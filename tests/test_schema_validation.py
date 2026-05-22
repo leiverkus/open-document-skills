@@ -72,7 +72,7 @@ class SchemaValidationTests(unittest.TestCase):
         import sys
 
         sys.path.insert(0, str(SKILLS.parent))
-        from lib.odf_common import ensure_schema  # noqa: E402
+        from odf_lib.odf_common import ensure_schema  # noqa: E402
 
         first = ensure_schema("manifest")
         self.assertTrue(first.exists())

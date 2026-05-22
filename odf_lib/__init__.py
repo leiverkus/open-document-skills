@@ -1,9 +1,9 @@
 """Shared helpers for OpenDocument Format scripts.
 
 All four ODF skills (ODT, ODP, ODS, ODG) use these functions.
-Import from ``lib`` or ``lib.odf_common``:
+Import from ``odf_lib`` or ``odf_lib.odf_common``:
 
-    from lib import pack_dir_as_odf, find_soffice, xml_bytes
+    from odf_lib import pack_dir_as_odf, find_soffice, xml_bytes
 
 Note: ``q()`` is NOT re-exported here — it needs a format-specific
 namespace dict and lives in each ``*_common.py`` wrapper.
@@ -11,7 +11,7 @@ namespace dict and lives in each ``*_common.py`` wrapper.
 
 from __future__ import annotations
 
-from lib.odf_common import (
+from odf_lib.odf_common import (
     clear_children,
     copy_into_package,
     ensure_manifest_entry,

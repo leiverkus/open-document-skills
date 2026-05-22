@@ -1,4 +1,4 @@
-"""Hypothesis property tests for the walker/locator helpers in lib/odf_common.
+"""Hypothesis property tests for the walker/locator helpers in odf_lib/odf_common.
 
 Four invariants:
 1. Replacement idempotence — replacing twice == replacing once (when `new` doesn't contain `old`).
@@ -16,7 +16,7 @@ from xml.etree import ElementTree as ET
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
 
-from lib.odf_common import (
+from odf_lib.odf_common import (
     insert_after_text_in_element,
     replace_text_in_element,
     wrap_text_with_pair_in_element,

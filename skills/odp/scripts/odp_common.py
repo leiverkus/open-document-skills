@@ -1,6 +1,6 @@
 """Shared helpers for small ODP scripts.
 
-All format-agnostic functions live in lib.odf_common.
+All format-agnostic functions live in odf_lib.odf_common.
 This module adds the ODP namespace, MIMETYPE, and thin wrappers.
 """
 
@@ -16,8 +16,8 @@ _repo_root = Path(__file__).resolve().parents[3]
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
 
-# Single consolidated import block from lib.odf_common.
-from lib.odf_common import (  # noqa: E402, I001
+# Single consolidated import block from odf_lib.odf_common.
+from odf_lib.odf_common import (  # noqa: E402, I001
     clear_children,
     copy_into_package as _copy_base,
     ensure_manifest_entry as _ensure_base,

@@ -28,12 +28,12 @@ from odt_common import (
     xml_bytes,
 )
 
-# Add repo root for lib.citation_mapping
+# Add repo root for odf_lib.citation_mapping
 _repo_root = Path(__file__).resolve().parents[3]
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
 
-from lib.citation_mapping import (  # noqa: E402
+from odf_lib.citation_mapping import (  # noqa: E402
     bibtex_entry_to_odf_fields,
     csl_entry_to_odf_fields,
 )

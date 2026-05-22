@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 # Import shared namespace helpers from the ODT common module
-# (all four *_common.py modules share the same lib.odf_common base)
+# (all four *_common.py modules share the same odf_lib.odf_common base)
 import sys
 import tempfile
 import unittest
