@@ -88,6 +88,28 @@ class LibreOfficeIntegrationTests(unittest.TestCase):
             self.assertTrue(pdf.exists())
             self.assertGreater(pdf.stat().st_size, 0)
 
+    def test_branded_odg_diagram_renders_to_pdf(self) -> None:
+        """A base ODG with the branded diagram styles.xml injected must render
+        to a non-empty PDF."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odg" / "scripts"
+            sys.path.insert(0, str(scripts))
+            from odg_common import inject_styles_from_file
+
+            diagram = ROOT / "examples" / "diagram"
+            base = tmp_path / "base.odg"
+            run_script(scripts / "create_minimal_odg.py", diagram / "spec.json", base)
+            final = tmp_path / "diagram.odg"
+            inject_styles_from_file(base, diagram / "styles.xml", final)
+            run_script(scripts / "validate_refs.py", final)
+
+            outdir = tmp_path / "qa"
+            run_script(scripts / "render.py", final, "--outdir", outdir, "--formats", "pdf")
+            pdf = outdir / "diagram.pdf"
+            self.assertTrue(pdf.exists())
+            self.assertGreater(pdf.stat().st_size, 0)
+
     def test_libreoffice_opens_flat_fodt(self) -> None:
         import subprocess
 

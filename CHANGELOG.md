@@ -1,5 +1,40 @@
 # Changelog
 
+## v1.2.0 - 2026-05-22
+
+Proper drawing styling for the ODG skill — the same class of bug v1.1.0
+fixed for ODP. A review of all four formats (verified by rendering with
+LibreOffice) found ODG, and only ODG, shared it: `create_minimal_odg.py`
+emitted an empty `DefaultGraphic` style and gave shapes no `draw:style-name`,
+so every shape inherited LibreOffice's generic `#729fcf` blue. ODT and ODS
+render plainly but correctly and were left unchanged.
+
+### Added
+
+- **Per-shape styling keys** — `create_minimal_odg.py` spec items accept
+  `fill`, `stroke`, `stroke-width`, `text-color`, `font-size`, and
+  `corner-radius`. Graphic overrides produce a per-shape automatic graphic
+  style; text overrides produce paragraph + text automatic styles (a graphic
+  style's text-properties are ignored by LibreOffice Draw from an automatic
+  style in content.xml).
+- **Branded flowchart example** — `examples/diagram/` ships a complete
+  branded drawing pipeline (`spec.json`, a curated `styles.xml`,
+  `build_diagram.py`).
+- **ODG `inject_styles_from_file` / `embed_pictures`** — `odg_common.py` now
+  wraps these `odf_lib` helpers, so a branded drawing `styles.xml` can be
+  swapped in by name.
+
+### Fixed
+
+- **`create_minimal_odg.py` renders a designed default theme** — a designed
+  `standard` graphic style (so even a styleless shape inherits a sensible
+  look), role styles (`gr-shape`, `gr-text`, `gr-line`, `gr-image`) referenced
+  by every generated shape, and a `drawing-page` page background. No more
+  generic-blue shapes.
+- **`inject_styles_from_file` no longer reports false dangling references** —
+  style names defined in `content.xml`'s own automatic-styles are now
+  recognised as satisfying a reference, not flagged as missing.
+
 ## v1.1.0 - 2026-05-22
 
 Proper presentation styling for the ODP skill. Generated decks were

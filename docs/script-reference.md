@@ -76,7 +76,7 @@ All scripts use the Python standard library.
 
 | Script | Purpose |
 | --- | --- |
-| `create_minimal_odg.py` | Build a minimal ODG drawing from a JSON spec. |
+| `create_minimal_odg.py` | Build a minimal ODG drawing from a JSON spec, with a designed default theme (no generic-blue shapes) and optional per-shape styling keys (`fill`, `stroke`, `stroke-width`, `text-color`, `font-size`, `corner-radius`). |
 | `extract_text.py` | Print text from drawing pages and shapes. |
 | `extract_shapes.py` | Emit drawing shapes, frames, geometry, and text as structured JSON. |
 | `inspect_package.py` | Summarize pages, shapes, images, package files, and manifest entries. |

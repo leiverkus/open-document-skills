@@ -1,0 +1,59 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<office:document-styles
+    xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+    xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+    xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+    xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
+    xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
+    xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0"
+    office:version="1.3">
+
+  <office:styles>
+
+    <!-- The graphic-family default. Named "standard" so even a styleless
+         shape inherits this — a clean white card, not LibreOffice's blue. -->
+    <style:style style:name="standard" style:family="graphic">
+      <style:graphic-properties
+          draw:fill="solid" draw:fill-color="#FFFFFF"
+          draw:stroke="solid" svg:stroke-color="#02416C" svg:stroke-width="0.05cm"
+          draw:textarea-horizontal-align="center" draw:textarea-vertical-align="middle"
+          fo:padding="0.15cm"/>
+      <style:text-properties fo:color="#1A2733" fo:font-size="16pt"/>
+    </style:style>
+
+    <!-- Role styles — every generated shape references one of these. -->
+    <style:style style:name="gr-shape" style:family="graphic" style:parent-style-name="standard"/>
+
+    <style:style style:name="gr-text" style:family="graphic" style:parent-style-name="standard">
+      <style:graphic-properties draw:fill="none" draw:stroke="none"
+          draw:textarea-horizontal-align="left"/>
+    </style:style>
+
+    <style:style style:name="gr-line" style:family="graphic" style:parent-style-name="standard">
+      <style:graphic-properties draw:fill="none"/>
+    </style:style>
+
+    <style:style style:name="gr-image" style:family="graphic" style:parent-style-name="standard">
+      <style:graphic-properties draw:fill="none" draw:stroke="none"/>
+    </style:style>
+
+  </office:styles>
+
+  <office:automatic-styles>
+    <style:page-layout style:name="Screen">
+      <style:page-layout-properties
+          fo:page-width="28cm" fo:page-height="15.75cm"
+          style:print-orientation="landscape"/>
+    </style:page-layout>
+    <!-- Page background: a master page's drawing-page style must live in
+         office:automatic-styles for LibreOffice to render it. -->
+    <style:style style:name="dp-default" style:family="drawing-page">
+      <style:drawing-page-properties draw:fill="solid" draw:fill-color="#F4F6F8"/>
+    </style:style>
+  </office:automatic-styles>
+
+  <office:master-styles>
+    <style:master-page style:name="Default" style:page-layout-name="Screen" draw:style-name="dp-default"/>
+  </office:master-styles>
+
+</office:document-styles>

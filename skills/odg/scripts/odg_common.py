@@ -25,8 +25,10 @@ else:
 # Single consolidated import block from odf_lib.odf_common.
 from odf_lib.odf_common import (  # noqa: E402, I001
     copy_into_package as _copy_base,
+    embed_pictures as _embed_pictures_base,
     ensure_manifest_entry as _ensure_base,
     find_soffice,
+    inject_styles_from_file as _inject_styles_base,
     local_name,
     media_type_for,
     pack_dir_as_odf,
@@ -45,14 +47,21 @@ from odf_lib.odf_common import (  # noqa: E402, I001
 __all__ = [
     "NS",
     "ODG_MIMETYPE",
+    "GRAPHIC_KEYS",
     "SHAPE_TAGS",
+    "STYLE_KEYS",
+    "TEXT_KEYS",
     "q",
+    "build_shape_style",
+    "build_text_styles",
     "copy_into_package",
     "element_text",
+    "embed_pictures",
     "ensure_manifest_entry",
     "ensure_shape_id",
     "find_shape_by_name",
     "find_soffice",
+    "inject_styles_from_file",
     "iter_glue_points",
     "iter_pages",
     "iter_shapes",
@@ -142,6 +151,109 @@ def write_odg_with_replacements(
 
 def update_meta_for_edit(meta_root: ET.Element) -> None:
     _update_meta_base(meta_root, NS, q)
+
+
+def inject_styles_from_file(input_odg: Path, styles_path: Path, output_odg: Path) -> list[str]:
+    """Replace styles.xml with a curated branded drawing theme.
+
+    Returns style names referenced by content.xml that are missing from the
+    injected styles (dangling references).
+    """
+    return _inject_styles_base(input_odg, styles_path, output_odg, ODG_MIMETYPE)
+
+
+def embed_pictures(input_odg: Path, pictures: dict[str, Path], output_odg: Path) -> None:
+    """Add local pictures into the ODG package and register them in the manifest."""
+    _embed_pictures_base(input_odg, pictures, output_odg, ODG_MIMETYPE, NS, q)
+
+
+# Per-shape styling keys accepted in create_minimal_odg.py spec items.
+GRAPHIC_KEYS = ("fill", "stroke", "stroke-width")
+TEXT_KEYS = ("text-color", "font-size")
+STYLE_KEYS = GRAPHIC_KEYS + TEXT_KEYS
+
+
+def _unique_style_name(auto_styles: ET.Element, prefix: str) -> str:
+    """Return ``{prefix}1``/``{prefix}2``/... not already used in *auto_styles*."""
+    existing = {s.attrib.get(q("style", "name")) for s in auto_styles.findall(q("style", "style"))}
+    n = 1
+    while f"{prefix}{n}" in existing:
+        n += 1
+    return f"{prefix}{n}"
+
+
+def build_shape_style(
+    auto_styles: ET.Element,
+    parent: str,
+    overrides: dict[str, str],
+) -> str:
+    """Append a per-shape automatic *graphic* style to *auto_styles*; return its name.
+
+    *overrides* may contain GRAPHIC_KEYS. ``fill``/``stroke`` accept a hex colour
+    or the literal ``"none"``. The style is parented to *parent* (a role style
+    such as ``gr-shape``) so unset properties fall through to the theme.
+
+    Graphic-property overrides (fill/stroke) render correctly from an automatic
+    style in content.xml; *text* overrides do not — use build_text_styles for
+    those.
+    """
+    name = _unique_style_name(auto_styles, "gr-auto-")
+    style = ET.SubElement(
+        auto_styles,
+        q("style", "style"),
+        {q("style", "name"): name, q("style", "family"): "graphic", q("style", "parent-style-name"): parent},
+    )
+    graphic_props: dict[str, str] = {}
+    fill = overrides.get("fill")
+    if fill == "none":
+        graphic_props[q("draw", "fill")] = "none"
+    elif fill:
+        graphic_props[q("draw", "fill")] = "solid"
+        graphic_props[q("draw", "fill-color")] = fill
+    stroke = overrides.get("stroke")
+    if stroke == "none":
+        graphic_props[q("draw", "stroke")] = "none"
+    elif stroke:
+        graphic_props[q("draw", "stroke")] = "solid"
+        graphic_props[q("svg", "stroke-color")] = stroke
+    if overrides.get("stroke-width"):
+        graphic_props[q("svg", "stroke-width")] = overrides["stroke-width"]
+    ET.SubElement(style, q("style", "graphic-properties"), graphic_props)
+    return name
+
+
+def build_text_styles(
+    auto_styles: ET.Element,
+    overrides: dict[str, str],
+) -> tuple[str, str]:
+    """Append a paragraph + text automatic style for shape-text overrides.
+
+    Returns ``(paragraph_style_name, text_style_name)``. LibreOffice Draw only
+    honours ``text-color``/``font-size`` for shape text when they are carried by
+    paragraph/text automatic styles in content.xml applied to the ``text:p`` and
+    a wrapping ``text:span`` — a graphic style's text-properties are ignored
+    from an automatic style.
+    """
+    text_props: dict[str, str] = {}
+    if overrides.get("text-color"):
+        text_props[q("fo", "color")] = overrides["text-color"]
+    if overrides.get("font-size"):
+        text_props[q("fo", "font-size")] = overrides["font-size"]
+    p_name = _unique_style_name(auto_styles, "P")
+    p_style = ET.SubElement(
+        auto_styles,
+        q("style", "style"),
+        {q("style", "name"): p_name, q("style", "family"): "paragraph"},
+    )
+    ET.SubElement(p_style, q("style", "text-properties"), dict(text_props))
+    t_name = _unique_style_name(auto_styles, "T")
+    t_style = ET.SubElement(
+        auto_styles,
+        q("style", "style"),
+        {q("style", "name"): t_name, q("style", "family"): "text"},
+    )
+    ET.SubElement(t_style, q("style", "text-properties"), dict(text_props))
+    return p_name, t_name
 
 
 def element_text(element: ET.Element) -> str:

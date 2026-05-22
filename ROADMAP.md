@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v1.1.0** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v1.2.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -99,6 +99,21 @@ text colour was uncontrollable, master backgrounds did not render.
   presentation `styles.xml` can be swapped in by name.
 - ✅ **Branded deck example** — `examples/deck/`; the README hero is now a
   real ODP title slide. (Track C, partially delivered.)
+
+## v1.2 — ODG drawing styling ✅ shipped (2026-05-22)
+
+A review of all four formats after v1.1 found ODG carried the same
+styling bug ODP had — and only ODG. ODT and ODS render plainly but
+correctly.
+
+- ✅ **`create_minimal_odg.py` designed default theme** — a designed
+  `standard` graphic style, role styles, and a `drawing-page` background;
+  no more generic-blue shapes.
+- ✅ **Per-shape styling keys** — `fill`, `stroke`, `stroke-width`,
+  `text-color`, `font-size`, `corner-radius` per spec item.
+- ✅ **ODG `inject_styles_from_file` / `embed_pictures`** wrappers.
+- ✅ **Branded flowchart example** — `examples/diagram/`. (Track C, further
+  delivery.)
 
 ## Beyond 1.0 — three tracks
 

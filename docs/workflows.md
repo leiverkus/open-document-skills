@@ -115,6 +115,16 @@ Export:
 python3 skills/odg/scripts/render.py example.odg --outdir qa --formats pdf,svg,png
 ```
 
+Style and brand:
+
+`create_minimal_odg.py` emits a designed default theme — a designed `standard`
+graphic style and role styles, so shapes never render as LibreOffice's generic
+blue. Spec items accept per-shape styling keys (`fill`, `stroke`,
+`stroke-width`, `text-color`, `font-size`, `corner-radius`). For a full branded
+theme, write a curated `styles.xml` that redefines the same named styles and
+inject it with `inject_styles_from_file` (see
+[examples/diagram/](#branded-flowchart-example)).
+
 ## Scholarly authoring (ODT)
 
 ODT supports footnotes, endnotes, and citation insertion natively. The skill ships direct ODF-native helpers — no DOCX or pandoc-citeproc round-trip needed.
@@ -255,6 +265,21 @@ The build runs `create_minimal_odp.py`, then injects `examples/deck/styles.xml`
 (deep-blue background, light typography) and embeds a logo. Because the branded
 `styles.xml` redefines the same named styles the generator emits, the injection
 swaps the whole theme without touching `content.xml`.
+
+## Branded flowchart (example)
+
+The `examples/diagram/` directory ships a branded drawing pipeline:
+
+```bash
+python3 examples/diagram/build_diagram.py
+# Output: examples/diagram/output/diagram.{odg,pdf}
+```
+
+The build runs `create_minimal_odg.py` (with per-shape `fill`/`stroke`/
+`text-color` keys in `spec.json`), connects the nodes with `connect_shapes.py`,
+then injects `examples/diagram/styles.xml` (a white-card theme on a light-grey
+page). Per-shape overrides live in `content.xml`, so the theme swap re-themes
+the default-styled shapes while the per-shape colours survive.
 
 ## Flat ODF (Git-friendly)
 

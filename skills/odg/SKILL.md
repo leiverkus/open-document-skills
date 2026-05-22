@@ -4,7 +4,7 @@ description: "Create, read, edit, convert, repair, inspect, or export OpenDocume
 triggers: [".odg", "ODG", "OpenDocument Graphics", "OpenDocument Drawing", "LibreOffice Draw", "OpenOffice Draw", "Draw document", "odg-Datei", "OpenDocument-Grafik", "Zeichnung", "diagram", "vector drawing", "connector", "Verbinder", "glue point", "Klebepunkt", "group", "Gruppe", "flowchart", "Flussdiagramm", "org chart", "Organigramm", "Mindmap", "flat ODF", ".fodg"]
 dont_use_for: ["text documents (.odt)", "spreadsheets (.ods)", "presentations (.odp)", "generic image editing"]
 license: MIT
-version: "1.1.0"
+version: "1.2.0"
 ---
 
 # ODG creation, editing, and analysis
@@ -143,6 +143,46 @@ If an ODG deliverable is not strictly required, offer SVG or PDF as a more porta
 ```
 
 Treat conversion as lossy until QA proves otherwise. Check text, fonts, shapes, connectors, image embedding, and page size.
+
+## Drawing Styling and Branding
+
+`create_minimal_odg.py` emits a designed default theme, not raw shapes:
+
+- A designed `standard` graphic style — named `standard` because LibreOffice
+  treats it as the graphic-family default, so even a styleless shape inherits
+  a sensible look instead of LibreOffice's generic `#729fcf` blue.
+- Role styles (`gr-shape`, `gr-text`, `gr-line`, `gr-image`) parented to
+  `standard`; every generated shape carries an explicit `draw:style-name`.
+- A `drawing-page` style (`dp-default`) for the page background.
+
+**Per-shape styling** — spec items accept optional styling keys:
+
+| Key | Applies to | Example |
+|---|---|---|
+| `fill` | rect/ellipse/text | `"#F4C542"` or `"none"` |
+| `stroke` | any shape | `"#7A5C00"` or `"none"` |
+| `stroke-width` | any shape | `"0.05cm"` |
+| `text-color` | any shape with text | `"#FFFFFF"` |
+| `font-size` | any shape with text | `"20pt"` |
+| `corner-radius` | rect | `"0.3cm"` |
+
+`fill`/`stroke`/`stroke-width` produce a per-shape automatic *graphic* style;
+`text-color`/`font-size` produce paragraph + text automatic styles — a graphic
+style's text-properties are ignored by LibreOffice Draw from an automatic
+style in `content.xml`.
+
+**Whole-theme swap** — write a curated `styles.xml` that redefines the same
+named styles (`standard`, `gr-shape`, `gr-text`, `gr-line`, `gr-image`,
+`dp-default`, master `Default`, layout `Screen`) and inject it:
+
+```python
+from odg_common import embed_pictures, inject_styles_from_file
+inject_styles_from_file("base.odg", "branded-styles.xml", "themed.odg")
+```
+
+Per-shape overrides live in `content.xml`, so a theme swap re-themes every
+default-styled shape while the overrides survive. See
+[examples/diagram/](../../examples/diagram/) for a complete branded build.
 
 ## Bundled Scripts
 

@@ -1,0 +1,74 @@
+{
+  "pages": [
+    {
+      "name": "Pipeline",
+      "items": [
+        {
+          "type": "text",
+          "text": "Content Pipeline",
+          "x": "1cm",
+          "y": "1cm",
+          "width": "20cm",
+          "height": "1.6cm",
+          "font-size": "30pt",
+          "text-color": "#02416C"
+        },
+        {
+          "type": "ellipse",
+          "name": "Draft",
+          "text": "Draft",
+          "x": "0.8cm",
+          "y": "6cm",
+          "width": "3.6cm",
+          "height": "2.2cm",
+          "fill": "#02416C",
+          "text-color": "#FFFFFF"
+        },
+        {
+          "type": "rect",
+          "name": "Review",
+          "text": "Review",
+          "x": "5.6cm",
+          "y": "6cm",
+          "width": "4.2cm",
+          "height": "2.2cm",
+          "corner-radius": "0.25cm"
+        },
+        {
+          "type": "rect",
+          "name": "Revise",
+          "text": "Revise",
+          "x": "11cm",
+          "y": "6cm",
+          "width": "4.2cm",
+          "height": "2.2cm",
+          "corner-radius": "0.25cm",
+          "fill": "#F4C542",
+          "stroke": "#7A5C00",
+          "text-color": "#3A2E00"
+        },
+        {
+          "type": "rect",
+          "name": "Approve",
+          "text": "Approve",
+          "x": "16.4cm",
+          "y": "6cm",
+          "width": "4.2cm",
+          "height": "2.2cm",
+          "corner-radius": "0.25cm"
+        },
+        {
+          "type": "ellipse",
+          "name": "Publish",
+          "text": "Publish",
+          "x": "22.6cm",
+          "y": "6cm",
+          "width": "3.6cm",
+          "height": "2.2cm",
+          "fill": "#1A7A3C",
+          "text-color": "#FFFFFF"
+        }
+      ]
+    }
+  ]
+}

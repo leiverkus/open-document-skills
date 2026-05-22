@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-VERSION = "1.1.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
+VERSION = "1.2.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
 
 ODF_NAMESPACES: dict[str, str] = {
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
@@ -221,7 +221,14 @@ def inject_styles_from_file(
         v = node.attrib.get(f"{{{text_ns}}}style-name")
         if v:
             used.add(v)
-    missing: list[str] = sorted(used - defined_names - parent_names)
+    # Styles defined in content.xml's own automatic-styles satisfy a reference
+    # too — only swapping styles.xml never touches them.
+    content_defined: set[str] = set()
+    for style_el in content_root.iter(f"{{{style_ns}}}style"):
+        name = style_el.attrib.get(f"{{{style_ns}}}name")
+        if name:
+            content_defined.add(name)
+    missing: list[str] = sorted(used - defined_names - parent_names - content_defined)
 
     write_odf_with_replacements(
         input_path,
