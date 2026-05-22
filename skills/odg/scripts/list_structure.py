@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from typing import Any
 from xml.etree import ElementTree as ET
 
 from odg_common import (
@@ -17,7 +18,7 @@ from odg_common import (
 )
 
 
-def collect(content_root: ET.Element) -> dict[str, object]:
+def collect(content_root: ET.Element) -> dict[str, Any]:
     # id → name lookup for connectors
     id_to_name: dict[str, str] = {}
     for el in content_root.iter():
@@ -25,9 +26,9 @@ def collect(content_root: ET.Element) -> dict[str, object]:
         if eid:
             id_to_name[eid] = el.attrib.get(q("draw", "name"), eid)
 
-    pages_data: list[dict[str, object]] = []
+    pages_data: list[dict[str, Any]] = []
     for page in iter_pages(content_root):
-        page_entry: dict[str, object] = {
+        page_entry: dict[str, Any] = {
             "name": page_name(page),
             "groups": [],
             "connectors": [],

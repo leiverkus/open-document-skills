@@ -29,8 +29,8 @@ def validate(path: Path) -> dict[str, object]:
         names = archive.namelist()
 
     required = {"mimetype", "content.xml", "styles.xml", "meta.xml", "settings.xml", "META-INF/manifest.xml"}
-    for name in sorted(required - set(names)):
-        errors.append(f"Missing package file: {name}")
+    for missing in sorted(required - set(names)):
+        errors.append(f"Missing package file: {missing}")
     if names and names[0] != "mimetype":
         errors.append("mimetype is not the first ZIP entry")
     if "content.xml" not in names:
@@ -42,8 +42,8 @@ def validate(path: Path) -> dict[str, object]:
 
     style_names = set()
     for root in [content, styles] if styles is not None else [content]:
-        for style in root.findall(".//style:style", NS):
-            name = style.attrib.get(q("style", "name"))
+        for style_el in root.findall(".//style:style", NS):
+            name = style_el.attrib.get(q("style", "name"))
             if name:
                 style_names.add(name)
 

@@ -6,11 +6,12 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from typing import Any
 
 from odg_common import NS, element_text, iter_pages, page_name, parse_xml_from_zip
 
 
-def extract(path: Path) -> list[dict[str, object]]:
+def extract(path: Path) -> list[dict[str, Any]]:
     root = parse_xml_from_zip(path, "content.xml")
     result = []
     for index, page in enumerate(iter_pages(root), start=1):

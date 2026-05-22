@@ -48,7 +48,7 @@ def collect(ods_path: Path) -> list[dict[str, object]]:
             chart_el = obj_content.find(".//chart:chart", NS)
             if chart_el is None:
                 continue
-            chart_class = chart_el.attrib.get(q("chart", "class"))
+            chart_class = chart_el.attrib.get(q("chart", "class"), "")
             chart_type = CLASS_TO_TYPE.get(chart_class, chart_class)
             title_el = chart_el.find("chart:title/text:p", NS)
             plot_area = chart_el.find("chart:plot-area", NS)

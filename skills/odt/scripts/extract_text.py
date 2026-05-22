@@ -7,6 +7,7 @@ import argparse
 import json
 import zipfile
 from pathlib import Path
+from typing import Any
 from xml.etree import ElementTree as ET
 
 from odt_common import NS, q
@@ -31,7 +32,7 @@ def table_rows(table: ET.Element) -> list[list[str]]:
     return rows
 
 
-def collect_blocks(parent: ET.Element, items: list[dict[str, object]]) -> None:
+def collect_blocks(parent: ET.Element, items: list[dict[str, Any]]) -> None:
     for node in list(parent):
         if node.tag == q("text", "h"):
             items.append(
@@ -67,7 +68,7 @@ def collect_blocks(parent: ET.Element, items: list[dict[str, object]]) -> None:
             )
 
 
-def extract(path: Path) -> list[dict[str, object]]:
+def extract(path: Path) -> list[dict[str, Any]]:
     with zipfile.ZipFile(path) as archive:
         with archive.open("content.xml") as content:
             root = ET.parse(content).getroot()

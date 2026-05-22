@@ -18,13 +18,13 @@ def summarize(path: Path) -> dict[str, object]:
     usage: Counter[str] = Counter()
     slides = []
     for index, page in enumerate(content.findall(".//draw:page", NS), start=1):
-        master = page.attrib.get(q("draw", "master-page-name"), "")
-        usage[master] += 1
+        master_name = page.attrib.get(q("draw", "master-page-name"), "")
+        usage[master_name] += 1
         slides.append(
             {
                 "index": index,
                 "name": page.attrib.get(q("draw", "name")),
-                "master_page": master,
+                "master_page": master_name,
                 "layout": page.attrib.get(q("presentation", "presentation-page-layout-name")),
             }
         )

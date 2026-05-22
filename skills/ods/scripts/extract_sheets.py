@@ -6,11 +6,12 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from typing import Any
 
 from ods_common import a1, cell_value, expanded_rows, iter_sheets, parse_xml_from_zip, q, sheet_name
 
 
-def extract(path: Path) -> list[dict[str, object]]:
+def extract(path: Path) -> list[dict[str, Any]]:
     root = parse_xml_from_zip(path, "content.xml")
     result = []
     for sheet in iter_sheets(root):

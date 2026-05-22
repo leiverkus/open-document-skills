@@ -37,7 +37,7 @@ sudo apt-get install -y libreoffice poppler-utils
 Run the full test suite with coverage:
 
 ```bash
-pytest tests/ --cov=lib
+pytest tests/ --cov=odf_lib
 ```
 
 Lint and format:
@@ -48,6 +48,15 @@ ruff format --check .
 ```
 
 Pre-commit hooks run both automatically on every commit.
+
+Type-check `odf_lib/` and the four skills. The skills hold same-named
+modules (`validate_refs.py` etc.) and are not packages, so mypy runs
+per directory:
+
+```bash
+mypy odf_lib
+for d in odt odp ods odg; do mypy skills/$d/scripts; done
+```
 
 Build the runnable examples:
 
@@ -122,22 +131,23 @@ Each skill directory should contain:
 1. Ensure `main` is clean.
 2. Run `pytest tests/ --cov=odf_lib --cov-fail-under=30`.
 3. Run `ruff check . && ruff format --check .`.
-4. Run `python3 examples/build_examples.py --render --png` when LibreOffice and Poppler are available.
-5. Update `CHANGELOG.md` and the `version` in `pyproject.toml`.
-6. Update `VERSION` in [odf_lib/odf_common.py](odf_lib/odf_common.py) to match `pyproject.toml` (used as the `meta:generator` string written into edited documents).
-7. Update `version:` in all four `SKILL.md` files and `version` in [.claude-plugin/plugin.json](.claude-plugin/plugin.json).
-8. Commit the release notes.
-9. Create an annotated tag, for example:
+4. Run `mypy odf_lib` and `mypy skills/<fmt>/scripts` for each of `odt`, `odp`, `ods`, `odg`.
+5. Run `python3 examples/build_examples.py --render --png` when LibreOffice and Poppler are available.
+6. Update `CHANGELOG.md` and the `version` in `pyproject.toml`.
+7. Update `VERSION` in [odf_lib/odf_common.py](odf_lib/odf_common.py) to match `pyproject.toml` (used as the `meta:generator` string written into edited documents).
+8. Update `version:` in all four `SKILL.md` files and `version` in [.claude-plugin/plugin.json](.claude-plugin/plugin.json).
+9. Commit the release notes.
+10. Create an annotated tag, for example:
 
-   ```bash
-   git tag -a v1.0.0 -m "v1.0.0"
-   ```
+    ```bash
+    git tag -a v1.0.0 -m "v1.0.0"
+    ```
 
-10. Push `main` and the tag.
-11. Create the GitHub release. Publishing the release triggers
+11. Push `main` and the tag.
+12. Create the GitHub release. Publishing the release triggers
     `.github/workflows/publish.yml`, which builds the `open-document-lib`
     distribution and uploads it to PyPI.
-12. Confirm GitHub Actions is green for `main`, the tag, and the publish run.
+13. Confirm GitHub Actions is green for `main`, the tag, and the publish run.
 
 ### One-time PyPI setup
 

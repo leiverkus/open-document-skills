@@ -20,10 +20,10 @@ def collect(content_root: ET.Element) -> list[dict[str, object]]:
         name = style.attrib.get(q("style", "name"))
         if not name:
             continue
-        props = style.find(q("style", "drawing-page-properties"))
-        if props is None:
+        props_el = style.find(q("style", "drawing-page-properties"))
+        if props_el is None:
             continue
-        style_props[name] = {k.rsplit("}", 1)[-1]: v for k, v in props.attrib.items()}
+        style_props[name] = {k.rsplit("}", 1)[-1]: v for k, v in props_el.attrib.items()}
 
     results: list[dict[str, object]] = []
     for idx, slide in enumerate(find_slides(content_root), start=1):

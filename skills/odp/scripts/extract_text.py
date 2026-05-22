@@ -7,6 +7,7 @@ import argparse
 import json
 import zipfile
 from pathlib import Path
+from typing import Any
 from xml.etree import ElementTree as ET
 
 NS = {
@@ -42,12 +43,12 @@ def text_blocks(root: ET.Element, scope: ET.Element) -> list[str]:
     return blocks
 
 
-def extract(path: Path) -> list[dict[str, object]]:
+def extract(path: Path) -> list[dict[str, Any]]:
     with zipfile.ZipFile(path) as archive:
         with archive.open("content.xml") as content:
             root = ET.parse(content).getroot()
 
-    slides: list[dict[str, object]] = []
+    slides: list[dict[str, Any]] = []
     for index, page in enumerate(root.findall(".//draw:page", NS), start=1):
         notes = page.find("presentation:notes", NS)
         slide_text_scope = ET.fromstring(ET.tostring(page))

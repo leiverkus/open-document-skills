@@ -19,8 +19,8 @@ def validate(path: Path) -> dict[str, object]:
     with zipfile.ZipFile(path) as archive:
         names = archive.namelist()
     required = {"mimetype", "content.xml", "styles.xml", "meta.xml", "settings.xml", "META-INF/manifest.xml"}
-    for name in sorted(required - set(names)):
-        errors.append(f"Missing package file: {name}")
+    for missing in sorted(required - set(names)):
+        errors.append(f"Missing package file: {missing}")
     if names and names[0] != "mimetype":
         errors.append("mimetype is not the first ZIP entry")
     if "content.xml" not in names:

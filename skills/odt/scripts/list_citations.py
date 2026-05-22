@@ -6,12 +6,13 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from typing import Any
 from xml.etree import ElementTree as ET
 
 from odt_common import NS, parse_xml_from_zip, q
 
 
-def collect_citations(content_root: ET.Element) -> list[dict[str, object]]:
+def collect_citations(content_root: ET.Element) -> list[dict[str, Any]]:
     body = content_root.find(".//office:text", NS)
     if body is None:
         raise SystemExit("office:text not found")

@@ -151,7 +151,7 @@ def main() -> None:
     if not inserted:
         print(f"warning: anchor not found, no math inserted: {args.anchor!r}", file=sys.stderr)
         # Fall through and write unchanged (consistent with other scripts).
-        copy_with_multiple_members(args.input_odt, args.output, {}, {}, "application/vnd.oasis.opendocument.text")
+        copy_with_multiple_members(args.input_odt, args.output, {}, {})
         return
 
     # Manifest entries for the new Object N/ sub-package.

@@ -47,8 +47,8 @@ def collect(content_root: ET.Element) -> dict[str, list[dict[str, object]]]:
 
     paragraphs = [n for n in body.iter() if n.tag in {q("text", "p"), q("text", "h")}]
     para_index_of: dict[int, int] = {}
-    for idx, paragraph in enumerate(paragraphs, start=1):
-        para_index_of[id(paragraph)] = idx
+    for idx, para in enumerate(paragraphs, start=1):
+        para_index_of[id(para)] = idx
 
     def parent_paragraph(el: ET.Element) -> ET.Element | None:
         for paragraph in paragraphs:
