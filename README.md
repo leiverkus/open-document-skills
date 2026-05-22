@@ -479,7 +479,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development and release chec
 
 ## Release Status
 
-Current release: `v0.9.0` — a robustness release. Every helper is now exercised against a committed corpus of 17 LibreOffice-native ODF fixtures (`tests/test_corpus.py`), which uncovered and fixed two foreign-ODF bugs in `validate_refs` and the flat-ODF roundtrip. No new features — all four skills (ODT/ODP/ODS/ODG) remain at production-level depth. See [ROADMAP.md](ROADMAP.md) for v1.0 (PyPI publication + final polish + ecosystem maturity).
+Current release: `v1.0.2`. All four skills (ODT/ODP/ODS/ODG) are at production-level depth; the shared library is published to PyPI as [`open-document-lib`](https://pypi.org/project/open-document-lib/). v1.0.0 brought ecosystem maturity (PyPI packaging, RelaxNG schema validation for every format, performance benchmarks); v1.0.1 fixed skill-bundle packaging so installed skills carry their `odf_lib/` dependency; v1.0.2 added a Python 3.10–3.13 CI matrix and a mypy type-check gate — which immediately caught a latent bug. See [CHANGELOG.md](CHANGELOG.md) for details and [ROADMAP.md](ROADMAP.md) for what comes next.
 
 ## License
 
