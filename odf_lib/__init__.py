@@ -60,6 +60,7 @@ from odf_lib.odf_common import (
     write_odf_with_replacements,
     xml_bytes,
 )
+from odf_lib.themes import THEMES, Theme, get_theme, theme_font_faces
 
 __version__ = VERSION
 
@@ -114,4 +115,9 @@ __all__ = [
     "render_to_pdf",
     "pdf_to_pngs",
     "build_contact_sheet",
+    # Themes
+    "Theme",
+    "THEMES",
+    "get_theme",
+    "theme_font_faces",
 ]

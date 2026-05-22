@@ -12,7 +12,19 @@ from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree as ET
 
-from odt_common import ODT_MIMETYPE, ensure_manifest_entry, media_type_for, pack_dir_as_odt, q, unique_picture_name
+from odt_common import (
+    BODY_FACE,
+    HEADING_FACE,
+    ODT_MIMETYPE,
+    Theme,
+    ensure_manifest_entry,
+    get_theme,
+    media_type_for,
+    pack_dir_as_odt,
+    q,
+    theme_font_faces,
+    unique_picture_name,
+)
 
 
 def add_paragraph(parent: ET.Element, text: str, style: str = "Body") -> None:
@@ -112,9 +124,30 @@ def build_block(block: dict[str, Any], parent: ET.Element) -> None:
         raise SystemExit(f"Unsupported content block type: {kind}")
 
 
-def build_styles() -> ET.Element:
-    """Build office:document-styles with Body, Heading1, Heading2, and A4 page layout."""
+def _font_face_decls(root: ET.Element, theme: Theme) -> None:
+    """Prepend office:font-face-decls with the theme's heading/body faces."""
+    faces = ET.SubElement(root, q("office", "font-face-decls"))
+    for face_name, family, generic in theme_font_faces(theme):
+        ET.SubElement(
+            faces,
+            q("style", "font-face"),
+            {
+                q("style", "name"): face_name,
+                q("svg", "font-family"): family,
+                q("style", "font-family-generic"): generic,
+            },
+        )
+
+
+def build_styles(theme: Theme | None = None) -> ET.Element:
+    """Build office:document-styles with Body, Heading1, Heading2, and A4 page layout.
+
+    With a *theme*, headings take the accent colour and body the text colour,
+    and the theme's heading/body fonts are declared and referenced.
+    """
     root = ET.Element(q("office", "document-styles"), {q("office", "version"): "1.3"})
+    if theme is not None:
+        _font_face_decls(root, theme)
     styles = ET.SubElement(root, q("office", "styles"))
     for name, family, size, weight in [
         ("Body", "paragraph", "11pt", "normal"),
@@ -122,9 +155,12 @@ def build_styles() -> ET.Element:
         ("Heading2", "paragraph", "14pt", "bold"),
     ]:
         style = ET.SubElement(styles, q("style", "style"), {q("style", "name"): name, q("style", "family"): family})
-        ET.SubElement(
-            style, q("style", "text-properties"), {q("fo", "font-size"): size, q("fo", "font-weight"): weight}
-        )
+        props = {q("fo", "font-size"): size, q("fo", "font-weight"): weight}
+        if theme is not None:
+            is_heading = name.startswith("Heading")
+            props[q("fo", "color")] = theme.accent if is_heading else theme.text
+            props[q("style", "font-name")] = HEADING_FACE if is_heading else BODY_FACE
+        ET.SubElement(style, q("style", "text-properties"), props)
     automatic = ET.SubElement(root, q("office", "automatic-styles"))
     layout = ET.SubElement(automatic, q("style", "page-layout"), {q("style", "name"): "A4"})
     ET.SubElement(
@@ -171,8 +207,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("spec", type=Path, help="JSON spec")
     parser.add_argument("output_odt", type=Path)
+    parser.add_argument("--theme", help="curated theme name (palette + font pairing)")
     args = parser.parse_args()
 
+    theme = get_theme(args.theme) if args.theme else None
     if not args.spec.exists():
         raise SystemExit(f"Spec file not found: {args.spec}")
     try:
@@ -216,7 +254,7 @@ def main() -> None:
                 raise SystemExit(f"Unknown block type: {kind}")
 
         ET.ElementTree(content).write(root_dir / "content.xml", encoding="utf-8", xml_declaration=True)
-        ET.ElementTree(build_styles()).write(root_dir / "styles.xml", encoding="utf-8", xml_declaration=True)
+        ET.ElementTree(build_styles(theme)).write(root_dir / "styles.xml", encoding="utf-8", xml_declaration=True)
         ET.ElementTree(build_meta(spec.get("title"))).write(
             root_dir / "meta.xml", encoding="utf-8", xml_declaration=True
         )

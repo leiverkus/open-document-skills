@@ -373,6 +373,33 @@ class LibreOfficeIntegrationTests(unittest.TestCase):
             self.assertTrue(pdf.exists())
             self.assertGreater(pdf.stat().st_size, 0)
 
+    def test_themed_documents_render_to_pdf(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            odp_scripts = SKILLS / "odp" / "scripts"
+            odt_scripts = SKILLS / "odt" / "scripts"
+            deck_spec = tmp_path / "deck.json"
+            deck_spec.write_text(
+                json.dumps({"slides": [{"layout": "title-slide", "title": "Themed", "subtitle": "v1.9"}]}),
+                encoding="utf-8",
+            )
+            deck = tmp_path / "deck.odp"
+            run_script(odp_scripts / "create_minimal_odp.py", deck_spec, deck, "--theme", "warm-editorial")
+            doc_spec = tmp_path / "doc.json"
+            doc_spec.write_text(
+                json.dumps({"title": "Report", "blocks": [{"type": "paragraph", "text": "Body."}]}),
+                encoding="utf-8",
+            )
+            doc = tmp_path / "doc.odt"
+            run_script(odt_scripts / "create_minimal_odt.py", doc_spec, doc, "--theme", "forest")
+            outdir = tmp_path / "qa"
+            run_script(odp_scripts / "render.py", deck, "--outdir", outdir)
+            run_script(odt_scripts / "render.py", doc, "--outdir", outdir)
+            for name in ("deck.pdf", "doc.pdf"):
+                pdf = outdir / name
+                self.assertTrue(pdf.exists())
+                self.assertGreater(pdf.stat().st_size, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

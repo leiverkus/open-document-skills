@@ -307,6 +307,7 @@ across all four formats.
 They cover:
 
 - direct generation, template-based editing, and Markdown → ODT authoring with inline rich text, links, tables, and footnotes
+- five curated themes (palette + font pairing) applied to any generator via `--theme`
 - package validation, including optional RelaxNG validation against the
   OASIS ODF 1.3 schema (`validate_refs.py --strict`, all four formats)
 - text/formula/shape extraction

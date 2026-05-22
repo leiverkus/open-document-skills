@@ -157,6 +157,15 @@ helpers) is internal and may change without notice.
 | `pdf_to_pngs(pdf_path, outdir, dpi=150) -> list[Path]` | Render each PDF page to a PNG via `pdftoppm` (Poppler). |
 | `build_contact_sheet(images, output_path, columns=0) -> Path` | Compose page thumbnails into one labelled grid image. Requires Pillow (`pip install open-document-lib[render]`). |
 
+### Themes
+
+| Signature | Description |
+|---|---|
+| `THEMES: dict[str, Theme]` | The five curated themes (`corporate-blue`, `warm-editorial`, `high-contrast`, `slate-mono`, `forest`). |
+| `Theme` | Dataclass: `background`, `accent`, `text`, `muted`, `shape_fill`, `heading_font`, `body_font`. |
+| `get_theme(name) -> Theme` | Look up a theme by name; exits with the valid-name list on a miss. |
+| `theme_font_faces(theme) -> list[tuple[str, str, str]]` | The `(face_name, font_family, family_generic)` triples for a theme's `style:font-face` declarations. |
+
 ## License
 
 MIT. See [LICENSE](https://github.com/leiverkus/open-document-skills/blob/main/LICENSE).

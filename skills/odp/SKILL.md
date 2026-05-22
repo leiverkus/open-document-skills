@@ -4,7 +4,7 @@ description: "Create, read, edit, convert, repair, or inspect OpenDocument Prese
 triggers: [".odp", "ODP", "OpenDocument Presentation", "Open Office presentation", "LibreOffice Impress", "Impress deck", "odp-Datei", "OpenDocument-Präsentation", "Folien", "Präsentation", "animation", "Animation", "transition", "Übergang", "Folienübergang", "slide transition", "master page", "master slide", "Folienmaster", "flat ODF", ".fodp"]
 dont_use_for: ["text documents (.odt)", "spreadsheets (.ods)", "general presentation advice without .odp file"]
 license: MIT
-version: "1.8.0"
+version: "1.9.0"
 ---
 
 # ODP creation, editing, and analysis
@@ -285,6 +285,30 @@ Two ways to brand a deck:
    header/footer, page numbers, or a logo on one master page. The background
    colour is written into the `drawing-page` style the master references
    (setting it on the master element itself does not render).
+
+## Themes
+
+`create_minimal_odp.py` accepts `--theme NAME` — a curated colour palette and
+font pairing applied to the whole deck. Five themes:
+
+| Theme | Feel |
+|-------|------|
+| `corporate-blue` | clean corporate blue |
+| `warm-editorial` | cream background, terracotta serif — reports, essays |
+| `high-contrast` | black on white, bold — accessibility, print |
+| `slate-mono` | slate palette, monospaced headings — technical decks |
+| `forest` | deep green, sans heading + serif body |
+
+```bash
+python scripts/create_minimal_odp.py deck.json deck.odp --theme slate-mono
+```
+
+Without `--theme` the output is unchanged. A theme sets the default slide
+background; a per-master `background_color` in the `masters` array still
+overrides it. Themes name fonts as stacks with a Liberation fallback, so a
+themed deck renders even where the first-choice font is absent. For branding
+beyond the five themes, inject a curated `styles.xml` with
+`inject_styles_from_file`.
 
 ## Bundled Scripts
 

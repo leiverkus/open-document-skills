@@ -170,6 +170,29 @@ theme, write a curated `styles.xml` that redefines the same named styles and
 inject it with `inject_styles_from_file` (see
 [examples/diagram/](#branded-flowchart-example)).
 
+## Curated themes
+
+Every generator — `create_minimal_odt`, `create_from_markdown`,
+`create_minimal_odp`, `create_minimal_ods`, `create_minimal_odg` — accepts a
+`--theme NAME` flag. A theme is a curated colour palette plus a heading/body
+font pairing, applied across the whole document. Five themes ship:
+`corporate-blue`, `warm-editorial`, `high-contrast`, `slate-mono`, `forest`.
+
+```bash
+python3 skills/odp/scripts/create_minimal_odp.py deck.json deck.odp --theme slate-mono
+python3 skills/odt/scripts/create_from_markdown.py article.md article.odt --theme warm-editorial
+python3 skills/ods/scripts/create_minimal_ods.py book.json book.ods --theme corporate-blue
+python3 skills/odg/scripts/create_minimal_odg.py diagram.json diagram.odg --theme forest
+```
+
+Without `--theme` each generator's output is byte-identical to before — themes
+are purely additive. Themes name fonts as CSS-style stacks ending in a
+Liberation fallback (`'Caladea', 'Liberation Serif', serif`), so a themed
+document renders deterministically even where the first-choice font is not
+installed. The theme registry lives in `odf_lib/themes.py` (`THEMES`,
+`get_theme`); for branding beyond the five themes, inject a curated `styles.xml`
+with `inject_styles_from_file`.
+
 ## Visual design loop
 
 Every format has a `render.py`. Treat rendering as a **design step**, not

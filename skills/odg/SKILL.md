@@ -4,7 +4,7 @@ description: "Create, read, edit, convert, repair, inspect, or export OpenDocume
 triggers: [".odg", "ODG", "OpenDocument Graphics", "OpenDocument Drawing", "LibreOffice Draw", "OpenOffice Draw", "Draw document", "odg-Datei", "OpenDocument-Grafik", "Zeichnung", "diagram", "vector drawing", "connector", "Verbinder", "glue point", "Klebepunkt", "group", "Gruppe", "flowchart", "Flussdiagramm", "org chart", "Organigramm", "Mindmap", "flat ODF", ".fodg"]
 dont_use_for: ["text documents (.odt)", "spreadsheets (.ods)", "presentations (.odp)", "generic image editing"]
 license: MIT
-version: "1.8.0"
+version: "1.9.0"
 ---
 
 # ODG creation, editing, and analysis
@@ -183,6 +183,28 @@ inject_styles_from_file("base.odg", "branded-styles.xml", "themed.odg")
 Per-shape overrides live in `content.xml`, so a theme swap re-themes every
 default-styled shape while the overrides survive. See
 [examples/diagram/](../../examples/diagram/) for a complete branded build.
+
+## Themes
+
+`create_minimal_odg.py` accepts `--theme NAME` — a curated colour palette and
+font pairing applied to the drawing's default shape/page styling. Five themes:
+
+| Theme | Feel |
+|-------|------|
+| `corporate-blue` | clean corporate blue |
+| `warm-editorial` | cream background, terracotta serif |
+| `high-contrast` | black on white, bold — accessibility, print |
+| `slate-mono` | slate palette, monospaced shape text |
+| `forest` | deep green, sans heading + serif body |
+
+```bash
+python scripts/create_minimal_odg.py diagram.json out.odg --theme forest
+```
+
+Without `--theme` the output is unchanged. A theme sets the page background,
+shape fill, stroke/accent, shape text colour, and font. Per-shape styling keys
+still override the theme. Themes name fonts as stacks with a Liberation
+fallback so a themed drawing renders even where the first-choice font is absent.
 
 ## Bundled Scripts
 

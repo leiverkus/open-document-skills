@@ -19,7 +19,18 @@ from xml.etree import ElementTree as ET
 
 import md_parser as md
 from create_minimal_odt import build_manifest, build_meta, build_settings
-from odt_common import ODT_MIMETYPE, media_type_for, pack_dir_as_odt, q, unique_picture_name
+from odt_common import (
+    BODY_FACE,
+    HEADING_FACE,
+    ODT_MIMETYPE,
+    Theme,
+    get_theme,
+    media_type_for,
+    pack_dir_as_odt,
+    q,
+    theme_font_faces,
+    unique_picture_name,
+)
 
 MAX_IMAGE_WIDTH_CM = 15.0
 DEFAULT_IMAGE = (12.0, 9.0)
@@ -74,8 +85,13 @@ def _list_style(styles: ET.Element, name: str, numbered: bool) -> None:
         )
 
 
-def build_styles() -> ET.Element:
-    """Build office:document-styles with the Markdown authoring theme."""
+def build_styles(theme: Theme | None = None) -> ET.Element:
+    """Build office:document-styles with the Markdown authoring theme.
+
+    With a *theme*, headings take the accent colour and the theme's heading
+    font, body prose takes the text colour and body font; code styles keep the
+    monospace face.
+    """
     root = ET.Element(q("office", "document-styles"), {q("office", "version"): "1.3"})
 
     faces = ET.SubElement(root, q("office", "font-face-decls"))
@@ -84,9 +100,24 @@ def build_styles() -> ET.Element:
         q("style", "font-face"),
         {q("style", "name"): "Mono", q("svg", "font-family"): "'Liberation Mono', monospace"},
     )
+    if theme is not None:
+        for face_name, family, generic in theme_font_faces(theme):
+            ET.SubElement(
+                faces,
+                q("style", "font-face"),
+                {
+                    q("style", "name"): face_name,
+                    q("svg", "font-family"): family,
+                    q("style", "font-family-generic"): generic,
+                },
+            )
+
+    # Theme overlays merged into the text-properties of prose styles.
+    heading_text = {q("fo", "color"): theme.accent, q("style", "font-name"): HEADING_FACE} if theme is not None else {}
+    body_text = {q("fo", "color"): theme.text, q("style", "font-name"): BODY_FACE} if theme is not None else {}
 
     styles = ET.SubElement(root, q("office", "styles"))
-    _paragraph_style(styles, "Body", {q("fo", "margin-bottom"): "0.25cm"}, {q("fo", "font-size"): "11pt"})
+    _paragraph_style(styles, "Body", {q("fo", "margin-bottom"): "0.25cm"}, {q("fo", "font-size"): "11pt", **body_text})
     headings = [
         ("Heading1", "20pt", "bold", "normal"),
         ("Heading2", "16pt", "bold", "normal"),
@@ -100,13 +131,13 @@ def build_styles() -> ET.Element:
             styles,
             name,
             {q("fo", "margin-top"): "0.4cm", q("fo", "margin-bottom"): "0.2cm", q("fo", "keep-with-next"): "always"},
-            {q("fo", "font-size"): size, q("fo", "font-weight"): weight, q("fo", "font-style"): slant},
+            {q("fo", "font-size"): size, q("fo", "font-weight"): weight, q("fo", "font-style"): slant, **heading_text},
         )
     _paragraph_style(
         styles,
         "Quote",
         {q("fo", "margin-left"): "1cm", q("fo", "margin-bottom"): "0.25cm"},
-        {q("fo", "font-style"): "italic"},
+        {q("fo", "font-style"): "italic", **body_text},
     )
     _paragraph_style(
         styles,
@@ -469,8 +500,10 @@ def main() -> None:
     parser.add_argument("input_md", type=Path, help="Markdown source file")
     parser.add_argument("output_odt", type=Path)
     parser.add_argument("--title", help="document title (default: first H1)")
+    parser.add_argument("--theme", help="curated theme name (palette + font pairing)")
     args = parser.parse_args()
 
+    theme = get_theme(args.theme) if args.theme else None
     if not args.input_md.exists():
         raise SystemExit(f"Markdown file not found: {args.input_md}")
     document = md.parse(args.input_md.read_text(encoding="utf-8"))
@@ -495,7 +528,7 @@ def main() -> None:
 
         title = _document_title(document, args.title)
         ET.ElementTree(content).write(root_dir / "content.xml", encoding="utf-8", xml_declaration=True)
-        ET.ElementTree(build_styles()).write(root_dir / "styles.xml", encoding="utf-8", xml_declaration=True)
+        ET.ElementTree(build_styles(theme)).write(root_dir / "styles.xml", encoding="utf-8", xml_declaration=True)
         ET.ElementTree(build_meta(title)).write(root_dir / "meta.xml", encoding="utf-8", xml_declaration=True)
         ET.ElementTree(build_settings()).write(root_dir / "settings.xml", encoding="utf-8", xml_declaration=True)
         ET.ElementTree(build_manifest(manifest_entries)).write(

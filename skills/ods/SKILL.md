@@ -4,7 +4,7 @@ description: "Create, read, edit, convert, repair, inspect, analyze, or format O
 triggers: [".ods", "ODS", "OpenDocument Spreadsheet", "Open Office spreadsheet", "LibreOffice Calc", "Calc sheet", "ods-Datei", "OpenDocument-Tabelle", "Tabellenkalkulation", "named range", "named expression", "data validation", "dropdown", "Auswahlliste", "chart", "Diagramm", "Balkendiagramm", "Liniendiagramm", "Kreisdiagramm", "Punktdiagramm", "bar chart", "line chart", "pie chart", "scatter", "conditional formatting", "bedingte Formatierung", "pivot table", "Pivot-Tabelle", "PivotTable", "flat ODF", ".fods"]
 dont_use_for: ["text documents (.odt)", "presentations (.odp)", "analysis where deliverable is not a spreadsheet"]
 license: MIT
-version: "1.8.0"
+version: "1.9.0"
 ---
 
 # ODS creation, editing, and analysis
@@ -162,6 +162,29 @@ For XLSX/CSV interoperability:
 ```
 
 Treat conversion as lossy until QA proves otherwise. Verify formulas, date/number formats, charts, sheet names, and repeated/merged cells.
+
+## Themes
+
+`create_minimal_ods.py` accepts `--theme NAME` — a curated colour palette and
+font pairing. For a workbook this is a light touch: the first row of each sheet
+gets a themed header cell style, and a table-cell default style applies the
+body font. Five themes:
+
+| Theme | Feel |
+|-------|------|
+| `corporate-blue` | clean corporate blue |
+| `warm-editorial` | cream header, terracotta serif |
+| `high-contrast` | black on white, bold — accessibility, print |
+| `slate-mono` | slate palette, monospaced heading |
+| `forest` | deep green header |
+
+```bash
+python scripts/create_minimal_ods.py workbook.json out.ods --theme corporate-blue
+```
+
+Without `--theme` the workbook is unstyled, exactly as before. Themes name
+fonts as stacks with a Liberation fallback so a themed sheet renders even where
+the first-choice font is absent.
 
 ## Bundled Scripts
 

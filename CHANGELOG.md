@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.9.0 - 2026-05-22
+
+Curated themes — ROADMAP Track D item 6 / Track C, the last open roadmap
+post. A theme is a colour palette plus a font pairing, applied across a
+document through a new `--theme` flag. Rather than a static `styles.xml`
+gallery (which drifts), themes are code data — one source of truth.
+
+### Added
+
+- **`odf_lib/themes.py`** — a theme registry: five curated themes
+  (`corporate-blue`, `warm-editorial`, `high-contrast`, `slate-mono`,
+  `forest`), each a palette + heading/body font pairing. `get_theme()` and
+  `theme_font_faces()` are part of the published library API.
+- **`--theme NAME`** on all five generators — `create_minimal_odt`,
+  `create_from_markdown`, `create_minimal_odp`, `create_minimal_ods`,
+  `create_minimal_odg`. The flag is purely additive: without it, every
+  generator's output is byte-identical to before.
+
+### Changed
+
+- The generators now declare fonts (`office:font-face-decls` +
+  `style:font-name`) for the first time. Themes name fonts as CSS-style
+  stacks ending in a Liberation fallback, so a themed document renders
+  deterministically even where the first-choice font is absent.
+- `create_minimal_ods` gains a light themed touch: a themed header-row cell
+  style plus a table-cell default style for the body font.
+
 ## v1.8.0 - 2026-05-22
 
 ODP slide layouts — reclassifying the former "Impress slide-master

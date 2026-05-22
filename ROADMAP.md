@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v1.8.0** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v1.9.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -172,7 +172,7 @@ by leverage:
    skill's formatting-preserving edits. → **v1.6.**
 5. **ODS depth.** Conditional formatting and pivot tables — handled by
    `xlsx`, were non-goals here. → **v1.7.**
-6. **Polished template library.** Overlaps Track C.
+6. **Polished template library.** Overlaps Track C. → **v1.9** (curated themes).
 
 Already at parity or ahead: stdlib-only with zero install friction; the
 scholarly apparatus (footnotes, BibTeX citations, cross-references, MathML)
@@ -267,6 +267,20 @@ layouts.
   repositioning placeholder frames.
 - ✅ **`list_masters.py` / `validate_refs.py`** — report slide layouts;
   flag dangling `presentation-page-layout-name` references.
+
+## v1.9 — Curated themes ✅ shipped (2026-05-22)
+
+Track D item 6 / Track C: a curated theme library. Rather than a static
+`styles.xml` gallery (which drifts), themes are code data applied through a
+`--theme` flag — the same single-source-of-truth pattern as `odp_layouts.py`.
+
+- ✅ **`odf_lib/themes.py`** — five themes (`corporate-blue`,
+  `warm-editorial`, `high-contrast`, `slate-mono`, `forest`), each a palette
+  plus a heading/body font pairing; part of the published library API.
+- ✅ **`--theme` on all five generators** — `create_minimal_{odt,odp,ods,odg}`
+  and `create_from_markdown`. Purely additive; output is unchanged without it.
+- ✅ **First font declarations** — generators now emit `office:font-face-decls`;
+  themes use Liberation-fallback font stacks so they render deterministically.
 
 ### Versioning
 

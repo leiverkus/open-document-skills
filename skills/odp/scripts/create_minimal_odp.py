@@ -13,7 +13,19 @@ from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree as ET
 
-from odp_common import ODP_MIMETYPE, ensure_manifest_entry, media_type_for, pack_dir_as_odp, q, unique_picture_name
+from odp_common import (
+    BODY_FACE,
+    HEADING_FACE,
+    ODP_MIMETYPE,
+    Theme,
+    ensure_manifest_entry,
+    get_theme,
+    media_type_for,
+    pack_dir_as_odp,
+    q,
+    theme_font_faces,
+    unique_picture_name,
+)
 from odp_layouts import (
     DEFAULT_LAYOUT,
     GRAPHIC_STYLE,
@@ -113,6 +125,7 @@ def _graphic_style(
     size: str | None = None,
     weight: str | None = None,
     color: str | None = None,
+    font: str | None = None,
 ) -> ET.Element:
     """Append a no-fill, no-stroke graphic style and return it.
 
@@ -140,7 +153,7 @@ def _graphic_style(
             q("draw", "auto-grow-width"): "false",
         },
     )
-    if size or color:
+    if size or color or font:
         text_props: dict[str, str] = {}
         if size:
             text_props[q("fo", "font-size")] = size
@@ -148,23 +161,26 @@ def _graphic_style(
             text_props[q("fo", "font-weight")] = weight
         if color:
             text_props[q("fo", "color")] = color
+        if font:
+            text_props[q("style", "font-name")] = font
         ET.SubElement(style, q("style", "text-properties"), text_props)
     return style
 
 
-def _paragraph_style(styles: ET.Element, name: str, size: str, weight: str, color: str) -> None:
+def _paragraph_style(
+    styles: ET.Element, name: str, size: str, weight: str, color: str, font: str | None = None
+) -> None:
     """Append a paragraph style carrying an explicit text colour."""
     style = ET.SubElement(styles, q("style", "style"), {q("style", "name"): name, q("style", "family"): "paragraph"})
     if name == "Body":
         ET.SubElement(style, q("style", "paragraph-properties"), {q("fo", "margin-bottom"): "0.35cm"})
-    ET.SubElement(
-        style,
-        q("style", "text-properties"),
-        {q("fo", "font-size"): size, q("fo", "font-weight"): weight, q("fo", "color"): color},
-    )
+    text_props = {q("fo", "font-size"): size, q("fo", "font-weight"): weight, q("fo", "color"): color}
+    if font:
+        text_props[q("style", "font-name")] = font
+    ET.SubElement(style, q("style", "text-properties"), text_props)
 
 
-def build_styles(masters: list[dict[str, Any]] | None = None) -> ET.Element:
+def build_styles(masters: list[dict[str, Any]] | None = None, theme: Theme | None = None) -> ET.Element:
     """Build office:document-styles with a designed default presentation theme.
 
     Emits a ``drawing-page`` background style (referenced by the master page),
@@ -175,24 +191,47 @@ def build_styles(masters: list[dict[str, Any]] | None = None) -> ET.Element:
 
     *masters* is an optional list of extra master pages, each a dict with a
     ``name`` and optional ``background_color``. The built-in ``Default`` master
-    is always present.
+    is always present. With a *theme*, the palette and fonts come from it.
     """
+    # Theme palette, falling back to the built-in default constants.
+    background = theme.background if theme is not None else BACKGROUND_COLOR
+    title_color = theme.accent if theme is not None else TITLE_COLOR
+    body_color = theme.text if theme is not None else BODY_COLOR
+    notes_color = theme.muted if theme is not None else NOTES_COLOR
+
     root = ET.Element(q("office", "document-styles"), {q("office", "version"): "1.3"})
+
+    # office:font-face-decls — must precede office:styles.
+    if theme is not None:
+        faces = ET.SubElement(root, q("office", "font-face-decls"))
+        for face_name, family, generic in theme_font_faces(theme):
+            ET.SubElement(
+                faces,
+                q("style", "font-face"),
+                {
+                    q("style", "name"): face_name,
+                    q("svg", "font-family"): family,
+                    q("style", "font-family-generic"): generic,
+                },
+            )
 
     # office:styles — common named styles.
     styles = ET.SubElement(root, q("office", "styles"))
 
+    heading_font = HEADING_FACE if theme is not None else None
+    body_font = BODY_FACE if theme is not None else None
+
     # Graphic styles — no blue box; the title block is vertically centred.
     # Their text-properties style the text inside each frame.
-    _graphic_style(styles, "gr-title", "middle", "40pt", "bold", TITLE_COLOR)
-    _graphic_style(styles, "gr-body", "top", "20pt", "normal", BODY_COLOR)
-    _graphic_style(styles, "gr-notes", "top", "12pt", "normal", NOTES_COLOR)
+    _graphic_style(styles, "gr-title", "middle", "40pt", "bold", title_color, heading_font)
+    _graphic_style(styles, "gr-body", "top", "20pt", "normal", body_color, body_font)
+    _graphic_style(styles, "gr-notes", "top", "12pt", "normal", notes_color, body_font)
     _graphic_style(styles, "gr-image", "middle")
 
     # Paragraph styles — colours double as a second guarantee of text colour.
-    _paragraph_style(styles, "Title", "40pt", "bold", TITLE_COLOR)
-    _paragraph_style(styles, "Body", "20pt", "normal", BODY_COLOR)
-    _paragraph_style(styles, "Notes", "12pt", "normal", NOTES_COLOR)
+    _paragraph_style(styles, "Title", "40pt", "bold", title_color, heading_font)
+    _paragraph_style(styles, "Body", "20pt", "normal", body_color, body_font)
+    _paragraph_style(styles, "Notes", "12pt", "normal", notes_color, body_font)
 
     # Slide layouts — one style:presentation-page-layout per named layout.
     for layout_name in LAYOUTS:
@@ -225,12 +264,12 @@ def build_styles(masters: list[dict[str, Any]] | None = None) -> ET.Element:
             {q("draw", "fill"): "solid", q("draw", "fill-color"): color},
         )
 
-    drawing_page_style("dp-default", BACKGROUND_COLOR)
+    drawing_page_style("dp-default", background)
     for spec in masters or []:
         name = spec.get("name")
         if not name or name == "Default":
             raise SystemExit(f"master {name!r}: each extra master needs a unique name other than 'Default'")
-        drawing_page_style(f"dp-{name}", spec.get("background_color", BACKGROUND_COLOR))
+        drawing_page_style(f"dp-{name}", spec.get("background_color", background))
 
     # office:master-styles — each master page references its background style.
     master_styles = ET.SubElement(root, q("office", "master-styles"))
@@ -284,7 +323,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("spec", type=Path, help="JSON spec with a slides array")
     parser.add_argument("output_odp", type=Path)
+    parser.add_argument("--theme", help="curated theme name (palette + font pairing)")
     args = parser.parse_args()
+
+    theme = get_theme(args.theme) if args.theme else None
 
     if not args.spec.exists():
         raise SystemExit(f"Spec file not found: {args.spec}")
@@ -393,7 +435,9 @@ def main() -> None:
                 )
 
         ET.ElementTree(content).write(root_dir / "content.xml", encoding="utf-8", xml_declaration=True)
-        ET.ElementTree(build_styles(masters)).write(root_dir / "styles.xml", encoding="utf-8", xml_declaration=True)
+        ET.ElementTree(build_styles(masters, theme)).write(
+            root_dir / "styles.xml", encoding="utf-8", xml_declaration=True
+        )
         ET.ElementTree(build_meta(spec.get("title"))).write(
             root_dir / "meta.xml", encoding="utf-8", xml_declaration=True
         )

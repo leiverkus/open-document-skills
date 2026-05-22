@@ -12,15 +12,19 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 from odg_common import (
+    BODY_FACE,
     GRAPHIC_KEYS,
     ODG_MIMETYPE,
     TEXT_KEYS,
+    Theme,
     build_shape_style,
     build_text_styles,
     ensure_manifest_entry,
+    get_theme,
     media_type_for,
     pack_dir_as_odg,
     q,
+    theme_font_faces,
     unique_picture_name,
 )
 
@@ -156,15 +160,37 @@ def _role_style(styles: ET.Element, name: str, graphic_props: dict[str, str]) ->
     ET.SubElement(style, q("style", "graphic-properties"), graphic_props)
 
 
-def build_styles() -> ET.Element:
+def build_styles(theme: Theme | None = None) -> ET.Element:
     """Build office:document-styles with a designed default drawing theme.
 
     Emits a designed ``standard`` graphic style (the graphic-family default —
     so even a styleless shape inherits something sensible, not LibreOffice's
     generic blue), role styles for shapes/text/lines/images, and a
     ``drawing-page`` background style referenced by the master page.
+
+    With a *theme*, the palette and shape font come from it.
     """
+    # Theme palette, falling back to the built-in default constants.
+    shape_fill = theme.shape_fill if theme is not None else SHAPE_FILL
+    accent = theme.accent if theme is not None else ACCENT
+    shape_text = theme.text if theme is not None else SHAPE_TEXT
+    page_background = theme.background if theme is not None else PAGE_BACKGROUND
+
     root = ET.Element(q("office", "document-styles"), {q("office", "version"): "1.3"})
+
+    # office:font-face-decls — must precede office:styles.
+    if theme is not None:
+        faces = ET.SubElement(root, q("office", "font-face-decls"))
+        for face_name, family, generic in theme_font_faces(theme):
+            ET.SubElement(
+                faces,
+                q("style", "font-face"),
+                {
+                    q("style", "name"): face_name,
+                    q("svg", "font-family"): family,
+                    q("style", "font-family-generic"): generic,
+                },
+            )
 
     # office:styles — common named styles.
     styles = ET.SubElement(root, q("office", "styles"))
@@ -179,20 +205,19 @@ def build_styles() -> ET.Element:
         q("style", "graphic-properties"),
         {
             q("draw", "fill"): "solid",
-            q("draw", "fill-color"): SHAPE_FILL,
+            q("draw", "fill-color"): shape_fill,
             q("draw", "stroke"): "solid",
-            q("svg", "stroke-color"): ACCENT,
+            q("svg", "stroke-color"): accent,
             q("svg", "stroke-width"): "0.03cm",
             q("draw", "textarea-horizontal-align"): "center",
             q("draw", "textarea-vertical-align"): "middle",
             q("fo", "padding"): "0.15cm",
         },
     )
-    ET.SubElement(
-        standard,
-        q("style", "text-properties"),
-        {q("fo", "color"): SHAPE_TEXT, q("fo", "font-size"): "16pt"},
-    )
+    text_props = {q("fo", "color"): shape_text, q("fo", "font-size"): "16pt"}
+    if theme is not None:
+        text_props[q("style", "font-name")] = BODY_FACE
+    ET.SubElement(standard, q("style", "text-properties"), text_props)
 
     # Role styles — referenced by every generated shape so none falls back to
     # the bare application default.
@@ -227,7 +252,7 @@ def build_styles() -> ET.Element:
     ET.SubElement(
         dp,
         q("style", "drawing-page-properties"),
-        {q("draw", "fill"): "solid", q("draw", "fill-color"): PAGE_BACKGROUND},
+        {q("draw", "fill"): "solid", q("draw", "fill-color"): page_background},
     )
 
     # office:master-styles — the master references the background style.
@@ -253,7 +278,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("spec", type=Path)
     parser.add_argument("output_odg", type=Path)
+    parser.add_argument("--theme", help="curated theme name (palette + font pairing)")
     args = parser.parse_args()
+    theme = get_theme(args.theme) if args.theme else None
     if not args.spec.exists():
         raise SystemExit(f"Spec file not found: {args.spec}")
     try:
@@ -308,7 +335,7 @@ def main() -> None:
         for full_path, media_type in manifest_entries:
             ensure_manifest_entry(manifest, full_path, media_type)
         ET.ElementTree(content).write(root_dir / "content.xml", encoding="utf-8", xml_declaration=True)
-        ET.ElementTree(build_styles()).write(root_dir / "styles.xml", encoding="utf-8", xml_declaration=True)
+        ET.ElementTree(build_styles(theme)).write(root_dir / "styles.xml", encoding="utf-8", xml_declaration=True)
         ET.ElementTree(meta).write(root_dir / "meta.xml", encoding="utf-8", xml_declaration=True)
         ET.ElementTree(settings).write(root_dir / "settings.xml", encoding="utf-8", xml_declaration=True)
         ET.ElementTree(manifest).write(root_dir / "META-INF" / "manifest.xml", encoding="utf-8", xml_declaration=True)

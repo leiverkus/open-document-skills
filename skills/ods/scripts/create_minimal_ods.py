@@ -10,13 +10,63 @@ from datetime import datetime, timezone
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from ods_common import ODS_MIMETYPE, ensure_cell, pack_dir_as_ods, parse_a1, q, set_cell_value
+from ods_common import (
+    BODY_FACE,
+    HEADING_FACE,
+    ODS_MIMETYPE,
+    Theme,
+    ensure_cell,
+    get_theme,
+    pack_dir_as_ods,
+    parse_a1,
+    q,
+    set_cell_value,
+    theme_font_faces,
+)
+
+# Cell style applied to the first (header) row of each sheet under a theme.
+HEADER_CELL_STYLE = "ce-header"
 
 
-def build_styles() -> ET.Element:
-    """Build office:document-styles with empty styles and a Default master page."""
+def build_styles(theme: Theme | None = None) -> ET.Element:
+    """Build office:document-styles and a Default master page.
+
+    Without a *theme* the styles are empty (cells inherit LibreOffice
+    defaults). With a theme, a table-cell default style sets the body font and
+    text colour, and a ``ce-header`` style themes the header row.
+    """
     root = ET.Element(q("office", "document-styles"), {q("office", "version"): "1.3"})
-    ET.SubElement(root, q("office", "styles"))
+    if theme is not None:
+        faces = ET.SubElement(root, q("office", "font-face-decls"))
+        for face_name, family, generic in theme_font_faces(theme):
+            ET.SubElement(
+                faces,
+                q("style", "font-face"),
+                {
+                    q("style", "name"): face_name,
+                    q("svg", "font-family"): family,
+                    q("style", "font-family-generic"): generic,
+                },
+            )
+    styles = ET.SubElement(root, q("office", "styles"))
+    if theme is not None:
+        default = ET.SubElement(styles, q("style", "default-style"), {q("style", "family"): "table-cell"})
+        ET.SubElement(
+            default,
+            q("style", "text-properties"),
+            {q("style", "font-name"): BODY_FACE, q("fo", "color"): theme.text},
+        )
+        header = ET.SubElement(
+            styles,
+            q("style", "style"),
+            {q("style", "name"): HEADER_CELL_STYLE, q("style", "family"): "table-cell"},
+        )
+        ET.SubElement(header, q("style", "table-cell-properties"), {q("fo", "background-color"): theme.shape_fill})
+        ET.SubElement(
+            header,
+            q("style", "text-properties"),
+            {q("fo", "color"): theme.accent, q("fo", "font-weight"): "bold", q("style", "font-name"): HEADING_FACE},
+        )
     ET.SubElement(root, q("office", "automatic-styles"))
     master = ET.SubElement(root, q("office", "master-styles"))
     ET.SubElement(master, q("style", "master-page"), {q("style", "name"): "Default"})
@@ -64,7 +114,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("spec", type=Path, help="JSON workbook spec")
     parser.add_argument("output_ods", type=Path)
+    parser.add_argument("--theme", help="curated theme name (palette + font pairing)")
     args = parser.parse_args()
+    theme = get_theme(args.theme) if args.theme else None
     if not args.spec.exists():
         raise SystemExit(f"Spec file not found: {args.spec}")
     try:
@@ -81,6 +133,8 @@ def main() -> None:
             row = ET.SubElement(sheet, q("table", "table-row"))
             for c, value in enumerate(row_values, start=1):
                 cell = ET.SubElement(row, q("table", "table-cell"))
+                if theme is not None and r == 1:
+                    cell.set(q("table", "style-name"), HEADER_CELL_STYLE)
                 if isinstance(value, dict):
                     if "formula" in value:
                         set_cell_value(cell, str(value["formula"]), formula=True)
@@ -110,7 +164,7 @@ def main() -> None:
         (root_dir / "META-INF").mkdir()
         (root_dir / "mimetype").write_text(ODS_MIMETYPE)
         ET.ElementTree(content).write(root_dir / "content.xml", encoding="utf-8", xml_declaration=True)
-        ET.ElementTree(build_styles()).write(root_dir / "styles.xml", encoding="utf-8", xml_declaration=True)
+        ET.ElementTree(build_styles(theme)).write(root_dir / "styles.xml", encoding="utf-8", xml_declaration=True)
         ET.ElementTree(build_meta(spec.get("title"))).write(
             root_dir / "meta.xml", encoding="utf-8", xml_declaration=True
         )

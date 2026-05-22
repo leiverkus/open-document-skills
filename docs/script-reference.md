@@ -6,8 +6,8 @@ All scripts use the Python standard library.
 
 | Script | Purpose |
 | --- | --- |
-| `create_minimal_odt.py` | Build a minimal ODT from a JSON document spec. |
-| `create_from_markdown.py` | Build a styled ODT from a Markdown file — rich inline text (`text:span`), links, nested lists, GFM tables, footnotes, images. Stdlib-only parser, no Pandoc. |
+| `create_minimal_odt.py` | Build a minimal ODT from a JSON document spec. Accepts `--theme` for a curated palette + font pairing. |
+| `create_from_markdown.py` | Build a styled ODT from a Markdown file — rich inline text (`text:span`), links, nested lists, GFM tables, footnotes, images. Stdlib-only parser, no Pandoc. Accepts `--theme`. |
 | `extract_text.py` | Print visible document text, including footnotes. |
 | `inspect_package.py` | Summarize package files, manifest entries, images, and document metadata. |
 | `list_styles.py` | List styles found in `styles.xml` and `content.xml`. |
@@ -42,7 +42,7 @@ All scripts use the Python standard library.
 
 | Script | Purpose |
 | --- | --- |
-| `create_minimal_odp.py` | Build a minimal ODP from a JSON slide spec — designed default theme, six named slide layouts (`title-slide`/`title-content`/`two-content`/`section-header`/`title-only`/`blank`), and optional extra master pages. |
+| `create_minimal_odp.py` | Build a minimal ODP from a JSON slide spec — designed default theme, six named slide layouts (`title-slide`/`title-content`/`two-content`/`section-header`/`title-only`/`blank`), optional extra master pages, and a `--theme` flag. |
 | `extract_text.py` | Print slide text and speaker notes. |
 | `inspect_package.py` | Summarize slides, notes, images, package files, and manifest entries. |
 | `list_masters.py` | List master pages, slide layouts (`presentation-page-layout` + placeholders), and per-slide usage as JSON. |
@@ -65,7 +65,7 @@ All scripts use the Python standard library.
 
 | Script | Purpose |
 | --- | --- |
-| `create_minimal_ods.py` | Build a minimal ODS workbook from a JSON spec. |
+| `create_minimal_ods.py` | Build a minimal ODS workbook from a JSON spec. Accepts `--theme` (themed header row + body font). |
 | `extract_sheets.py` | Print sheet cell values and formulas. |
 | `extract_formulas.py` | Emit formulas as structured JSON. |
 | `inspect_package.py` | Summarize package files, sheets, manifest entries, and metadata. |
@@ -91,7 +91,7 @@ All scripts use the Python standard library.
 
 | Script | Purpose |
 | --- | --- |
-| `create_minimal_odg.py` | Build a minimal ODG drawing from a JSON spec, with a designed default theme (no generic-blue shapes) and optional per-shape styling keys (`fill`, `stroke`, `stroke-width`, `text-color`, `font-size`, `corner-radius`). |
+| `create_minimal_odg.py` | Build a minimal ODG drawing from a JSON spec, with a designed default theme (no generic-blue shapes), optional per-shape styling keys (`fill`, `stroke`, `stroke-width`, `text-color`, `font-size`, `corner-radius`), and a `--theme` flag. |
 | `extract_text.py` | Print text from drawing pages and shapes. |
 | `extract_shapes.py` | Emit drawing shapes, frames, geometry, and text as structured JSON. |
 | `inspect_package.py` | Summarize pages, shapes, images, package files, and manifest entries. |

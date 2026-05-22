@@ -4,7 +4,7 @@ description: "Create, read, edit, convert, repair, or inspect OpenDocument Text 
 triggers: [".odt", "ODT", "OpenDocument Text", "Open Office document", "LibreOffice Writer", "Writer document", "odt-Datei", "OpenDocument-Text", "footnote", "endnote", "citation", "bibliography", "BibTeX", "CSL-JSON", "Fußnote", "Zitation", "Bibliographie", "Quellenangabe", "cross-reference", "Querverweis", "bookmark", "Lesezeichen", "figure", "Abbildung", "Table", "Tabelle", "equation", "Gleichung", "Formel", "MathML", "LaTeX", "flat ODF", ".fodt"]
 dont_use_for: ["spreadsheets (.ods)", "presentations (.odp)", "PDFs as primary deliverable", "general prose editing"]
 license: MIT
-version: "1.8.0"
+version: "1.9.0"
 ---
 
 # ODT creation, editing, and analysis
@@ -193,6 +193,30 @@ pandoc input.md --reference-doc=template.odt -o output.odt
 ```
 
 Set explicit heading hierarchy in the source. Avoid manually faking headings with bold text.
+
+## Themes
+
+`create_minimal_odt.py` and `create_from_markdown.py` accept `--theme NAME` — a
+curated colour palette and font pairing applied to the generated document.
+Five themes:
+
+| Theme | Feel |
+|-------|------|
+| `corporate-blue` | clean corporate blue |
+| `warm-editorial` | cream background, terracotta serif — reports, essays |
+| `high-contrast` | black on white, bold — accessibility, print |
+| `slate-mono` | slate palette, monospaced headings — technical docs |
+| `forest` | deep green, sans heading + serif body |
+
+```bash
+python scripts/create_minimal_odt.py spec.json out.odt --theme warm-editorial
+python scripts/create_from_markdown.py in.md out.odt --theme forest
+```
+
+Without `--theme` the output is unchanged. Themes name fonts as stacks with a
+Liberation fallback, so a themed document renders even where the first-choice
+font is absent. For branding beyond the five themes, inject a curated
+`styles.xml` with `inject_styles_from_file`.
 
 ## Bundled Scripts
 

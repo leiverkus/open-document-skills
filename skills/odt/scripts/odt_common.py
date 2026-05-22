@@ -59,12 +59,24 @@ from odf_lib.odf_common import (  # noqa: E402, I001
     write_odf_with_replacements as _write_base,
     xml_bytes,
 )
+from odf_lib.themes import (  # noqa: E402, I001
+    BODY_FACE,
+    HEADING_FACE,
+    Theme,
+    get_theme,
+    theme_font_faces,
+)
 
 # Direct re-exports.
 __all__ = [
     "NS",
     "ODT_MIMETYPE",
     "q",
+    "BODY_FACE",
+    "HEADING_FACE",
+    "Theme",
+    "get_theme",
+    "theme_font_faces",
     "build_contact_sheet",
     "clear_children",
     "copy_into_package",
