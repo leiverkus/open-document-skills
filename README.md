@@ -10,9 +10,9 @@
 Four self-contained skills for Codex, Claude Code, and OpenCode that teach an agent to create, inspect, and edit OpenDocument files directly via Python (stdlib only). Edits preserve inline structure (`text:span`, `text:note`, `text:bookmark`, `text:a`), `meta.xml` is updated on every save, and flat single-XML formats (`.fodt`/`.fodp`/`.fods`/`.fodg`) give you Git-friendly diffs. LibreOffice is optional and only needed for rendering, recalculation, and PDF export.
 
 <p align="center">
-  <img src="docs/assets/hero.png" alt="A branded research proposal generated from a JSON spec and rendered to PDF" width="500">
+  <img src="docs/assets/hero.png" alt="A styled report generated from a JSON spec — headings, citations, a footnote, and a MathML formula" width="640">
   <br>
-  <em>From a JSON spec to a finished, branded research proposal — auto-numbered headings, BibTeX citations, a footnote, and a MathML formula. See <a href="examples/dao/">the end-to-end example</a>.</em>
+  <em>Generated from a JSON spec, rendered with LibreOffice — auto-numbered headings, BibTeX citations, a footnote, and a MathML formula, all in pure Python.</em>
 </p>
 
 ```bash
