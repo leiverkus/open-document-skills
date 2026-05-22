@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 from odg_common import find_soffice
@@ -31,7 +33,20 @@ def main() -> None:
         formats.append("png")
     soffice = find_soffice()
     for fmt in formats:
-        run([soffice, "--headless", "--convert-to", fmt, "--outdir", str(args.outdir), str(args.odg)])
+        profile = tempfile.mkdtemp(prefix="odf-soffice-")
+        try:
+            run([
+                soffice,
+                f"-env:UserInstallation=file://{profile}",
+                "--headless",
+                "--convert-to",
+                fmt,
+                "--outdir",
+                str(args.outdir),
+                str(args.odg),
+            ])
+        finally:
+            shutil.rmtree(profile, ignore_errors=True)
         print(args.outdir / f"{args.odg.stem}.{fmt}")
 
 

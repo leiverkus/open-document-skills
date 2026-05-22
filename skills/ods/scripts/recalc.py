@@ -7,6 +7,7 @@ import argparse
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 from ods_common import find_soffice
@@ -28,7 +29,20 @@ def main() -> None:
     target = args.outdir / args.ods.name
     shutil.copyfile(args.ods, target)
     soffice = find_soffice()
-    run([soffice, "--headless", "--convert-to", "ods", "--outdir", str(args.outdir), str(target)])
+    profile = tempfile.mkdtemp(prefix="odf-soffice-")
+    try:
+        run([
+            soffice,
+            f"-env:UserInstallation=file://{profile}",
+            "--headless",
+            "--convert-to",
+            "ods",
+            "--outdir",
+            str(args.outdir),
+            str(target),
+        ])
+    finally:
+        shutil.rmtree(profile, ignore_errors=True)
     print(target)
     validate = Path(__file__).with_name("validate_refs.py")
     run([sys.executable, str(validate), str(target)])

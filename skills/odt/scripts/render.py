@@ -7,6 +7,7 @@ import argparse
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 SOFFICE_CANDIDATES = [
@@ -48,7 +49,20 @@ def main() -> None:
 
     args.outdir.mkdir(parents=True, exist_ok=True)
     soffice = find_soffice()
-    run([soffice, "--headless", "--convert-to", "pdf", "--outdir", str(args.outdir), str(args.odt)])
+    profile = tempfile.mkdtemp(prefix="odf-soffice-")
+    try:
+        run([
+            soffice,
+            f"-env:UserInstallation=file://{profile}",
+            "--headless",
+            "--convert-to",
+            "pdf",
+            "--outdir",
+            str(args.outdir),
+            str(args.odt),
+        ])
+    finally:
+        shutil.rmtree(profile, ignore_errors=True)
     pdf = args.outdir / f"{args.odt.stem}.pdf"
     print(pdf)
 
