@@ -304,6 +304,44 @@ Chart types: `bar`, `line`, `pie`, `scatter`. Charts use the LibreOffice-native 
 
 The `validate_refs.py` ODS validator detects: unknown sheet names in named-range targets, duplicate named-range/expression names, dangling `table:content-validation-name` references, and missing chart `Object N/` package targets.
 
+## Conditional formatting and pivot tables (ODS)
+
+ODS v1.7 adds conditional highlighting and pivot tables:
+
+```bash
+# Conditional formatting — highlight cells by value or formula. Rules stack:
+python3 skills/ods/scripts/add_conditional_format.py wb.ods \
+    --range 'Data.B2:B100' --condition 'value > 100' \
+    --background '#C8E6C9' --text-color '#1B5E20' -o wb.ods
+python3 skills/ods/scripts/add_conditional_format.py wb.ods \
+    --range 'Data.B2:B100' --condition 'value < 50' \
+    --background '#FFCDD2' --bold -o wb.ods
+
+# Pivot table — group, aggregate, and write the result grid + definition:
+python3 skills/ods/scripts/add_pivot_table.py wb.ods \
+    --source 'Data.A1:D100' --rows Region,Product --columns Quarter \
+    --data Revenue --function sum --target 'Pivot.A1' -o wb.ods
+
+# Inspect:
+python3 skills/ods/scripts/list_pivot_tables.py wb.ods --json
+```
+
+Conditions accept `value OP N` (`>`, `<`, `>=`, `<=`, `=`, `!=`), `value between A B`,
+`value not-between A B`, and `formula:EXPR`. Each rule is written both as a
+`calcext:conditional-format` (the form LibreOffice renders) and as an ODF-core
+`style:map`. The `calcext` namespace is a documented LibreOffice extension; under
+`--strict` it is excluded from the OASIS core-schema check and reported as a warning.
+
+Pivot tables are computed in Python (group-by + aggregation with `sum`/`count`/
+`average`/`min`/`max`) and the result grid is written into the target range, so
+LibreOffice shows it immediately. A matching ODF-core `table:data-pilot-table`
+is written alongside, so LibreOffice treats it as a real, refreshable pivot.
+`--rows` takes one or more comma-separated fields; `--columns` is optional; the
+target sheet is created if it does not exist.
+
+`validate_refs.py` additionally flags dangling `style:map` style references and
+pivot tables whose source or target range names an unknown sheet.
+
 ## Schema validation (--strict)
 
 `validate_refs.py --strict` runs OASIS ODF 1.3 RelaxNG validation against `content.xml` and `META-INF/manifest.xml`. The OASIS `content` schema is shared across formats, so the `--strict` flag works for all four — ODT, ODP, ODS, and ODG. The schemas are downloaded once on first use to `~/.cache/open-document-skills/schemas/` and reused afterwards.

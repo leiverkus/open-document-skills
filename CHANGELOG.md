@@ -1,5 +1,39 @@
 # Changelog
 
+## v1.7.0 - 2026-05-22
+
+ODS conditional formatting and pivot tables (ROADMAP Track D, item 5).
+Benchmarked against the `xlsx` skill — both were previously explicit
+non-goals. Three new ODS scripts close the gap.
+
+### Added
+
+- **`add_conditional_format.py`** — highlight a cell range by value or
+  formula condition (`value > N`, `value between A B`, `formula:EXPR`, …)
+  with `--background`, `--text-color`, `--bold`, `--italic`. Each rule is
+  written both as a `calcext:conditional-format` (the form LibreOffice
+  renders) and as an ODF-core `style:map`; repeating the command on the
+  same range stacks another rule.
+- **`add_pivot_table.py`** — compute a pivot (group-by + `sum`/`count`/
+  `average`/`min`/`max`) and write the result grid into the target range,
+  plus a matching ODF-core `table:data-pilot-table` so LibreOffice treats
+  it as a real, refreshable pivot. `--rows` supports nested grouping;
+  `--columns` is optional; the target sheet is created if missing.
+- **`list_pivot_tables.py`** — list all `table:data-pilot-table`
+  definitions as JSON (name, source/target range, fields).
+
+### Changed
+
+- `parse_range` moved from `add_data_validation.py` to `ods_common.py` and
+  is now shared; it also accepts the fully-qualified `Sheet.A1:Sheet.C10`
+  range form.
+- `validate_refs.py` (ODS) gains checks for dangling `style:map` style
+  references and pivot tables whose source/target range names an unknown
+  sheet, and warns when a pivot field is absent from the source header.
+- `validate_refs.py --strict` is now extension-aware: the documented
+  `calcext` LibreOffice namespace is excluded from the OASIS core-schema
+  check and reported as a warning instead of an error.
+
 ## v1.6.0 - 2026-05-22
 
 Richer editing primitives for ODT (ROADMAP Track D, item 4). Benchmarked

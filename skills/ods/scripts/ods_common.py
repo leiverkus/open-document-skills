@@ -64,6 +64,7 @@ __all__ = [
     "pack_dir_as_ods",
     "pack_flat_odf",
     "parse_a1",
+    "parse_range",
     "parse_xml_from_zip",
     "pdf_to_pngs",
     "render_to_pdf",
@@ -79,6 +80,7 @@ __all__ = [
 ]
 
 NS = {
+    "calcext": "urn:org:documentfoundation:names:experimental:calc:xmlns:calcext:1.0",
     "chart": "urn:oasis:names:tc:opendocument:xmlns:chart:1.0",
     "dc": "http://purl.org/dc/elements/1.1/",
     "draw": "urn:oasis:names:tc:opendocument:xmlns:drawing:1.0",
@@ -272,6 +274,34 @@ def parse_a1(address: str) -> tuple[str, int, int]:
 def a1(row: int, col: int) -> str:
     """Build an A1 cell reference from 1-based row and column indices."""
     return f"{index_to_col(col)}{row}"
+
+
+# Accepts 'Sheet.A1', 'Sheet.A1:C10', and the fully-qualified 'Sheet.A1:Sheet.C10'
+# form LibreOffice writes for pivot/conditional-format ranges (end sheet ignored).
+RANGE_RE = re.compile(r"^([^.!]+)[.!]([A-Za-z]+\d+)(?::(?:[^.!]+[.!])?([A-Za-z]+\d+))?$")
+
+CELL_RE = re.compile(r"^\$?([A-Za-z]+)\$?(\d+)$")
+
+
+def _parse_cell(cell: str) -> tuple[int, int]:
+    """Parse a bare 'A1' or '$A$1' into (row, col), both 1-based."""
+    match = CELL_RE.fullmatch(cell)
+    if not match:
+        raise SystemExit(f"Invalid cell address: {cell!r}")
+    return int(match.group(2)), col_to_index(match.group(1))
+
+
+def parse_range(range_str: str) -> tuple[str, int, int, int, int]:
+    """Parse 'Sheet.A1:C10' → (sheet, row1, col1, row2, col2). Single cell allowed."""
+    match = RANGE_RE.fullmatch(range_str)
+    if not match:
+        raise SystemExit(f"Invalid range: {range_str!r}; expected 'Sheet.A1:C10' or 'Sheet.A1'")
+    sheet, start, end = match.groups()
+    row1, col1 = _parse_cell(start)
+    if end is None:
+        return sheet, row1, col1, row1, col1
+    row2, col2 = _parse_cell(end)
+    return sheet, row1, col1, row2, col2
 
 
 def cell_text(cell: ET.Element) -> str:

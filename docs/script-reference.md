@@ -76,6 +76,9 @@ All scripts use the Python standard library.
 | `add_data_validation.py` | Add a data-validation rule (list/number/date/text) and apply it to a cell range. |
 | `add_chart.py` | Embed a chart object (bar/line/pie/scatter) into a cell via LibreOffice-native `Object N/` sub-package. |
 | `list_charts.py` | List all embedded chart objects as JSON. |
+| `add_conditional_format.py` | Highlight a cell range by value/formula condition — `calcext:conditional-format` (LibreOffice-rendered) plus ODF-core `style:map`; stackable. |
+| `add_pivot_table.py` | Compute a pivot (group-by + aggregation) and write the result grid plus a refreshable `table:data-pilot-table`. |
+| `list_pivot_tables.py` | List all `table:data-pilot-table` definitions as JSON — name, source/target range, fields. |
 | `pack_ods.py` | Repack an unpacked ODS directory with correct `mimetype` handling. |
 | `pack_fods.py` | Convert a zipped ODS to a flat `.fods` (single XML, Git-friendly). |
 | `unpack_fods.py` | Convert a flat `.fods` back to a zipped `.ods` package. |

@@ -29,7 +29,7 @@ python skills/odt/scripts/validate_refs.py out.odt
 | --- | --- | --- | --- |
 | [`odt`](skills/odt) | Writer | [smithery.ai/skills/leiverkus/odt](https://smithery.ai/skills/leiverkus/odt) | author from Markdown, edit ODT, footnotes, citations (BibTeX/CSL-JSON), bookmarks, cross-references, figure/table sequences, MathML formulas, render to PDF |
 | [`odp`](skills/odp) | Impress | [smithery.ai/skills/leiverkus/odp](https://smithery.ai/skills/leiverkus/odp) | clone slide, edit notes, add image, animations (entrance/exit/emphasis/motion), slide transitions, master-page customization (background, header/footer, logo), render deck |
-| [`ods`](skills/ods) | Calc | [smithery.ai/skills/leiverkus/ods](https://smithery.ai/skills/leiverkus/ods) | set cells/formulas, named ranges, dropdowns + data validation, embedded charts (bar/line/pie/scatter), export CSV, recalculate |
+| [`ods`](skills/ods) | Calc | [smithery.ai/skills/leiverkus/ods](https://smithery.ai/skills/leiverkus/ods) | set cells/formulas, named ranges, dropdowns + data validation, embedded charts (bar/line/pie/scatter), conditional formatting, pivot tables, export CSV, recalculate |
 | [`odg`](skills/odg) | Draw | [smithery.ai/skills/leiverkus/odg](https://smithery.ai/skills/leiverkus/odg) | edit labels, add shape image, glue points, connectors with shape binding, groups, flowcharts, org charts, export SVG/PNG |
 
 ## Why use these
@@ -42,7 +42,7 @@ python skills/odt/scripts/validate_refs.py out.odt
 
 ## What this is not
 
-Not a LibreOffice replacement, and not a substitute for full ODF feature coverage. Generated tables of contents and DOCX/PPTX/XLSX import-and-edit are explicit non-goals; Calc conditional formatting and pivot tables are on the [roadmap](ROADMAP.md) rather than permanently excluded. See [Current Limits](#current-limits). The goal is to make the 80% of ODF automation that agents need safe, repeatable, and dependency-light.
+Not a LibreOffice replacement, and not a substitute for full ODF feature coverage. Generated tables of contents and DOCX/PPTX/XLSX import-and-edit are explicit non-goals. See [Current Limits](#current-limits). The goal is to make the 80% of ODF automation that agents need safe, repeatable, and dependency-light.
 
 ## Repository Layout
 
@@ -314,7 +314,7 @@ They cover:
 - scholarly authoring — footnotes, endnotes, citations (BibTeX/CSL-JSON), cross-references, MathML
 - document review — comments and tracked changes (record edits, then accept or reject)
 - structural editing — bulk restyle, insert/delete blocks, table editing (rows, columns, cells)
-- spreadsheets — named ranges, data validation, embedded charts
+- spreadsheets — named ranges, data validation, embedded charts, conditional formatting, pivot tables
 - presentations — designed default styling, branded-theme injection, animations, slide transitions, master-page customization
 - drawings — designed styling with per-shape colours, connectors with shape binding, glue points, shape groups
 - rendering to PDF, per-page PNG, or a single contact sheet — a visual design loop, not just final QA
@@ -322,12 +322,8 @@ They cover:
 - `meta.xml` lifecycle updates on every edit (`modification-date`, `generator`, `editing-cycles`)
 - flat ODF (`.fodt`/`.fodp`/`.fods`/`.fodg`) roundtrip
 
-They intentionally do **not** model every OpenDocument feature. Some gaps are
-on the [roadmap](ROADMAP.md):
-
-- Calc conditional formatting and pivot tables
-
-Others stay out of scope — use LibreOffice for these:
+They intentionally do **not** model every OpenDocument feature.
+Some gaps stay out of scope — use LibreOffice for these:
 
 - generated indexes and tables of contents (LibreOffice builds these from the markers the skills set)
 - full Impress slide-master hierarchies beyond simple page layouts

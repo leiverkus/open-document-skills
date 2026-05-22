@@ -280,6 +280,70 @@ class LibreOfficeIntegrationTests(unittest.TestCase):
             self.assertTrue(recalced.exists())
             run_script(scripts / "validate_refs.py", recalced)
 
+    def test_conditional_format_and_pivot_render_to_pdf(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "ods" / "scripts"
+            spec = tmp_path / "spec.json"
+            spec.write_text(
+                json.dumps(
+                    {
+                        "sheets": [
+                            {
+                                "name": "Data",
+                                "rows": [
+                                    ["Region", "Quarter", "Revenue"],
+                                    ["North", "Q1", "150"],
+                                    ["North", "Q2", "40"],
+                                    ["South", "Q1", "220"],
+                                    ["South", "Q2", "95"],
+                                ],
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            ods = tmp_path / "book.ods"
+            run_script(scripts / "create_minimal_ods.py", spec, ods)
+            cf = tmp_path / "cf.ods"
+            run_script(
+                scripts / "add_conditional_format.py",
+                ods,
+                "--range",
+                "Data.C2:C5",
+                "--condition",
+                "value > 100",
+                "--background",
+                "#C8E6C9",
+                "-o",
+                cf,
+            )
+            pv = tmp_path / "pv.ods"
+            run_script(
+                scripts / "add_pivot_table.py",
+                cf,
+                "--source",
+                "Data.A1:C5",
+                "--rows",
+                "Region",
+                "--columns",
+                "Quarter",
+                "--data",
+                "Revenue",
+                "--function",
+                "sum",
+                "--target",
+                "Pivot.A1",
+                "-o",
+                pv,
+            )
+            outdir = tmp_path / "qa"
+            run_script(scripts / "render.py", pv, "--outdir", outdir)
+            pdf = outdir / "pv.pdf"
+            self.assertTrue(pdf.exists())
+            self.assertGreater(pdf.stat().st_size, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

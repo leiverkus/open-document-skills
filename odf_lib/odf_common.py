@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-VERSION = "1.6.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
+VERSION = "1.7.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
 
 ODF_NAMESPACES: dict[str, str] = {
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
@@ -556,7 +556,11 @@ def ensure_schema(name: str) -> Path:
     return schema_path
 
 
-def validate_against_schema(xml_bytes_input: bytes, schema_name: str) -> tuple[bool, list[str]]:
+def validate_against_schema(
+    xml_bytes_input: bytes,
+    schema_name: str,
+    strip_namespaces: tuple[str, ...] = (),
+) -> tuple[bool, list[str]]:
     """Validate *xml_bytes_input* against the named OASIS ODF 1.3 RelaxNG schema.
 
     Lazily imports ``lxml`` and raises ``SystemExit`` with an install hint
@@ -565,6 +569,10 @@ def validate_against_schema(xml_bytes_input: bytes, schema_name: str) -> tuple[b
     Args:
         xml_bytes_input: Raw XML bytes to validate.
         schema_name: Schema key, e.g. ``"content"`` or ``"manifest"``.
+        strip_namespaces: Namespace URIs whose elements and attributes are
+            removed before validation. Use this for documented vendor
+            extensions (e.g. ``calcext``) that ODF permits as foreign content
+            but the OASIS core schema does not describe.
 
     Returns:
         ``(is_valid, errors)`` where errors is a list of human-readable strings.
@@ -580,6 +588,9 @@ def validate_against_schema(xml_bytes_input: bytes, schema_name: str) -> tuple[b
         doc = etree.fromstring(xml_bytes_input)
     except etree.XMLSyntaxError as exc:
         return False, [f"XML syntax error: {exc}"]
+    for namespace in strip_namespaces:
+        etree.strip_elements(doc, f"{{{namespace}}}*")
+        etree.strip_attributes(doc, f"{{{namespace}}}*")
     valid = relaxng.validate(doc)
     errors: list[str] = []
     if not valid:
@@ -588,7 +599,19 @@ def validate_against_schema(xml_bytes_input: bytes, schema_name: str) -> tuple[b
     return valid, errors
 
 
-def apply_strict_schema_check(odf_path: Path, result: dict[str, object]) -> None:
+# Documented vendor extensions that ODF permits as foreign content but the
+# OASIS core schema does not describe. They are excluded from the --strict
+# RelaxNG check (and reported as a warning) rather than counted as errors.
+KNOWN_EXTENSION_NAMESPACES: dict[str, str] = {
+    "calcext": "urn:org:documentfoundation:names:experimental:calc:xmlns:calcext:1.0",
+}
+
+
+def apply_strict_schema_check(
+    odf_path: Path,
+    result: dict[str, object],
+    extension_namespaces: dict[str, str] | None = None,
+) -> None:
     """Validate an ODF file's content.xml and manifest.xml against the schemas.
 
     Runs RelaxNG validation against the OASIS ODF 1.3 schemas — the same
@@ -601,7 +624,14 @@ def apply_strict_schema_check(odf_path: Path, result: dict[str, object]) -> None
         odf_path: Path to the ODF package to validate.
         result: A validation result dict with ``"errors"`` and ``"status"``
             keys, as returned by a ``validate_refs`` ``validate()`` function.
+        extension_namespaces: Optional ``label -> URI`` map of documented
+            vendor extensions to exclude from the content.xml schema check.
+            Each extension actually present is reported in ``result["warnings"]``
+            instead of failing the check. Defaults to
+            :data:`KNOWN_EXTENSION_NAMESPACES`.
     """
+    if extension_namespaces is None:
+        extension_namespaces = KNOWN_EXTENSION_NAMESPACES
     with zipfile.ZipFile(odf_path) as archive:
         content_bytes = archive.read("content.xml")
         try:
@@ -612,13 +642,22 @@ def apply_strict_schema_check(odf_path: Path, result: dict[str, object]) -> None
     if not isinstance(errors, list):  # defensive — validate() always returns a list
         errors = []
         result["errors"] = errors
-    ok, errs = validate_against_schema(content_bytes, "content")
+    present = {label: uri for label, uri in extension_namespaces.items() if uri.encode("utf-8") in content_bytes}
+    ok, errs = validate_against_schema(content_bytes, "content", strip_namespaces=tuple(present.values()))
     if not ok:
         errors.extend(f"content.xml: {err}" for err in errs)
     if manifest_bytes is not None:
         ok_m, errs_m = validate_against_schema(manifest_bytes, "manifest")
         if not ok_m:
             errors.extend(f"manifest.xml: {err}" for err in errs_m)
+    if present:
+        warnings = result.get("warnings")
+        if isinstance(warnings, list):
+            for label in sorted(present):
+                warnings.append(
+                    f"content.xml uses the {label!r} extension — excluded from the OASIS "
+                    "core-schema check (renders in LibreOffice, valid as ODF foreign content)"
+                )
     if errors:
         result["status"] = "errors_found"
 

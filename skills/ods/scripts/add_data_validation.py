@@ -11,47 +11,20 @@ Types:
 from __future__ import annotations
 
 import argparse
-import re
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
 from ods_common import (
     NS,
-    col_to_index,
     ensure_cell,
     find_sheet,
+    parse_range,
     parse_xml_from_zip,
     q,
     update_meta_for_edit,
     write_ods_with_replacements,
     xml_bytes,
 )
-
-RANGE_RE = re.compile(r"^([^.!]+)[.!]([A-Za-z]+\d+)(?::([A-Za-z]+\d+))?$")
-
-
-CELL_RE = re.compile(r"^\$?([A-Za-z]+)\$?(\d+)$")
-
-
-def _parse_cell(cell: str) -> tuple[int, int]:
-    """Parse a bare 'A1' or '$A$1' into (row, col), both 1-based."""
-    match = CELL_RE.fullmatch(cell)
-    if not match:
-        raise SystemExit(f"Invalid cell address: {cell!r}")
-    return int(match.group(2)), col_to_index(match.group(1))
-
-
-def parse_range(range_str: str) -> tuple[str, int, int, int, int]:
-    """Parse 'Sheet.A1:C10' → (sheet, row1, col1, row2, col2). Single cell allowed."""
-    match = RANGE_RE.fullmatch(range_str)
-    if not match:
-        raise SystemExit(f"Invalid range: {range_str!r}; expected 'Sheet.A1:C10' or 'Sheet.A1'")
-    sheet, start, end = match.groups()
-    row1, col1 = _parse_cell(start)
-    if end is None:
-        return sheet, row1, col1, row1, col1
-    row2, col2 = _parse_cell(end)
-    return sheet, row1, col1, row2, col2
 
 
 def ensure_content_validations(content_root: ET.Element) -> ET.Element:

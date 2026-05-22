@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v1.6.0** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v1.7.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -171,7 +171,7 @@ by leverage:
    heading"), insert-section, table editing are thinner than the `docx`
    skill's formatting-preserving edits. → **v1.6.**
 5. **ODS depth.** Conditional formatting and pivot tables — handled by
-   `xlsx`, currently non-goals here.
+   `xlsx`, were non-goals here. → **v1.7.**
 6. **Polished template library.** Overlaps Track C.
 
 Already at parity or ahead: stdlib-only with zero install friction; the
@@ -232,6 +232,23 @@ Track D item 4: structural editing of an existing document, matching the
 - ✅ **`edit_table.py`** — add/delete rows and columns, set cells, by table
   name; expands repeated-cell/row shorthands first.
 
+## v1.7 — ODS conditional formatting & pivot tables ✅ shipped (2026-05-22)
+
+Track D item 5: the two remaining `xlsx`-skill features that were ODS gaps.
+
+- ✅ **`add_conditional_format.py`** — value/formula conditions with
+  background, text colour, bold, italic. Written twice: as a
+  `calcext:conditional-format` (LibreOffice-rendered) and as an ODF-core
+  `style:map`. Rules stack per range.
+- ✅ **`add_pivot_table.py`** — the pivot is computed in Python and the
+  result grid written into the target range, plus a refreshable ODF-core
+  `table:data-pilot-table`. Nested row fields, optional column field, five
+  aggregation functions.
+- ✅ **`list_pivot_tables.py`** — pivot definitions as JSON.
+- ✅ **`validate_refs.py`** — dangling `style:map` references, pivot
+  source/target sheet checks; `--strict` treats the `calcext` extension as
+  documented foreign content (warning, not error).
+
 ### Versioning
 
 `1.0.x` for bug fixes, shipped promptly; a `1.x` minor when something
@@ -243,7 +260,8 @@ the published `open-document-lib` API — avoided unless clearly necessary.
 These are intentionally out of scope. If you need them, use LibreOffice or another tool:
 
 - **Whole-paragraph / cross-paragraph tracked deletions** — `track_change.py` records tracked deletions of a text run within one paragraph; deleting across paragraph boundaries is deferred. Tracked insertions and comments work anywhere.
-- **Complex Calc pivots and conditional formatting** — build in LibreOffice for now, then read with our skills. Under reconsideration as Track D item 5.
+- **Calc conditional-formatting colour scales, data bars, and icon sets** — `add_conditional_format.py` covers value/formula highlighting; the graphical `calcext`-only variants are deferred.
+- **Pivot drill-down and field date-grouping** — `add_pivot_table.py` writes a computed grid and a refreshable definition; interactive drill-down is a LibreOffice concern.
 - **Full Impress slide-master hierarchies** beyond simple page-layouts.
 - **Full LibreOffice/Word-processor replacement.**
 - **DOCX/PPTX/XLSX import-and-edit** — the whole point of this project is to avoid those round-trips. Use `pandoc` if you need DOCX in/out.

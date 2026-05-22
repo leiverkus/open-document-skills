@@ -7,10 +7,37 @@ import argparse
 import json
 import zipfile
 from pathlib import Path
+from xml.etree import ElementTree as ET
 
-from ods_common import NS, parse_xml_from_zip, q
+from ods_common import (
+    NS,
+    cell_value,
+    expanded_rows,
+    find_sheet,
+    parse_range,
+    parse_xml_from_zip,
+    q,
+)
 
 ERROR_MARKERS = ("#REF!", "#DIV/0!", "#VALUE!", "#NAME?", "#N/A", "Err:")
+
+
+def _source_header_fields(content: ET.Element, source_addr: str) -> set[str] | None:
+    """Return the first-row field names of a pivot source range, or None."""
+    try:
+        sheet_name, r1, c1, _, c2 = parse_range(source_addr)
+        sheet = find_sheet(content, sheet_name)
+    except SystemExit:
+        return None
+    rows = expanded_rows(sheet)
+    if r1 - 1 >= len(rows):
+        return None
+    header_row = rows[r1 - 1]
+    fields: set[str] = set()
+    for ci in range(c1 - 1, c2):
+        if ci < len(header_row):
+            fields.add(str(cell_value(header_row[ci])))
+    return fields
 
 
 def validate(path: Path) -> dict[str, object]:
@@ -102,6 +129,42 @@ def validate(path: Path) -> dict[str, object]:
         target = href.lstrip("./").rstrip("/")
         if not any(n.startswith(target + "/") for n in names):
             errors.append(f"Missing draw:object package target: {href}")
+
+    # Conditional-formatting style:map references (content.xml + styles.xml)
+    style_roots: list[ET.Element] = [content]
+    if "styles.xml" in names:
+        style_roots.append(parse_xml_from_zip(path, "styles.xml"))
+    style_names: set[str] = set()
+    for root in style_roots:
+        for el in root.iter():
+            sn = el.attrib.get(q("style", "name"))
+            if sn:
+                style_names.add(sn)
+    for root in style_roots:
+        for mp in root.iter(q("style", "map")):
+            applied = mp.attrib.get(q("style", "apply-style-name"))
+            if applied and applied not in style_names:
+                errors.append(f"style:map references unknown style: {applied}")
+
+    # Pivot table (table:data-pilot-table) checks
+    for pivot in content.iter(q("table", "data-pilot-table")):
+        pname = pivot.attrib.get(q("table", "name"), "?")
+        target_addr = pivot.attrib.get(q("table", "target-range-address"), "")
+        src_el = pivot.find(q("table", "source-cell-range"))
+        src_addr = src_el.attrib.get(q("table", "cell-range-address"), "") if src_el is not None else ""
+        for label, addr in (("source", src_addr), ("target", target_addr)):
+            if not addr:
+                continue
+            head = addr.split(":", 1)[0].lstrip("$")
+            sheet_part = head.split(".", 1)[0].strip("'") if "." in head else ""
+            if sheet_part and sheet_part not in sheet_names:
+                errors.append(f"Pivot table {pname!r} {label} references unknown sheet {sheet_part!r}")
+        header_fields = _source_header_fields(content, src_addr) if src_addr else None
+        if header_fields is not None:
+            for field in pivot.findall(q("table", "data-pilot-field")):
+                fname = field.attrib.get(q("table", "source-field-name"))
+                if fname and fname not in header_fields:
+                    warnings.append(f"Pivot table {pname!r} field {fname!r} not in source header")
 
     return {
         "status": "ok" if not errors else "errors_found",

@@ -1,10 +1,10 @@
 ---
 name: ods
-description: "Create, read, edit, convert, repair, inspect, analyze, or format OpenDocument Spreadsheet files (.ods). Supports named ranges, data validation (dropdowns and range constraints), and embedded charts (bar, line, pie, scatter)."
-triggers: [".ods", "ODS", "OpenDocument Spreadsheet", "Open Office spreadsheet", "LibreOffice Calc", "Calc sheet", "ods-Datei", "OpenDocument-Tabelle", "Tabellenkalkulation", "named range", "named expression", "data validation", "dropdown", "Auswahlliste", "chart", "Diagramm", "Balkendiagramm", "Liniendiagramm", "Kreisdiagramm", "Punktdiagramm", "bar chart", "line chart", "pie chart", "scatter", "flat ODF", ".fods"]
+description: "Create, read, edit, convert, repair, inspect, analyze, or format OpenDocument Spreadsheet files (.ods). Supports named ranges, data validation (dropdowns and range constraints), embedded charts (bar, line, pie, scatter), conditional formatting, and pivot tables."
+triggers: [".ods", "ODS", "OpenDocument Spreadsheet", "Open Office spreadsheet", "LibreOffice Calc", "Calc sheet", "ods-Datei", "OpenDocument-Tabelle", "Tabellenkalkulation", "named range", "named expression", "data validation", "dropdown", "Auswahlliste", "chart", "Diagramm", "Balkendiagramm", "Liniendiagramm", "Kreisdiagramm", "Punktdiagramm", "bar chart", "line chart", "pie chart", "scatter", "conditional formatting", "bedingte Formatierung", "pivot table", "Pivot-Tabelle", "PivotTable", "flat ODF", ".fods"]
 dont_use_for: ["text documents (.odt)", "presentations (.odp)", "analysis where deliverable is not a spreadsheet"]
 license: MIT
-version: "1.6.0"
+version: "1.7.0"
 ---
 
 # ODS creation, editing, and analysis
@@ -226,6 +226,46 @@ python scripts/list_charts.py wb.ods --json
 Chart types: `bar`, `line`, `pie`, `scatter`. Charts are embedded as LibreOffice-native `Object N/` sub-packages with the `application/vnd.oasis.opendocument.chart` MIME type. LibreOffice renders them when the file is opened or converted to PDF.
 
 The validator (`validate_refs.py`) catches dangling named-range sheet targets, dangling content-validation references, and missing chart object package targets.
+
+## Conditional Formatting and Pivot Tables
+
+`add_conditional_format.py` highlights cells that meet a condition; `add_pivot_table.py` computes a pivot and writes both the result grid and a refreshable pivot definition.
+
+```bash
+# Conditional formatting — highlight cells by value or formula:
+python scripts/add_conditional_format.py wb.ods --range 'Data.B2:B100' \
+    --condition 'value > 100' --background '#C8E6C9' --text-color '#1B5E20' -o cf.ods
+python scripts/add_conditional_format.py cf.ods --range 'Data.B2:B100' \
+    --condition 'value < 50' --background '#FFCDD2' --bold -o cf.ods   # rules stack
+
+# Pivot table — group, aggregate, and write the result grid:
+python scripts/add_pivot_table.py wb.ods --source 'Data.A1:D100' \
+    --rows Region,Product --columns Quarter --data Revenue \
+    --function sum --target 'Pivot.A1' -o pv.ods
+python scripts/list_pivot_tables.py pv.ods --json
+```
+
+Conditions: `value > N`, `value < N`, `value >= N`, `value <= N`, `value = N`,
+`value != N`, `value between A B`, `value not-between A B`, and `formula:EXPR`
+(any ODF formula). Formatting flags: `--background`, `--text-color`, `--bold`,
+`--italic`. Repeating the command on the same `--range` stacks another rule
+(first match wins).
+
+Each conditional-formatting rule is written twice: as a `calcext:conditional-format`
+(the form LibreOffice renders) and as an ODF-core `style:map` (for other ODF
+consumers). The `calcext` namespace is a documented LibreOffice extension that
+ODF permits as foreign content; `validate_refs.py --strict` excludes it from the
+OASIS core-schema check and reports it as a warning rather than an error.
+
+Pivot tables aggregate with `sum`, `count`, `average`, `min`, or `max`. `--rows`
+takes one or more comma-separated fields (nested grouping); `--columns` is an
+optional single field; `--target` names the top-left output cell and its sheet
+is created if missing. The pivot is computed in Python and the grid written into
+the target range, so LibreOffice shows it immediately; a matching ODF-core
+`table:data-pilot-table` is written too, so LibreOffice can refresh it.
+
+`validate_refs.py` also catches dangling `style:map` style references and pivot
+tables whose source or target range names an unknown sheet.
 
 ## Formula and Data Rules
 
