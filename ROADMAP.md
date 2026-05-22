@@ -147,17 +147,56 @@ for the academic niche — a separate repository depending on the core skills.
 This is what turns the toolkit into something a non-technical researcher can
 pick up directly; the highest-value piece of genuinely new work.
 
+### Track D — Authoring ergonomics
+
+Benchmarked against Anthropic's `docx`/`xlsx`/`pptx` skills. Those target
+OOXML (Microsoft formats) while this project targets ODF, so they are
+complements rather than competitors — but they set the bar for *how an
+agent produces a good document with little friction*. Gaps found, ranked
+by leverage:
+
+1. **Authoring expressiveness — the biggest gap.** The Anthropic skills let
+   the model author at a high level (`docx`: Markdown → docx via Pandoc;
+   `pptx`: HTML → pptx). This project's JSON spec is low-level — it cannot
+   express "a paragraph with one bold word and a link". A first-class
+   **Markdown → ODT** path is the single highest-leverage change. → **v1.3.**
+2. **Visual feedback loop.** The `pptx` skill *designs against rendered
+   thumbnails*. `render.py` and the QA-loop docs exist here, but rendering
+   is framed as QA, not as the primary design mechanism. A contact-sheet
+   render mode + sharper SKILL.md guidance would close most of this.
+3. **Tracked changes + comments (ODT).** The `docx` skill does redlining —
+   a top review use case. ODF supports `text:tracked-changes` and
+   `office:annotation`; an `add_comment.py` and tracked-changes support
+   would close it. (Currently an explicit non-goal — see below.)
+4. **Richer editing primitives.** Bulk restyle ("apply this style to every
+   heading"), insert-section, table editing are thinner than the `docx`
+   skill's formatting-preserving edits.
+5. **ODS depth.** Conditional formatting and pivot tables — handled by
+   `xlsx`, currently non-goals here.
+6. **Polished template library.** Overlaps Track C.
+
+Already at parity or ahead: stdlib-only with zero install friction; the
+scholarly apparatus (footnotes, BibTeX citations, cross-references, MathML)
+that the `docx` skill lacks first-class; flat-ODF Git diffs; RelaxNG schema
+validation across all four formats; the real-world corpus tests.
+
+## v1.3 — Markdown → ODT authoring (planned)
+
+Track D item 1: a first-class Markdown authoring path for ODT, so an agent
+can write rich prose (headings, bold/italic, links, lists, tables, inline
+footnotes/citations) without hand-assembling block JSON.
+
 ### Versioning
 
-`1.0.x` for bug fixes, shipped promptly. A `1.1` only when Track C lands
-something user-facing. A `2.0` only for a breaking change to the published
-`open-document-lib` API — avoided unless clearly necessary.
+`1.0.x` for bug fixes, shipped promptly; a `1.x` minor when something
+user-facing lands (as v1.1/v1.2 did). A `2.0` only for a breaking change to
+the published `open-document-lib` API — avoided unless clearly necessary.
 
 ## Explicit non-goals (stays in Current Limits)
 
 These are intentionally out of scope. If you need them, use LibreOffice or another tool:
 
-- **Tracked changes** (`text:tracked-changes`) — preservation is hard across tools; recommend round-tripping through LibreOffice for this.
+- **Tracked changes** (`text:tracked-changes`) — preservation is hard across tools; recommend round-tripping through LibreOffice for now. Under reconsideration as Track D item 3.
 - **Complex Calc pivots and conditional formatting** — build in LibreOffice, then read with our skills.
 - **Full Impress slide-master hierarchies** beyond simple page-layouts.
 - **Full LibreOffice/Word-processor replacement.**
