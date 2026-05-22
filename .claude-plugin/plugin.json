@@ -1,6 +1,6 @@
 {
   "name": "open-document-skills",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "OpenDocument Format skills for ODT, ODP, ODS, and ODG files.",
   "author": {
     "name": "Patrick Leiverkus"

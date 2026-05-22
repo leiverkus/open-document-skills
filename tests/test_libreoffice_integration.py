@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from helpers import FIXTURES, SKILLS, run_script
+from helpers import FIXTURES, ROOT, SKILLS, run_script
 
 # Import shared find_soffice from lib
 _repo_root = Path(__file__).resolve().parents[1]
@@ -61,6 +61,30 @@ class LibreOfficeIntegrationTests(unittest.TestCase):
             run_script(scripts / "create_minimal_odg.py", odg_fixture_with_image(tmp_path), odg)
             run_script(scripts / "render.py", odg, "--outdir", outdir, "--formats", "pdf")
             pdf = outdir / "drawing.pdf"
+            self.assertTrue(pdf.exists())
+            self.assertGreater(pdf.stat().st_size, 0)
+
+    def test_branded_odp_deck_renders_to_pdf(self) -> None:
+        """A base ODP with the branded deck styles.xml injected + logo embedded
+        must render to a non-empty PDF."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odp" / "scripts"
+            sys.path.insert(0, str(scripts))
+            from odp_common import embed_pictures, inject_styles_from_file
+
+            deck = ROOT / "examples" / "deck"
+            base = tmp_path / "base.odp"
+            run_script(scripts / "create_minimal_odp.py", deck / "spec.json", base)
+            styled = tmp_path / "styled.odp"
+            inject_styles_from_file(base, deck / "styles.xml", styled)
+            final = tmp_path / "deck.odp"
+            embed_pictures(styled, {"Pictures/logo.png": deck / "logo-placeholder.png"}, final)
+            run_script(scripts / "validate_refs.py", final)
+
+            outdir = tmp_path / "qa"
+            run_script(scripts / "render.py", final, "--outdir", outdir)
+            pdf = outdir / "deck.pdf"
             self.assertTrue(pdf.exists())
             self.assertGreater(pdf.stat().st_size, 0)
 

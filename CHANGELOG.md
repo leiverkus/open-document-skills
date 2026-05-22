@@ -1,5 +1,44 @@
 # Changelog
 
+## v1.1.0 - 2026-05-22
+
+Proper presentation styling for the ODP skill. Generated decks were
+rendered poorly by LibreOffice — styleless `draw:frame` elements inherited
+the default theme fill and showed as blue boxes around every text block,
+text colour was uncontrollable, and `customize_master --background-color`
+did not render at all. This release gives the ODP skill a real, designed
+default look and a branding path.
+
+### Added
+
+- **Branded deck example** — `examples/deck/` ships a complete branded
+  presentation pipeline (`spec.json`, a curated `styles.xml`, `build_deck.py`,
+  a logo placeholder). It generates a base ODP, injects the branded theme,
+  and embeds a logo — the same `styles.xml`-swap pattern as `examples/dao/`.
+- **ODP `inject_styles_from_file` / `embed_pictures`** — `odp_common.py` now
+  wraps these `odf_lib` helpers (bound to the ODP mimetype), so a fully
+  branded presentation `styles.xml` can be swapped in by name.
+
+### Fixed
+
+- **`create_minimal_odp.py` renders a designed default theme** — slides now
+  carry a real `drawing-page` background style, and every `draw:frame`
+  references a `graphic`-family style with `draw:fill="none"`
+  `draw:stroke="none"`, so frames no longer render as blue boxes. Frame text
+  is styled through the graphic style's `style:text-properties` (accent-blue
+  title, dark body); paragraph styles also carry an explicit `fo:color`.
+- **`customize_master.py --background-color` now renders** — the colour is
+  written into the `drawing-page` style the master page references via
+  `draw:style-name` (placed in `office:automatic-styles`, where LibreOffice
+  expects it), instead of onto the `style:master-page` element, which it
+  ignored. Header/footer/logo frames added to a master get a no-fill
+  graphic style so they too are not blue boxes.
+
+### Changed
+
+- The README hero image is now a real ODP title slide rendered from
+  `examples/deck/`.
+
 ## v1.0.2 - 2026-05-22
 
 Bug-fix patch. The new type-check gate immediately caught a latent bug.

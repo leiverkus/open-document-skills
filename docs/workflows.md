@@ -55,6 +55,20 @@ Render:
 python3 skills/odp/scripts/render.py example.odp --outdir qa --png
 ```
 
+Style and brand:
+
+```bash
+# Per-master tweak: background colour written into the master's drawing-page style.
+python3 skills/odp/scripts/customize_master.py example.odp \
+    --master Default --background-color "#02416C" -o branded.odp
+```
+
+`create_minimal_odp.py` already emits a designed default theme — a real
+`drawing-page` background style and no-fill `graphic` frame styles, so frames
+never render as blue boxes. For a full branded theme, write a curated
+`styles.xml` that redefines the same named styles and inject it with
+`inject_styles_from_file` (see [examples/deck/](#branded-deck-example)).
+
 ## ODS
 
 Create:
@@ -227,6 +241,20 @@ python3 examples/dao/build_grant_proposal.py
 ```
 
 The build runs `create_minimal_odt.py` then injects `examples/dao/styles.xml` (Nunito Sans, `#02416C`, DFG-Antrag margins, logo placeholder header, page-number footer) before filling citations, footnotes, cross-references, and a LaTeX math formula.
+
+## Branded deck (example)
+
+The `examples/deck/` directory ships a branded presentation pipeline:
+
+```bash
+python3 examples/deck/build_deck.py
+# Output: examples/deck/output/deck.{odp,pdf}
+```
+
+The build runs `create_minimal_odp.py`, then injects `examples/deck/styles.xml`
+(deep-blue background, light typography) and embeds a logo. Because the branded
+`styles.xml` redefines the same named styles the generator emits, the injection
+swaps the whole theme without touching `content.xml`.
 
 ## Flat ODF (Git-friendly)
 

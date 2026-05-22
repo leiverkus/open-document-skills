@@ -27,8 +27,10 @@ else:
 from odf_lib.odf_common import (  # noqa: E402, I001
     clear_children,
     copy_into_package as _copy_base,
+    embed_pictures as _embed_pictures_base,
     ensure_manifest_entry as _ensure_base,
     find_soffice,
+    inject_styles_from_file as _inject_styles_base,
     media_type_for,
     pack_dir_as_odf,
     pack_flat_odf,
@@ -51,12 +53,14 @@ __all__ = [
     "clear_children",
     "copy_into_package",
     "copy_slide",
+    "embed_pictures",
     "ensure_manifest_entry",
     "ensure_shape_id",
     "ensure_timing_root",
     "find_shape_by_name",
     "find_soffice",
     "find_slides",
+    "inject_styles_from_file",
     "media_type_for",
     "pack_dir_as_odp",
     "pack_flat_odf",
@@ -139,6 +143,20 @@ def write_odp_with_replacements(
 
 def update_meta_for_edit(meta_root: ET.Element) -> None:
     _update_meta_base(meta_root, NS, q)
+
+
+def inject_styles_from_file(input_odp: Path, styles_path: Path, output_odp: Path) -> list[str]:
+    """Replace styles.xml with a curated branded presentation theme.
+
+    Returns style names referenced by content.xml that are missing from the
+    injected styles (dangling references).
+    """
+    return _inject_styles_base(input_odp, styles_path, output_odp, ODP_MIMETYPE)
+
+
+def embed_pictures(input_odp: Path, pictures: dict[str, Path], output_odp: Path) -> None:
+    """Add local pictures into the ODP package and register them in the manifest."""
+    _embed_pictures_base(input_odp, pictures, output_odp, ODP_MIMETYPE, NS, q)
 
 
 def find_slides(content_root: ET.Element) -> list[ET.Element]:

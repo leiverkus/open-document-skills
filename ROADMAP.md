@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v1.0.2** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v1.1.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -83,6 +83,22 @@ project a dependable 1.0.
 - ✅ **Schema validation for all four formats** — `validate_refs.py --strict` (OASIS ODF 1.3 RelaxNG) extended from ODT to ODP/ODS/ODG via a shared `apply_strict_schema_check` helper. The test suite is the CI schema gate.
 - ✅ **Performance benchmarks** — `benchmarks/run_benchmarks.py` measures large-document latency; representative numbers published in the README.
 - ✅ **Final polish** — skill-trigger audit, README "Current Limits" refresh, CONTRIBUTING release-checklist fixes. Plus two robustness fixes: schema-clean table generation and per-invocation LibreOffice profiles.
+
+## v1.1 — ODP presentation styling ✅ shipped (2026-05-22)
+
+The first user-facing post-1.0 release. The ODP generator produced decks
+LibreOffice rendered poorly — styleless frames showed as blue boxes,
+text colour was uncontrollable, master backgrounds did not render.
+
+- ✅ **`create_minimal_odp.py` designed default theme** — real `drawing-page`
+  background style, no-fill `graphic` frame styles, text styled through the
+  graphic style; no more blue boxes.
+- ✅ **`customize_master.py --background-color` renders** — written into the
+  `drawing-page` style the master references, in `office:automatic-styles`.
+- ✅ **ODP `inject_styles_from_file` / `embed_pictures`** wrappers — a branded
+  presentation `styles.xml` can be swapped in by name.
+- ✅ **Branded deck example** — `examples/deck/`; the README hero is now a
+  real ODP title slide. (Track C, partially delivered.)
 
 ## Beyond 1.0 — three tracks
 

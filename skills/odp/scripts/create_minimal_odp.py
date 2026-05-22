@@ -23,13 +23,20 @@ def text_frame(
     height: str,
     style: str,
     lines: list[str],
+    frame_style: str,
 ) -> None:
-    """Add a draw:frame with draw:text-box containing styled paragraphs."""
+    """Add a draw:frame with draw:text-box containing styled paragraphs.
+
+    *frame_style* names a ``style:family="graphic"`` style — without it the
+    frame inherits LibreOffice's default fill and renders as a blue box.
+    """
     frame = ET.SubElement(
         parent,
         q("draw", "frame"),
         {
             q("draw", "name"): name,
+            q("draw", "style-name"): frame_style,
+            q("draw", "layer"): "layout",
             q("svg", "x"): x,
             q("svg", "y"): y,
             q("svg", "width"): width,
@@ -62,6 +69,8 @@ def image_frame(
             q("svg", "height"): height,
         },
     )
+    frame.set(q("draw", "style-name"), "gr-image")
+    frame.set(q("draw", "layer"), "layout")
     ET.SubElement(
         frame,
         q("draw", "image"),
@@ -74,23 +83,99 @@ def image_frame(
     )
 
 
-def build_styles() -> ET.Element:
-    """Build office:document-styles with Title/Body/Notes styles and Screen page layout."""
-    root = ET.Element(q("office", "document-styles"), {q("office", "version"): "1.3"})
-    styles = ET.SubElement(root, q("office", "styles"))
-    for name, size, weight in [("Title", "32pt", "bold"), ("Body", "18pt", "normal"), ("Notes", "12pt", "normal")]:
-        style = ET.SubElement(
-            styles, q("style", "style"), {q("style", "name"): name, q("style", "family"): "paragraph"}
-        )
-        ET.SubElement(
-            style, q("style", "text-properties"), {q("fo", "font-size"): size, q("fo", "font-weight"): weight}
-        )
-    master_styles = ET.SubElement(root, q("office", "master-styles"))
-    ET.SubElement(
-        master_styles,
-        q("style", "master-page"),
-        {q("style", "name"): "Default", q("style", "page-layout-name"): "Screen"},
+# Default presentation theme — light background, accent-blue title, dark body.
+BACKGROUND_COLOR = "#FFFFFF"
+TITLE_COLOR = "#02416C"
+BODY_COLOR = "#1A1A1A"
+NOTES_COLOR = "#000000"
+
+
+def _graphic_style(
+    styles: ET.Element,
+    name: str,
+    vertical_align: str,
+    size: str | None = None,
+    weight: str | None = None,
+    color: str | None = None,
+) -> ET.Element:
+    """Append a no-fill, no-stroke graphic style and return it.
+
+    A styleless draw:frame inherits LibreOffice's default ``standard`` graphic
+    style (a solid #729fcf fill) and renders as a blue box. Every generated
+    frame references one of these instead.
+
+    The graphic style also carries the ``style:text-properties`` that style the
+    text inside the frame — slide text is styled through the frame's graphic
+    style, not through a paragraph ``text:style-name``.
+    """
+    style = ET.SubElement(
+        styles,
+        q("style", "style"),
+        {q("style", "name"): name, q("style", "family"): "graphic"},
     )
+    ET.SubElement(
+        style,
+        q("style", "graphic-properties"),
+        {
+            q("draw", "fill"): "none",
+            q("draw", "stroke"): "none",
+            q("draw", "textarea-vertical-align"): vertical_align,
+            q("draw", "auto-grow-height"): "false",
+            q("draw", "auto-grow-width"): "false",
+        },
+    )
+    if size or color:
+        text_props: dict[str, str] = {}
+        if size:
+            text_props[q("fo", "font-size")] = size
+        if weight:
+            text_props[q("fo", "font-weight")] = weight
+        if color:
+            text_props[q("fo", "color")] = color
+        ET.SubElement(style, q("style", "text-properties"), text_props)
+    return style
+
+
+def _paragraph_style(styles: ET.Element, name: str, size: str, weight: str, color: str) -> None:
+    """Append a paragraph style carrying an explicit text colour."""
+    style = ET.SubElement(styles, q("style", "style"), {q("style", "name"): name, q("style", "family"): "paragraph"})
+    if name == "Body":
+        ET.SubElement(style, q("style", "paragraph-properties"), {q("fo", "margin-bottom"): "0.35cm"})
+    ET.SubElement(
+        style,
+        q("style", "text-properties"),
+        {q("fo", "font-size"): size, q("fo", "font-weight"): weight, q("fo", "color"): color},
+    )
+
+
+def build_styles() -> ET.Element:
+    """Build office:document-styles with a designed default presentation theme.
+
+    Emits a ``drawing-page`` background style (referenced by the master page),
+    ``graphic`` frame styles that suppress the default fill, and the paragraph
+    styles Title/Body/Notes. Names stay stable so injected branded styles and
+    customize_master keep working.
+    """
+    root = ET.Element(q("office", "document-styles"), {q("office", "version"): "1.3"})
+
+    # office:styles — common named styles.
+    styles = ET.SubElement(root, q("office", "styles"))
+
+    # Graphic styles — no blue box; the title block is vertically centred.
+    # Their text-properties style the text inside each frame.
+    _graphic_style(styles, "gr-title", "middle", "40pt", "bold", TITLE_COLOR)
+    _graphic_style(styles, "gr-body", "top", "20pt", "normal", BODY_COLOR)
+    _graphic_style(styles, "gr-notes", "top", "12pt", "normal", NOTES_COLOR)
+    _graphic_style(styles, "gr-image", "middle")
+
+    # Paragraph styles — colours double as a second guarantee of text colour.
+    _paragraph_style(styles, "Title", "40pt", "bold", TITLE_COLOR)
+    _paragraph_style(styles, "Body", "20pt", "normal", BODY_COLOR)
+    _paragraph_style(styles, "Notes", "12pt", "normal", NOTES_COLOR)
+
+    # office:automatic-styles — page layout + the drawing-page background
+    # style. A master page's drawing-page style must live here (not in
+    # office:styles) for LibreOffice to render the slide background.
     automatic = ET.SubElement(root, q("office", "automatic-styles"))
     layout = ET.SubElement(automatic, q("style", "page-layout"), {q("style", "name"): "Screen"})
     ET.SubElement(
@@ -100,6 +185,28 @@ def build_styles() -> ET.Element:
             q("fo", "page-width"): "28cm",
             q("fo", "page-height"): "15.75cm",
             q("style", "print-orientation"): "landscape",
+        },
+    )
+    dp = ET.SubElement(
+        automatic,
+        q("style", "style"),
+        {q("style", "name"): "dp-default", q("style", "family"): "drawing-page"},
+    )
+    ET.SubElement(
+        dp,
+        q("style", "drawing-page-properties"),
+        {q("draw", "fill"): "solid", q("draw", "fill-color"): BACKGROUND_COLOR},
+    )
+
+    # office:master-styles — the master page references the background style.
+    master_styles = ET.SubElement(root, q("office", "master-styles"))
+    ET.SubElement(
+        master_styles,
+        q("style", "master-page"),
+        {
+            q("style", "name"): "Default",
+            q("style", "page-layout-name"): "Screen",
+            q("draw", "style-name"): "dp-default",
         },
     )
     return root
@@ -177,12 +284,22 @@ def main() -> None:
             )
             title = slide.get("title")
             if title:
-                text_frame(page, "Title", "1cm", "0.8cm", "26cm", "2cm", "Title", [str(title)])
+                text_frame(page, "Title", "1cm", "0.8cm", "26cm", "2cm", "Title", [str(title)], "gr-title")
             body_lines = slide.get("body", [])
             if isinstance(body_lines, str):
                 body_lines = [body_lines]
             if body_lines:
-                text_frame(page, "Body", "1.4cm", "3.2cm", "25cm", "8cm", "Body", [str(line) for line in body_lines])
+                text_frame(
+                    page,
+                    "Body",
+                    "1.4cm",
+                    "3.2cm",
+                    "25cm",
+                    "8cm",
+                    "Body",
+                    [str(line) for line in body_lines],
+                    "gr-body",
+                )
             image = slide.get("image")
             if image:
                 source = Path(image)
@@ -205,7 +322,17 @@ def main() -> None:
                 notes = [notes]
             if notes:
                 notes_el = ET.SubElement(page, q("presentation", "notes"))
-                text_frame(notes_el, "Notes", "1cm", "1cm", "24cm", "10cm", "Notes", [str(line) for line in notes])
+                text_frame(
+                    notes_el,
+                    "Notes",
+                    "1cm",
+                    "1cm",
+                    "24cm",
+                    "10cm",
+                    "Notes",
+                    [str(line) for line in notes],
+                    "gr-notes",
+                )
 
         ET.ElementTree(content).write(root_dir / "content.xml", encoding="utf-8", xml_declaration=True)
         ET.ElementTree(build_styles()).write(root_dir / "styles.xml", encoding="utf-8", xml_declaration=True)

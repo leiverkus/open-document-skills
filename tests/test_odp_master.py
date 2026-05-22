@@ -63,7 +63,16 @@ class MasterPageTests(unittest.TestCase):
             master = next(
                 m for m in styles.iter(q("style", "master-page")) if m.attrib.get(q("style", "name")) == "Default"
             )
-            props = master.find(q("style", "drawing-page-properties"))
+            # The background lives in the drawing-page style the master
+            # references via draw:style-name — not on the master element.
+            dp_name = master.attrib.get(q("draw", "style-name"))
+            self.assertIsNotNone(dp_name)
+            dp_style = next(
+                s
+                for s in styles.iter(q("style", "style"))
+                if s.attrib.get(q("style", "name")) == dp_name and s.attrib.get(q("style", "family")) == "drawing-page"
+            )
+            props = dp_style.find(q("style", "drawing-page-properties"))
             assert props is not None
             self.assertEqual(props.attrib.get(q("draw", "fill")), "solid")
             self.assertEqual(props.attrib.get(q("draw", "fill-color")), "#02416C")

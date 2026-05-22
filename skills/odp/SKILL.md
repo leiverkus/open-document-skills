@@ -4,7 +4,7 @@ description: "Create, read, edit, convert, repair, or inspect OpenDocument Prese
 triggers: [".odp", "ODP", "OpenDocument Presentation", "Open Office presentation", "LibreOffice Impress", "Impress deck", "odp-Datei", "OpenDocument-Präsentation", "Folien", "Präsentation", "animation", "Animation", "transition", "Übergang", "Folienübergang", "slide transition", "master page", "master slide", "Folienmaster", "flat ODF", ".fodp"]
 dont_use_for: ["text documents (.odt)", "spreadsheets (.ods)", "general presentation advice without .odp file"]
 license: MIT
-version: "1.0.2"
+version: "1.1.0"
 ---
 
 # ODP creation, editing, and analysis
@@ -213,6 +213,40 @@ Use LibreOffice conversion when the source already exists in another format or w
 ```
 
 Treat conversion as lossy until QA proves otherwise. Check fonts, images, connectors, masters, notes, and placeholder behavior after every conversion.
+
+## Presentation Styling and Branding
+
+`create_minimal_odp.py` emits a designed default theme, not raw frames:
+
+- A real `drawing-page` style (`dp-default`) sets the slide background and is
+  referenced by the master page through `draw:style-name`.
+- Each `draw:frame` references a `graphic`-family style (`gr-title`,
+  `gr-body`, `gr-notes`, `gr-image`) with `draw:fill="none"` and
+  `draw:stroke="none"`. **Without a graphic style a frame inherits
+  LibreOffice's default fill and renders as a blue box** — always give
+  generated frames an explicit `draw:style-name`.
+- Paragraph styles `Title`/`Body`/`Notes` carry an explicit `fo:color`.
+
+Two ways to brand a deck:
+
+1. **Whole-theme swap** — write a curated `styles.xml` that redefines the
+   same named styles (`dp-default`, `gr-title`, `gr-body`, `Title`, `Body`,
+   master `Default`, layout `Screen`) and inject it:
+
+   ```python
+   from odp_common import embed_pictures, inject_styles_from_file
+   inject_styles_from_file("base.odp", "branded-styles.xml", "styled.odp")
+   embed_pictures("styled.odp", {"Pictures/logo.png": "logo.png"}, "deck.odp")
+   ```
+
+   Because content references styles by name, no edit to `content.xml` is
+   needed. See [examples/deck/](../../examples/deck/) for a complete
+   branded-deck build.
+
+2. **Per-master tweak** — use `customize_master.py` for a background colour,
+   header/footer, page numbers, or a logo on one master page. The background
+   colour is written into the `drawing-page` style the master references
+   (setting it on the master element itself does not render).
 
 ## Bundled Scripts
 

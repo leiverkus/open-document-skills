@@ -34,15 +34,101 @@ def find_master(styles_root: ET.Element, name: str) -> ET.Element | None:
     return None
 
 
-def find_or_create_drawing_page_properties(master: ET.Element) -> ET.Element:
-    """Resolve the master's drawing-page-properties via its page-layout."""
-    # ODF master-page's background is normally set on its style:page-layout's
-    # style:drawing-page-properties. For simplicity, attach properties directly
-    # under the master and let LibreOffice honour them.
-    props = master.find(q("style", "drawing-page-properties"))
+def office_styles_element(styles_root: ET.Element) -> ET.Element:
+    """Return the office:styles container, creating it as the first child if absent."""
+    office_styles = styles_root.find(q("office", "styles"))
+    if office_styles is None:
+        office_styles = ET.Element(q("office", "styles"))
+        styles_root.insert(0, office_styles)
+    return office_styles
+
+
+def automatic_styles_element(styles_root: ET.Element) -> ET.Element:
+    """Return office:automatic-styles, creating it before office:master-styles if absent.
+
+    A master page's drawing-page style must live here — LibreOffice ignores a
+    drawing-page style placed in office:styles.
+    """
+    auto = styles_root.find(q("office", "automatic-styles"))
+    if auto is not None:
+        return auto
+    auto = ET.Element(q("office", "automatic-styles"))
+    children = list(styles_root)
+    master = styles_root.find(q("office", "master-styles"))
+    if master is not None:
+        styles_root.insert(children.index(master), auto)
+    else:
+        styles_root.append(auto)
+    return auto
+
+
+def unique_style_name(styles_root: ET.Element, base: str) -> str:
+    """Return *base*, or base-2/base-3/... if already taken by a style:style."""
+    existing = {s.attrib.get(q("style", "name")) for s in styles_root.iter(q("style", "style"))}
+    if base not in existing:
+        return base
+    n = 2
+    while f"{base}-{n}" in existing:
+        n += 1
+    return f"{base}-{n}"
+
+
+def resolve_drawing_page_props(styles_root: ET.Element, master: ET.Element, fresh: bool) -> ET.Element:
+    """Return the drawing-page-properties that actually control the slide background.
+
+    A master page's background is governed by the ``drawing-page`` style it
+    references via ``draw:style-name`` — properties written straight onto the
+    ``style:master-page`` element are ignored by LibreOffice. This locates that
+    style (creating one when missing) and returns its drawing-page-properties.
+
+    *fresh* mints a brand-new drawing-page style even if one is referenced —
+    used for clones so the original master's background is left untouched.
+    """
+    auto = automatic_styles_element(styles_root)
+    name_attr = q("draw", "style-name")
+    dp_name = master.attrib.get(name_attr)
+    dp_style: ET.Element | None = None
+    if dp_name and not fresh:
+        for st in styles_root.iter(q("style", "style")):
+            if st.attrib.get(q("style", "name")) == dp_name and st.attrib.get(q("style", "family")) == "drawing-page":
+                dp_style = st
+                break
+    if dp_style is None:
+        master_name = master.attrib.get(q("style", "name")) or "master"
+        new_name = unique_style_name(styles_root, f"dp-{master_name}")
+        dp_style = ET.SubElement(
+            auto,
+            q("style", "style"),
+            {q("style", "name"): new_name, q("style", "family"): "drawing-page"},
+        )
+        master.set(name_attr, new_name)
+    props = dp_style.find(q("style", "drawing-page-properties"))
     if props is None:
-        props = ET.SubElement(master, q("style", "drawing-page-properties"))
+        props = ET.SubElement(dp_style, q("style", "drawing-page-properties"))
     return props
+
+
+def ensure_master_graphic_style(styles_root: ET.Element) -> str:
+    """Ensure a no-fill graphic style exists for master frames; return its name.
+
+    Header/footer/page-number/logo frames added to a master would otherwise
+    inherit LibreOffice's default fill and render as blue boxes.
+    """
+    office_styles = office_styles_element(styles_root)
+    for st in office_styles.iter(q("style", "style")):
+        if st.attrib.get(q("style", "name")) == "gr-master" and st.attrib.get(q("style", "family")) == "graphic":
+            return "gr-master"
+    style = ET.SubElement(
+        office_styles,
+        q("style", "style"),
+        {q("style", "name"): "gr-master", q("style", "family"): "graphic"},
+    )
+    ET.SubElement(
+        style,
+        q("style", "graphic-properties"),
+        {q("draw", "fill"): "none", q("draw", "stroke"): "none"},
+    )
+    return "gr-master"
 
 
 def apply_background(props: ET.Element, color: str | None, image_path: str | None, fill: str) -> None:
@@ -101,17 +187,25 @@ def main() -> None:
             existing = set(archive.namelist())
         new_logo_path = unique_picture_name(existing, args.logo)
 
-    # Apply background
+    # Apply background — into the drawing-page style the master references,
+    # not onto the master element itself (which LibreOffice ignores).
     if args.background_color or new_picture_path:
-        props = find_or_create_drawing_page_properties(target)
+        props = resolve_drawing_page_props(styles, target, fresh=bool(args.clone_to))
         apply_background(props, args.background_color, new_picture_path, args.background_fill)
 
-    # Header / footer / page numbers / logo as draw:frame children of master
+    # Header / footer / page numbers / logo as draw:frame children of master.
+    # Each carries a no-fill graphic style so it does not render as a blue box.
+    needs_frame = args.header or args.footer_text or args.page_numbers == "true" or new_logo_path
+    graphic_style = ensure_master_graphic_style(styles) if needs_frame else ""
     if args.header:
         frame = ET.SubElement(
             target,
             q("draw", "frame"),
-            {q("presentation", "class"): "header", q("draw", "name"): "Header"},
+            {
+                q("presentation", "class"): "header",
+                q("draw", "name"): "Header",
+                q("draw", "style-name"): graphic_style,
+            },
         )
         text_box = ET.SubElement(frame, q("draw", "text-box"))
         p = ET.SubElement(text_box, q("text", "p"))
@@ -120,7 +214,11 @@ def main() -> None:
         frame = ET.SubElement(
             target,
             q("draw", "frame"),
-            {q("presentation", "class"): "footer", q("draw", "name"): "Footer"},
+            {
+                q("presentation", "class"): "footer",
+                q("draw", "name"): "Footer",
+                q("draw", "style-name"): graphic_style,
+            },
         )
         text_box = ET.SubElement(frame, q("draw", "text-box"))
         p = ET.SubElement(text_box, q("text", "p"))
@@ -129,7 +227,11 @@ def main() -> None:
         frame = ET.SubElement(
             target,
             q("draw", "frame"),
-            {q("presentation", "class"): "page-number", q("draw", "name"): "PageNumber"},
+            {
+                q("presentation", "class"): "page-number",
+                q("draw", "name"): "PageNumber",
+                q("draw", "style-name"): graphic_style,
+            },
         )
         text_box = ET.SubElement(frame, q("draw", "text-box"))
         p = ET.SubElement(text_box, q("text", "p"))
@@ -140,6 +242,7 @@ def main() -> None:
             q("draw", "frame"),
             {
                 q("draw", "name"): "Logo",
+                q("draw", "style-name"): graphic_style,
                 q("svg", "width"): "3cm",
                 q("svg", "height"): "1.2cm",
                 q("svg", "x"): "0.5cm",

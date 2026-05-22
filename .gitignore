@@ -6,6 +6,7 @@ __pycache__/
 qa/
 examples/output/
 examples/dao/output/
+examples/deck/output/
 .coverage
 /dist/
 /build/

@@ -32,7 +32,7 @@ All scripts use the Python standard library.
 
 | Script | Purpose |
 | --- | --- |
-| `create_minimal_odp.py` | Build a minimal ODP from a JSON slide spec. |
+| `create_minimal_odp.py` | Build a minimal ODP from a JSON slide spec, with a designed default theme (drawing-page background, no-fill graphic frame styles, coloured text). |
 | `extract_text.py` | Print slide text and speaker notes. |
 | `inspect_package.py` | Summarize slides, notes, images, package files, and manifest entries. |
 | `list_masters.py` | List master pages and page-layout references. |
@@ -43,7 +43,7 @@ All scripts use the Python standard library.
 | `list_animations.py` | List all animations as JSON. |
 | `add_transition.py` | Add or remove a slide transition (fade/wipe/cover/uncover/push/dissolve/random). |
 | `list_transitions.py` | List all slide transitions as JSON. |
-| `customize_master.py` | Customize a master page: background, header/footer, page numbers, logo, clone-to. |
+| `customize_master.py` | Customize a master page: background colour (written into the master's `drawing-page` style so it renders), header/footer, page numbers, logo, clone-to. |
 | `pack_odp.py` | Repack an unpacked ODP directory with correct `mimetype` handling. |
 | `pack_fodp.py` | Convert a zipped ODP to a flat `.fodp` (single XML, Git-friendly). |
 | `unpack_fodp.py` | Convert a flat `.fodp` back to a zipped `.odp` package. |

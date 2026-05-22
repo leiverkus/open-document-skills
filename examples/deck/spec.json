@@ -1,0 +1,32 @@
+{
+  "title": "Open Document Skills",
+  "slides": [
+    {
+      "name": "Title",
+      "title": "Open Document Skills",
+      "body": [
+        "Programmatic OpenDocument authoring — ODT, ODP, ODS, ODG",
+        "Pure Python. No office suite required for edits."
+      ]
+    },
+    {
+      "name": "Capabilities",
+      "title": "What it does",
+      "body": [
+        "Generate documents, presentations, spreadsheets, and drawings",
+        "Footnotes, citations, cross-references, and MathML formulas",
+        "Charts, named ranges, animations, transitions, and diagrams",
+        "Flat-ODF Git diffs and OASIS ODF 1.3 schema validation"
+      ]
+    },
+    {
+      "name": "Workflow",
+      "title": "How it works",
+      "body": [
+        "Each skill is a folder of small, composable Python scripts",
+        "Edits operate directly on the ODF XML — fast and inspectable",
+        "LibreOffice is optional, used only to render previews"
+      ]
+    }
+  ]
+}
