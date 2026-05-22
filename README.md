@@ -42,7 +42,7 @@ python skills/odt/scripts/validate_refs.py out.odt
 
 ## What this is not
 
-Not a LibreOffice replacement, and not a substitute for full ODF feature coverage. Tracked changes, generated tables of contents, Calc pivot tables, and DOCX/PPTX/XLSX import-and-edit are explicit non-goals — see [Current Limits](#current-limits). The goal is to make the 80% of ODF automation that agents need safe, repeatable, and dependency-light.
+Not a LibreOffice replacement, and not a substitute for full ODF feature coverage. Generated tables of contents and DOCX/PPTX/XLSX import-and-edit are explicit non-goals; a few features LibreOffice still handles better — tracked changes, Calc conditional formatting — are on the [roadmap](ROADMAP.md) rather than permanently excluded. See [Current Limits](#current-limits). The goal is to make the 80% of ODF automation that agents need safe, repeatable, and dependency-light.
 
 ## Repository Layout
 
@@ -306,25 +306,29 @@ across all four formats.
 
 They cover:
 
-- direct generation and template-based editing
+- direct generation, template-based editing, and Markdown → ODT authoring with inline rich text, links, tables, and footnotes
 - package validation, including optional RelaxNG validation against the
   OASIS ODF 1.3 schema (`validate_refs.py --strict`, all four formats)
 - text/formula/shape extraction
 - XML-safe replacements that preserve inline `text:span`, `text:note`, `text:bookmark`, and `text:a`
 - scholarly authoring — footnotes, endnotes, citations (BibTeX/CSL-JSON), cross-references, MathML
 - spreadsheets — named ranges, data validation, embedded charts
-- presentations — animations, slide transitions, master-page customization
-- drawings — connectors with shape binding, glue points, shape groups
+- presentations — designed default styling, branded-theme injection, animations, slide transitions, master-page customization
+- drawings — designed styling with per-shape colours, connectors with shape binding, glue points, shape groups
+- rendering to PDF, per-page PNG, or a single contact sheet — a visual design loop, not just final QA
 - image embedding with magic-byte MIME detection
 - `meta.xml` lifecycle updates on every edit (`modification-date`, `generator`, `editing-cycles`)
 - flat ODF (`.fodt`/`.fodp`/`.fods`/`.fodg`) roundtrip
 
-They intentionally do **not** attempt to model every OpenDocument feature.
-Out of scope — use LibreOffice for these:
+They intentionally do **not** model every OpenDocument feature. Some gaps are
+on the [roadmap](ROADMAP.md):
 
 - tracked changes and comments
+- Calc conditional formatting and pivot tables
+
+Others stay out of scope — use LibreOffice for these:
+
 - generated indexes and tables of contents (LibreOffice builds these from the markers the skills set)
-- Calc pivot tables, conditional formatting, and cell protection
 - full Impress slide-master hierarchies beyond simple page layouts
 - DOCX/PPTX/XLSX import-and-edit — use `pandoc` if you need those round-trips
 

@@ -215,7 +215,7 @@ the published `open-document-lib` API — avoided unless clearly necessary.
 These are intentionally out of scope. If you need them, use LibreOffice or another tool:
 
 - **Tracked changes** (`text:tracked-changes`) — preservation is hard across tools; recommend round-tripping through LibreOffice for now. Under reconsideration as Track D item 3.
-- **Complex Calc pivots and conditional formatting** — build in LibreOffice, then read with our skills.
+- **Complex Calc pivots and conditional formatting** — build in LibreOffice for now, then read with our skills. Under reconsideration as Track D item 5.
 - **Full Impress slide-master hierarchies** beyond simple page-layouts.
 - **Full LibreOffice/Word-processor replacement.**
 - **DOCX/PPTX/XLSX import-and-edit** — the whole point of this project is to avoid those round-trips. Use `pandoc` if you need DOCX in/out.
