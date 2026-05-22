@@ -96,6 +96,15 @@ def main() -> None:
             else:
                 set_cell_value(cell, str(value.get("value", value)) if isinstance(value, dict) else str(value))
 
+        # ODF requires table:table-column declarations before any rows.
+        table_rows = sheet.findall(q("table", "table-row"))
+        ncols = max((len(row.findall(q("table", "table-cell"))) for row in table_rows), default=0)
+        if ncols:
+            column = ET.Element(q("table", "table-column"))
+            if ncols > 1:
+                column.set(q("table", "number-columns-repeated"), str(ncols))
+            sheet.insert(0, column)
+
     with tempfile.TemporaryDirectory() as tmp:
         root_dir = Path(tmp)
         (root_dir / "META-INF").mkdir()

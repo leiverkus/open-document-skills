@@ -109,12 +109,11 @@ class SchemaValidationTests(unittest.TestCase):
             payload = json.loads(result.stdout)
             self.assertEqual(payload["status"], "ok", payload.get("errors"))
 
-    def test_strict_validation_on_minimal_ods_runs(self) -> None:
-        """The --strict path must run for ODS and emit a well-formed result.
+    def test_strict_validation_on_minimal_ods(self) -> None:
+        """A minimal generated ODS must pass the OASIS RelaxNG schema.
 
-        A generated ODS is not asserted schema-perfect — the minimal sheet
-        generator emits tables without explicit table-column declarations —
-        but the strict path must run without crashing and report results.
+        The minimal sheet generator emits explicit table-column declarations
+        before its rows, as the schema requires for table:table.
         """
         with tempfile.TemporaryDirectory() as tmp:
             ods = _generate("ods", MINIMAL_SPECS["ods"], Path(tmp))
@@ -122,8 +121,7 @@ class SchemaValidationTests(unittest.TestCase):
                 SKILLS / "ods" / "scripts" / "validate_refs.py", ods, "--strict", check=False
             )
             payload = json.loads(result.stdout)
-            self.assertIn("status", payload)
-            self.assertIn("errors", payload)
+            self.assertEqual(payload["status"], "ok", payload.get("errors"))
 
     def test_strict_detects_broken_xml_ods(self) -> None:
         """The schema gate must have teeth on non-ODT formats too."""

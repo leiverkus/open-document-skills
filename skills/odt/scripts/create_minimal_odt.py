@@ -41,8 +41,13 @@ def add_list(parent: ET.Element, items: list[str]) -> None:
 
 
 def add_table(parent: ET.Element, rows: list[list[object]], name: str = "Table") -> None:
-    """Add a table:table with rows and string-typed cells."""
+    """Add a table:table with column declarations, rows, and string-typed cells."""
     table = ET.SubElement(parent, q("table", "table"), {q("table", "name"): name})
+    ncols = max((len(row) for row in rows), default=0)
+    if ncols:
+        column = ET.SubElement(table, q("table", "table-column"))
+        if ncols > 1:
+            column.set(q("table", "number-columns-repeated"), str(ncols))
     for row in rows:
         row_el = ET.SubElement(table, q("table", "table-row"))
         for cell in row:
