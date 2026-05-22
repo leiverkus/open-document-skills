@@ -103,6 +103,12 @@ Recalculate:
 python3 skills/ods/scripts/recalc.py example.ods --outdir qa
 ```
 
+Render:
+
+```bash
+python3 skills/ods/scripts/render.py example.ods --outdir qa --contact-sheet
+```
+
 ## ODG
 
 Create:
@@ -136,7 +142,22 @@ theme, write a curated `styles.xml` that redefines the same named styles and
 inject it with `inject_styles_from_file` (see
 [examples/diagram/](#branded-flowchart-example)).
 
-## Scholarly authoring (ODT)
+## Visual design loop
+
+Every format has a `render.py`. Treat rendering as a **design step**, not
+only a final check: render an early draft, look at it, fix what is wrong,
+then continue.
+
+```bash
+python3 skills/odp/scripts/render.py deck.odp --outdir qa --contact-sheet
+python3 skills/odt/scripts/render.py doc.odt --outdir qa --png
+```
+
+`--contact-sheet` composes every page or slide into a **single labelled grid
+image** — the fastest way to judge layout and cross-page consistency at a
+glance. It needs LibreOffice, Poppler (`pdftoppm`), and Pillow
+(`pip install open-document-lib[render]`). `--png` writes one image per page;
+plain `render.py` writes a PDF.
 
 ODT supports footnotes, endnotes, and citation insertion natively. The skill ships direct ODF-native helpers — no DOCX or pandoc-citeproc round-trip needed.
 

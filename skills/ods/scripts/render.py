@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Render an ODT file to PDF, per-page PNGs, or a single contact sheet.
+"""Render an ODS spreadsheet to PDF, per-page PNGs, or a single contact sheet.
 
-The contact sheet (``--contact-sheet``) shows every page in one labelled
-grid image — render an early draft, look at it, and iterate. Treat rendering
-as a design step, not only a final check.
+LibreOffice paginates the sheet for printing; the contact sheet
+(``--contact-sheet``) shows every printed page in one labelled grid image.
+Treat rendering as a design step, not only a final check.
 """
 
 from __future__ import annotations
@@ -12,18 +12,18 @@ import argparse
 import tempfile
 from pathlib import Path
 
-from odt_common import build_contact_sheet, pdf_to_pngs, render_to_pdf
+from ods_common import build_contact_sheet, pdf_to_pngs, render_to_pdf
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("input", type=Path, help="source ODT file")
+    parser.add_argument("input", type=Path, help="source ODS file")
     parser.add_argument("--outdir", type=Path, default=Path("qa"))
-    parser.add_argument("--png", action="store_true", help="render each page to a PNG")
+    parser.add_argument("--png", action="store_true", help="render each printed page to a PNG")
     parser.add_argument(
         "--contact-sheet",
         action="store_true",
-        help="compose all pages into one labelled grid image (needs Pillow)",
+        help="compose all printed pages into one labelled grid image (needs Pillow)",
     )
     parser.add_argument("--dpi", type=int, default=150, help="PNG render resolution")
     parser.add_argument("--columns", type=int, default=0, help="contact-sheet columns (0 = auto)")

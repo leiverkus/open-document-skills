@@ -88,6 +88,45 @@ class LibreOfficeIntegrationTests(unittest.TestCase):
             self.assertTrue(pdf.exists())
             self.assertGreater(pdf.stat().st_size, 0)
 
+    def test_ods_render_to_pdf(self) -> None:
+        """The new ODS render.py must produce a PDF."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "ods" / "scripts"
+            ods = tmp_path / "book.ods"
+            outdir = tmp_path / "qa"
+            run_script(scripts / "create_minimal_ods.py", FIXTURES / "ods_workbook.json", ods)
+            run_script(scripts / "render.py", ods, "--outdir", outdir)
+            pdf = outdir / "book.pdf"
+            self.assertTrue(pdf.exists())
+            self.assertGreater(pdf.stat().st_size, 0)
+
+    def test_contact_sheet_render(self) -> None:
+        """render.py --contact-sheet must compose all pages into one PNG."""
+        import shutil
+
+        if not shutil.which("pdftoppm"):
+            self.skipTest("pdftoppm (Poppler) not available")
+        try:
+            import PIL  # noqa: F401
+        except ImportError:
+            self.skipTest("Pillow not installed")
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odp" / "scripts"
+            spec = tmp_path / "deck.json"
+            spec.write_text(
+                json.dumps({"slides": [{"name": f"S{i}", "title": f"Slide {i}"} for i in range(1, 4)]}),
+                encoding="utf-8",
+            )
+            odp = tmp_path / "deck.odp"
+            run_script(scripts / "create_minimal_odp.py", spec, odp)
+            outdir = tmp_path / "qa"
+            run_script(scripts / "render.py", odp, "--outdir", outdir, "--contact-sheet")
+            sheet = outdir / "deck-contact.png"
+            self.assertTrue(sheet.exists())
+            self.assertGreater(sheet.stat().st_size, 0)
+
     def test_markdown_to_odt_renders_to_pdf(self) -> None:
         """An ODT built from Markdown must render to a non-empty PDF."""
         with tempfile.TemporaryDirectory() as tmp:

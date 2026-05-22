@@ -4,7 +4,7 @@ description: "Create, read, edit, convert, repair, or inspect OpenDocument Prese
 triggers: [".odp", "ODP", "OpenDocument Presentation", "Open Office presentation", "LibreOffice Impress", "Impress deck", "odp-Datei", "OpenDocument-Präsentation", "Folien", "Präsentation", "animation", "Animation", "transition", "Übergang", "Folienübergang", "slide transition", "master page", "master slide", "Folienmaster", "flat ODF", ".fodp"]
 dont_use_for: ["text documents (.odt)", "spreadsheets (.ods)", "general presentation advice without .odp file"]
 license: MIT
-version: "1.3.0"
+version: "1.4.0"
 ---
 
 # ODP creation, editing, and analysis
@@ -370,19 +370,21 @@ Check:
 
 If you changed masters, backgrounds, logos, footers, or placeholders, inspect both `content.xml` and `styles.xml` for broken style/master references before rendering.
 
-### Visual QA
+### Visual Design Loop
 
-Render to PDF and, when possible, PNG slide images:
-
-```bash
-python scripts/render.py output.odp --outdir qa --png
-```
-
-If PNG rendering is unavailable, at least produce the PDF:
+Rendering is a **design step, not only a final check**. Render an early
+draft, look at it, fix what is wrong, then continue — do not build the whole
+deck blind and render once at the end.
 
 ```bash
-python scripts/render.py output.odp --outdir qa
+python scripts/render.py output.odp --outdir qa --contact-sheet  # all slides in one image
+python scripts/render.py output.odp --outdir qa --png            # one PNG per slide
+python scripts/render.py output.odp --outdir qa                  # PDF only
 ```
+
+The **contact sheet** composes every slide into a single labelled grid
+image — the best way to judge cross-slide consistency (alignment, colours,
+repeated master elements) at a glance. Open it and actually look at it.
 
 Inspect every rendered slide. Look for:
 
@@ -398,8 +400,10 @@ Inspect every rendered slide. Look for:
 
 ### Verification Loop
 
+The final pass of a loop you should already be running while building the deck:
+
 1. Extract content and package summaries.
-2. Render to PDF/PNG.
+2. Render to a contact sheet or PDF/PNG and **look at it**.
 3. List concrete issues found, even if minor.
 4. Fix the ODP source, package XML, or intermediate source deck.
 5. Re-run the relevant extraction/inspection/rendering steps.

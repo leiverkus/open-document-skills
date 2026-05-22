@@ -4,7 +4,7 @@ description: "Create, read, edit, convert, repair, inspect, analyze, or format O
 triggers: [".ods", "ODS", "OpenDocument Spreadsheet", "Open Office spreadsheet", "LibreOffice Calc", "Calc sheet", "ods-Datei", "OpenDocument-Tabelle", "Tabellenkalkulation", "named range", "named expression", "data validation", "dropdown", "Auswahlliste", "chart", "Diagramm", "Balkendiagramm", "Liniendiagramm", "Kreisdiagramm", "Punktdiagramm", "bar chart", "line chart", "pie chart", "scatter", "flat ODF", ".fods"]
 dont_use_for: ["text documents (.odt)", "presentations (.odp)", "analysis where deliverable is not a spreadsheet"]
 license: MIT
-version: "1.3.0"
+version: "1.4.0"
 ---
 
 # ODS creation, editing, and analysis
@@ -283,14 +283,30 @@ Export important sheets to CSV for data comparison:
 python scripts/export_csv.py output.ods --sheet Data --output qa/data.csv
 ```
 
-For user-facing reports, also render/export via LibreOffice to PDF and inspect layout, charts, table widths, page breaks, headers, and footers.
+### Visual Design Loop
+
+For user-facing reports, rendering is a **design step, not only a final
+check** — render an early draft, look at how LibreOffice paginates it, and
+adjust column widths and print ranges before finishing:
+
+```bash
+python scripts/render.py output.ods --outdir qa                  # PDF
+python scripts/render.py output.ods --outdir qa --contact-sheet  # all printed pages in one image
+```
+
+The contact sheet composes every printed page into a single labelled grid
+image — the quickest way to spot bad page breaks, clipped columns, and
+charts that span pages. Open it and actually look at it: check layout,
+charts, table widths, page breaks, headers, and footers.
 
 ### Verification Loop
+
+The final pass of a loop you should already be running while building the sheet:
 
 1. Extract sheet data and formulas.
 2. Validate package references.
 3. Recalculate if formulas exist.
-4. Export CSV/PDF for the relevant sheets.
+4. Export CSV, and render to PDF/contact sheet and **look at it**.
 5. Fix data, formula, type, formatting, or package issues.
 6. Re-run the relevant checks until no unresolved issues remain.
 

@@ -25,12 +25,15 @@ else:
 
 # Single consolidated import block from odf_lib.odf_common.
 from odf_lib.odf_common import (  # noqa: E402, I001
+    build_contact_sheet,
     clear_children,
     copy_into_package as _copy_base,
     embed_pictures as _embed_pictures_base,
     ensure_manifest_entry as _ensure_base,
     find_soffice,
     inject_styles_from_file as _inject_styles_base,
+    pdf_to_pngs,
+    render_to_pdf,
     media_type_for,
     pack_dir_as_odf,
     pack_flat_odf,
@@ -50,6 +53,7 @@ __all__ = [
     "NS",
     "ODP_MIMETYPE",
     "q",
+    "build_contact_sheet",
     "clear_children",
     "copy_into_package",
     "copy_slide",
@@ -65,6 +69,8 @@ __all__ = [
     "pack_dir_as_odp",
     "pack_flat_odf",
     "parse_xml_from_zip",
+    "pdf_to_pngs",
+    "render_to_pdf",
     "replace_text_in_element",
     "select_slide",
     "sniff_image_mime",

@@ -26,7 +26,7 @@ All scripts use the Python standard library.
 | `pack_odt.py` | Repack an unpacked ODT directory with correct `mimetype` handling. |
 | `pack_fodt.py` | Convert a zipped ODT to a flat `.fodt` (single XML, Git-friendly). |
 | `unpack_fodt.py` | Convert a flat `.fodt` back to a zipped `.odt` package. |
-| `render.py` | Render ODT to PDF, optionally PNG pages, through LibreOffice/Poppler. |
+| `render.py` | Render ODT to PDF, per-page PNGs (`--png`), or a single labelled contact sheet (`--contact-sheet`) via LibreOffice/Poppler. |
 | `validate_refs.py` | Validate manifest, embedded image references, note id consistency, citation field completeness, leftover citation placeholders, cross-reference targets. Use `--strict` for OASIS RelaxNG schema validation (requires `pip install open-document-lib[validate]`). |
 
 ## ODP
@@ -48,7 +48,7 @@ All scripts use the Python standard library.
 | `pack_odp.py` | Repack an unpacked ODP directory with correct `mimetype` handling. |
 | `pack_fodp.py` | Convert a zipped ODP to a flat `.fodp` (single XML, Git-friendly). |
 | `unpack_fodp.py` | Convert a flat `.fodp` back to a zipped `.odp` package. |
-| `render.py` | Render ODP to PDF, optionally PNG pages, through LibreOffice/Poppler. |
+| `render.py` | Render ODP to PDF, per-slide PNGs (`--png`), or a single labelled contact sheet (`--contact-sheet`) via LibreOffice/Poppler. |
 | `validate_refs.py` | Validate manifest, embedded image references, animation/transition/master-page targets. Use `--strict` for OASIS RelaxNG schema validation. |
 
 ## ODS
@@ -71,6 +71,7 @@ All scripts use the Python standard library.
 | `pack_fods.py` | Convert a zipped ODS to a flat `.fods` (single XML, Git-friendly). |
 | `unpack_fods.py` | Convert a flat `.fods` back to a zipped `.ods` package. |
 | `recalc.py` | Recalculate a workbook through LibreOffice and validate references. |
+| `render.py` | Render ODS to PDF, per-page PNGs (`--png`), or a single labelled contact sheet (`--contact-sheet`) via LibreOffice/Poppler. |
 | `validate_refs.py` | Validate manifest/package references, formula errors, named ranges, data validation, and chart targets. Use `--strict` for OASIS RelaxNG schema validation. |
 
 ## ODG
@@ -92,6 +93,6 @@ All scripts use the Python standard library.
 | `pack_odg.py` | Repack an unpacked ODG directory with correct `mimetype` handling. |
 | `pack_fodg.py` | Convert a zipped ODG to a flat `.fodg` (single XML, Git-friendly). |
 | `unpack_fodg.py` | Convert a flat `.fodg` back to a zipped `.odg` package. |
-| `render.py` | Export ODG to PDF, SVG, and/or PNG through LibreOffice. |
+| `render.py` | Export ODG to PDF/SVG/PNG (`--formats`), or a single labelled contact sheet (`--contact-sheet`). |
 | `validate_refs.py` | Validate manifest, embedded image references, geometry values, connector/glue-point targets, and groups. Use `--strict` for OASIS RelaxNG schema validation. |
 

@@ -4,7 +4,7 @@ description: "Create, read, edit, convert, repair, or inspect OpenDocument Text 
 triggers: [".odt", "ODT", "OpenDocument Text", "Open Office document", "LibreOffice Writer", "Writer document", "odt-Datei", "OpenDocument-Text", "footnote", "endnote", "citation", "bibliography", "BibTeX", "CSL-JSON", "Fußnote", "Zitation", "Bibliographie", "Quellenangabe", "cross-reference", "Querverweis", "bookmark", "Lesezeichen", "figure", "Abbildung", "Table", "Tabelle", "equation", "Gleichung", "Formel", "MathML", "LaTeX", "flat ODF", ".fodt"]
 dont_use_for: ["spreadsheets (.ods)", "presentations (.odp)", "PDFs as primary deliverable", "general prose editing"]
 license: MIT
-version: "1.3.0"
+version: "1.4.0"
 ---
 
 # ODT creation, editing, and analysis
@@ -265,26 +265,30 @@ python scripts/validate_refs.py output.odt
 
 Check that `mimetype` is first, required XML files exist, media targets exist, manifest entries are present, and style references are not broken.
 
-### Visual QA
+### Visual Design Loop
 
-Render to PDF:
-
-```bash
-python scripts/render.py output.odt --outdir qa
-```
-
-If only Pandoc is available, use Markdown as a partial content check:
+Rendering is a **design step, not only a final check**. Render an early draft,
+look at it, fix what is wrong, then continue — do not author the whole
+document blind and render once at the end.
 
 ```bash
-pandoc output.odt -t markdown -o qa.md
+python scripts/render.py output.odt --outdir qa                  # PDF
+python scripts/render.py output.odt --outdir qa --contact-sheet  # all pages in one image
+python scripts/render.py output.odt --outdir qa --png            # one PNG per page
 ```
 
-Inspect page breaks, headers/footers, table overflow, footnote placement, missing images, changed fonts, and unexpected style loss.
+The contact sheet composes every page into a single labelled grid image —
+the fastest way to judge page breaks and cross-page consistency at a glance.
+Open the rendered PDF or contact sheet and actually look at it.
+
+Inspect page breaks, headers/footers, table overflow, footnote placement, missing images, changed fonts, and unexpected style loss. If only Pandoc is available, `pandoc output.odt -t markdown` gives a partial content check.
 
 ### Verification Loop
 
+The final pass of a loop you should already be running while authoring:
+
 1. Extract content and package summaries.
-2. Render to PDF.
+2. Render to PDF or a contact sheet and **look at it**.
 3. List concrete issues found.
 4. Fix the ODT source, package XML, or template edits.
 5. Re-run the relevant extraction/inspection/rendering steps.

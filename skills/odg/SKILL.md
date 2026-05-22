@@ -4,7 +4,7 @@ description: "Create, read, edit, convert, repair, inspect, or export OpenDocume
 triggers: [".odg", "ODG", "OpenDocument Graphics", "OpenDocument Drawing", "LibreOffice Draw", "OpenOffice Draw", "Draw document", "odg-Datei", "OpenDocument-Grafik", "Zeichnung", "diagram", "vector drawing", "connector", "Verbinder", "glue point", "Klebepunkt", "group", "Gruppe", "flowchart", "Flussdiagramm", "org chart", "Organigramm", "Mindmap", "flat ODF", ".fodg"]
 dont_use_for: ["text documents (.odt)", "spreadsheets (.ods)", "presentations (.odp)", "generic image editing"]
 license: MIT
-version: "1.3.0"
+version: "1.4.0"
 ---
 
 # ODG creation, editing, and analysis
@@ -247,21 +247,29 @@ python scripts/validate_refs.py output.odg
 
 Check that `mimetype` is first, required XML files exist, media targets exist, manifest entries are present, style references are not broken, and geometry has no zero-size or suspicious negative-size objects.
 
-### Visual QA
+### Visual Design Loop
 
-LibreOffice Draw export filters vary by installation. Prefer PDF for multi-page drawings, then SVG/PNG when useful:
+Rendering is a **design step, not only a final check**. Render an early
+draft, look at it, fix what is wrong, then continue — do not place every
+shape blind and render once at the end.
 
 ```bash
-python scripts/render.py output.odg --outdir qa --png
+python scripts/render.py output.odg --outdir qa --contact-sheet  # all pages in one image
+python scripts/render.py output.odg --outdir qa --formats pdf,svg,png
 ```
 
-For multi-page ODG files, PDF export is usually the most reliable visual check. Inspect every page for missing images, shifted connectors, wrong fonts, clipped text, changed line widths, and page-size/canvas problems.
+The contact sheet composes every page into a single labelled grid image.
+Open the rendered output and actually look at it: check for missing images,
+shifted connectors, wrong fonts, clipped text, changed line widths, and
+page-size/canvas problems.
 
 ### Verification Loop
 
+The final pass of a loop you should already be running while drawing:
+
 1. Extract text and shape summaries.
 2. Validate package references and geometry.
-3. Render to PDF/SVG/PNG as relevant.
+3. Render to a contact sheet or PDF/SVG/PNG and **look at it**.
 4. List concrete issues found.
 5. Fix XML, coordinates, styles, media, or source spec.
 6. Re-run the relevant checks until no unresolved issues remain.

@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-VERSION = "1.3.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
+VERSION = "1.4.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
 
 ODF_NAMESPACES: dict[str, str] = {
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
@@ -1630,3 +1630,149 @@ def local_name(tag: str) -> str:
         The local name part (e.g. ``"text"``).
     """
     return tag.split("}", 1)[1] if tag.startswith("{") else tag
+
+
+def render_to_pdf(odf_path: Path, outdir: Path) -> Path:
+    """Render an ODF file to PDF with LibreOffice.
+
+    Uses an isolated, throwaway user profile so concurrent renders do not
+    clash. The PDF is written to *outdir* as ``<stem>.pdf``.
+
+    Args:
+        odf_path: Source ODF file.
+        outdir: Directory for the PDF (created if absent).
+
+    Returns:
+        Path to the rendered PDF.
+
+    Raises:
+        SystemExit: If LibreOffice fails or the PDF is not produced.
+    """
+    import subprocess
+
+    outdir.mkdir(parents=True, exist_ok=True)
+    soffice: str = find_soffice()
+    profile: str = tempfile.mkdtemp(prefix="odf-soffice-")
+    try:
+        result = subprocess.run(
+            [
+                soffice,
+                f"-env:UserInstallation=file://{profile}",
+                "--headless",
+                "--convert-to",
+                "pdf",
+                "--outdir",
+                str(outdir),
+                str(odf_path),
+            ],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+    finally:
+        shutil.rmtree(profile, ignore_errors=True)
+    pdf: Path = outdir / f"{odf_path.stem}.pdf"
+    if result.returncode != 0 or not pdf.exists():
+        raise SystemExit(f"LibreOffice failed to render {odf_path.name}:\n{result.stdout}")
+    return pdf
+
+
+def pdf_to_pngs(pdf_path: Path, outdir: Path, dpi: int = 150) -> list[Path]:
+    """Render every page of a PDF to a PNG with ``pdftoppm`` (Poppler).
+
+    Args:
+        pdf_path: Source PDF.
+        outdir: Directory for the page PNGs (created if absent).
+        dpi: Render resolution.
+
+    Returns:
+        Sorted list of ``<stem>-N.png`` page images.
+
+    Raises:
+        SystemExit: If ``pdftoppm`` is not installed or rendering fails.
+    """
+    import subprocess
+
+    pdftoppm: str | None = shutil.which("pdftoppm")
+    if pdftoppm is None:
+        raise SystemExit(
+            "pdftoppm not found — install Poppler (e.g. 'brew install poppler' or 'apt install poppler-utils')"
+        )
+    outdir.mkdir(parents=True, exist_ok=True)
+    prefix: Path = outdir / pdf_path.stem
+    result = subprocess.run(
+        [pdftoppm, "-png", "-r", str(dpi), str(pdf_path), str(prefix)],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+    if result.returncode != 0:
+        raise SystemExit(f"pdftoppm failed for {pdf_path.name}:\n{result.stdout}")
+    return sorted(outdir.glob(f"{pdf_path.stem}-*.png"))
+
+
+def build_contact_sheet(images: list[Path], output_path: Path, columns: int = 0) -> Path:
+    """Compose page thumbnails into a single labelled grid image.
+
+    A contact sheet shows every page of a document at once, so layout and
+    cross-page consistency can be judged in a single glance. Requires Pillow.
+
+    Args:
+        images: Page images, in order.
+        output_path: Destination PNG.
+        columns: Grid columns; 0 picks 2 for landscape pages, 3 for portrait.
+
+    Returns:
+        Path to the contact sheet PNG.
+
+    Raises:
+        SystemExit: If Pillow is not installed or *images* is empty.
+    """
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+    except ImportError:
+        raise SystemExit(
+            "Contact sheet rendering requires Pillow. Install with:\n"
+            "  pip install open-document-lib[render]\n"
+            "Or render per-page PNGs with --png and inspect them individually."
+        ) from None
+
+    if not images:
+        raise SystemExit("build_contact_sheet: no page images to compose")
+
+    thumb_w = 480
+    pad = 16
+    label_h = 22
+    bg = (245, 245, 247)
+
+    thumbs: list[Image.Image] = []
+    for path in images:
+        img = Image.open(path).convert("RGB")
+        ratio = thumb_w / img.width
+        thumbs.append(img.resize((thumb_w, max(1, round(img.height * ratio))), Image.LANCZOS))
+
+    if columns <= 0:
+        columns = 2 if thumbs[0].width >= thumbs[0].height else 3
+    columns = min(columns, len(thumbs))
+    rows = (len(thumbs) + columns - 1) // columns
+
+    cell_w = thumb_w + pad
+    cell_h = max(t.height for t in thumbs) + pad + label_h
+    sheet = Image.new("RGB", (columns * cell_w + pad, rows * cell_h + pad), bg)
+    draw = ImageDraw.Draw(sheet)
+    try:
+        font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", 15)
+    except OSError:
+        font = ImageFont.load_default()
+
+    for index, thumb in enumerate(thumbs):
+        col = index % columns
+        row = index // columns
+        x = pad + col * cell_w
+        y = pad + row * cell_h
+        draw.text((x, y), f"Page {index + 1}", fill=(60, 60, 70), font=font)
+        sheet.paste(thumb, (x, y + label_h))
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    sheet.save(output_path)
+    return output_path

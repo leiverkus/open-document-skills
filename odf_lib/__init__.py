@@ -23,6 +23,7 @@ from odf_lib.odf_common import (
     ODF_NAMESPACES,
     VERSION,
     apply_strict_schema_check,
+    build_contact_sheet,
     clear_children,
     copy_into_package,
     copy_with_multiple_members,
@@ -42,6 +43,8 @@ from odf_lib.odf_common import (
     pack_dir_as_odf,
     pack_flat_odf,
     parse_xml_from_zip,
+    pdf_to_pngs,
+    render_to_pdf,
     replace_pattern_with_element_in_element,
     replace_text_in_element,
     sniff_image_mime,
@@ -105,4 +108,8 @@ __all__ = [
     "find_soffice",
     "find_pandoc",
     "latex_to_mathml",
+    # Rendering
+    "render_to_pdf",
+    "pdf_to_pngs",
+    "build_contact_sheet",
 ]

@@ -26,12 +26,15 @@ else:
 
 # Single consolidated import block from odf_lib.odf_common.
 from odf_lib.odf_common import (  # noqa: E402, I001
+    build_contact_sheet,
     copy_with_multiple_members as _copy_members_base,
     ensure_manifest_entry as _ensure_base,
     find_soffice,
     pack_dir_as_odf,
     pack_flat_odf,
     parse_xml_from_zip,
+    pdf_to_pngs,
+    render_to_pdf,
     unique_object_name,
     unpack_flat_odf,
     update_meta_for_edit as _update_meta_base,
@@ -46,6 +49,7 @@ __all__ = [
     "q",
     "a1",
     "build_chart_content",
+    "build_contact_sheet",
     "cell_text",
     "cell_value",
     "col_to_index",
@@ -61,6 +65,8 @@ __all__ = [
     "pack_flat_odf",
     "parse_a1",
     "parse_xml_from_zip",
+    "pdf_to_pngs",
+    "render_to_pdf",
     "repeated",
     "set_cell_value",
     "sheet_name",

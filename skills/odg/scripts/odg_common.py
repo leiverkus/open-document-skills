@@ -24,12 +24,15 @@ else:
 
 # Single consolidated import block from odf_lib.odf_common.
 from odf_lib.odf_common import (  # noqa: E402, I001
+    build_contact_sheet,
     copy_into_package as _copy_base,
     embed_pictures as _embed_pictures_base,
     ensure_manifest_entry as _ensure_base,
     find_soffice,
     inject_styles_from_file as _inject_styles_base,
     local_name,
+    pdf_to_pngs,
+    render_to_pdf,
     media_type_for,
     pack_dir_as_odf,
     pack_flat_odf,
@@ -52,6 +55,7 @@ __all__ = [
     "STYLE_KEYS",
     "TEXT_KEYS",
     "q",
+    "build_contact_sheet",
     "build_shape_style",
     "build_text_styles",
     "copy_into_package",
@@ -71,6 +75,8 @@ __all__ = [
     "pack_flat_odf",
     "page_name",
     "parse_xml_from_zip",
+    "pdf_to_pngs",
+    "render_to_pdf",
     "replace_text_in_element",
     "sniff_image_mime",
     "unique_picture_name",

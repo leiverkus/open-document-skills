@@ -26,6 +26,7 @@ else:
 
 # Single consolidated import block from odf_lib.odf_common.
 from odf_lib.odf_common import (  # noqa: E402, I001
+    build_contact_sheet,
     clear_children,
     copy_into_package as _copy_base,
     copy_with_multiple_members as _copy_members_base,
@@ -33,7 +34,10 @@ from odf_lib.odf_common import (  # noqa: E402, I001
     ensure_sequence_declarations as _ensure_seq_base,
     embed_pictures as _embed_pictures_base,
     find_pandoc,
+    find_soffice,
     inject_styles_from_file as _inject_styles_base,
+    pdf_to_pngs,
+    render_to_pdf,
     find_text_position_in_element,
     insert_after_text_in_element,
     insert_in_paragraph,
@@ -60,6 +64,7 @@ __all__ = [
     "NS",
     "ODT_MIMETYPE",
     "q",
+    "build_contact_sheet",
     "clear_children",
     "copy_into_package",
     "copy_with_multiple_members",
@@ -67,7 +72,10 @@ __all__ = [
     "embed_pictures",
     "ensure_sequence_declarations",
     "find_pandoc",
+    "find_soffice",
     "inject_styles_from_file",
+    "pdf_to_pngs",
+    "render_to_pdf",
     "find_text_position_in_element",
     "insert_after_text_in_element",
     "insert_in_paragraph",

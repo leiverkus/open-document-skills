@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v1.3.0** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v1.4.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -163,7 +163,7 @@ by leverage:
 2. **Visual feedback loop.** The `pptx` skill *designs against rendered
    thumbnails*. `render.py` and the QA-loop docs exist here, but rendering
    is framed as QA, not as the primary design mechanism. A contact-sheet
-   render mode + sharper SKILL.md guidance would close most of this.
+   render mode + sharper SKILL.md guidance would close most of this. → **v1.4.**
 3. **Tracked changes + comments (ODT).** The `docx` skill does redlining —
    a top review use case. ODF supports `text:tracked-changes` and
    `office:annotation`; an `add_comment.py` and tracked-changes support
@@ -190,6 +190,19 @@ writes rich prose without hand-assembling block JSON.
 - ✅ **Inline rich text** — `text:span` runs, `text:a` links, `text:note`
   footnotes, GFM tables, embedded/linked images.
 - ✅ **`examples/article/`** — a sample Markdown document.
+
+## v1.4 — Visual feedback loop ✅ shipped (2026-05-22)
+
+Track D item 2: make rendering the primary design mechanism, not only a
+final check.
+
+- ✅ **Contact-sheet render mode** — `render.py --contact-sheet` composes
+  every page/slide into one labelled grid image (Pillow, optional `[render]`
+  extra).
+- ✅ **ODS `render.py`** — every format now renders through the skill tooling.
+- ✅ **Consolidated render helpers** in `odf_lib` (`render_to_pdf`,
+  `pdf_to_pngs`, `build_contact_sheet`); the four `render.py` are thin CLIs.
+- ✅ **SKILL.md** reframed: render-early-and-iterate, not render-once-at-the-end.
 
 ### Versioning
 

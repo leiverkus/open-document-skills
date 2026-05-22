@@ -15,6 +15,7 @@ from xml.etree import ElementTree as ET
 
 from odf_lib.odf_common import (
     VERSION,
+    build_contact_sheet,
     clear_children,
     copy_into_package,
     copy_with_multiple_members,
@@ -557,6 +558,54 @@ class LibOdfCommonTests(unittest.TestCase):
         ):
             with self.assertRaises(SystemExit):
                 find_soffice()
+
+
+try:
+    from PIL import Image as _PILImage
+
+    HAVE_PILLOW = True
+except ImportError:
+    HAVE_PILLOW = False
+
+
+@unittest.skipUnless(HAVE_PILLOW, "Pillow not installed")
+class ContactSheetTests(unittest.TestCase):
+    def _make_pages(self, tmp: Path, count: int, size: tuple[int, int] = (320, 240)) -> list[Path]:
+        paths: list[Path] = []
+        for i in range(count):
+            path = tmp / f"page-{i + 1}.png"
+            _PILImage.new("RGB", size, (200, 200 + i * 10, 220)).save(path)
+            paths.append(path)
+        return paths
+
+    def test_contact_sheet_composes_a_valid_grid(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            pages = self._make_pages(tmp_path, 5)
+            out = tmp_path / "sheet.png"
+            result = build_contact_sheet(pages, out)
+            self.assertEqual(result, out)
+            self.assertTrue(out.exists())
+            with _PILImage.open(out) as sheet:
+                self.assertEqual(sheet.format, "PNG")
+                # 5 landscape pages -> 2 columns, 3 rows: sheet is wider than one cell.
+                self.assertGreater(sheet.width, 480)
+                self.assertGreater(sheet.height, 480)
+
+    def test_contact_sheet_respects_explicit_columns(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            pages = self._make_pages(tmp_path, 4)
+            wide = build_contact_sheet(pages, tmp_path / "wide.png", columns=4)
+            narrow = build_contact_sheet(pages, tmp_path / "narrow.png", columns=1)
+            with _PILImage.open(wide) as w, _PILImage.open(narrow) as n:
+                self.assertGreater(w.width, n.width)
+                self.assertGreater(n.height, w.height)
+
+    def test_contact_sheet_rejects_empty_input(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(SystemExit):
+                build_contact_sheet([], Path(tmp) / "sheet.png")
 
 
 if __name__ == "__main__":

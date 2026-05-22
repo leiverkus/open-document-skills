@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.4.0 - 2026-05-22
+
+The visual feedback loop (ROADMAP Track D, item 2). Benchmarked against
+Anthropic's `pptx` skill, which designs against rendered thumbnails:
+rendering should be the primary design mechanism, not only final QA.
+
+### Added
+
+- **Contact-sheet render mode** — `render.py --contact-sheet` composes every
+  page or slide into a single labelled grid image, so layout and cross-page
+  consistency can be judged at a glance. Requires Pillow (new optional
+  `[render]` extra).
+- **ODS `render.py`** — spreadsheets can now be rendered to PDF / PNG /
+  contact sheet through the skill tooling; previously ODS had no `render.py`.
+- **Shared render helpers** in `odf_lib` — `render_to_pdf`, `pdf_to_pngs`,
+  `build_contact_sheet`, added to the public API.
+
+### Changed
+
+- **`render.py` consolidated across all four formats** — the four scripts
+  are now thin CLIs over the shared helpers; the duplicated `find_soffice`
+  copies in the ODT/ODP scripts are gone. ODG keeps `--formats` (PDF/SVG/PNG
+  vector export). Existing flags (`--outdir`, `--png`, `--dpi`, `--formats`)
+  are unchanged.
+- **SKILL.md (all four)** reframes the QA section as a *visual design loop* —
+  render an early draft, look at it, iterate — rather than a final-only check.
+
 ## v1.3.0 - 2026-05-22
 
 A first-class Markdown authoring path for ODT (ROADMAP Track D, item 1).
