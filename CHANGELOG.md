@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.0.2 - 2026-05-22
+
+Bug-fix patch. The new type-check gate immediately caught a latent bug.
+
+### Fixed
+
+- **`add_math.py`** passed five arguments to the four-parameter
+  `copy_with_multiple_members` wrapper on the anchor-not-found fallback
+  path — a latent `TypeError` that 225 tests never hit because no test
+  exercised that branch. Surfaced by the v1.0.2 mypy gate.
+
+### Changed
+
+- **CI hardening (Track B)** — the test suite now runs across Python
+  3.10–3.13 (was 3.12 only), so the `requires-python = ">=3.10"` promise
+  is enforced, and a new `typecheck` job gates on mypy for `odf_lib/` and
+  all four skills. 39 pre-existing, behavior-neutral type errors in the
+  skill scripts were fixed; `odf_lib/` was already clean. `[tool.mypy]`
+  config and a `mypy` dev dependency were added.
+
 ## v1.0.1 - 2026-05-22
 
 Bug-fix patch. Skills installed outside a full repo checkout — as a Claude
