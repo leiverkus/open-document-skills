@@ -120,22 +120,32 @@ Each skill directory should contain:
 ## Release Checklist
 
 1. Ensure `main` is clean.
-2. Run `pytest tests/ --cov=lib --cov-fail-under=30`.
+2. Run `pytest tests/ --cov=odf_lib --cov-fail-under=30`.
 3. Run `ruff check . && ruff format --check .`.
 4. Run `python3 examples/build_examples.py --render --png` when LibreOffice and Poppler are available.
-5. Update `CHANGELOG.md` and `pyproject.toml` version.
-6. Update `VERSION` in [lib/odf_common.py](lib/odf_common.py) to match `pyproject.toml` (used as the `meta:generator` string written into edited documents).
-7. Update `version:` in all four `SKILL.md` files.
-7. Commit the release notes.
-8. Create an annotated tag, for example:
+5. Update `CHANGELOG.md` and the `version` in `pyproject.toml`.
+6. Update `VERSION` in [odf_lib/odf_common.py](odf_lib/odf_common.py) to match `pyproject.toml` (used as the `meta:generator` string written into edited documents).
+7. Update `version:` in all four `SKILL.md` files and `version` in [.claude-plugin/plugin.json](.claude-plugin/plugin.json).
+8. Commit the release notes.
+9. Create an annotated tag, for example:
 
-```bash
-git tag -a v0.1.2 -m "v0.1.2"
-```
+   ```bash
+   git tag -a v1.0.0 -m "v1.0.0"
+   ```
 
-7. Push `main` and the tag.
-8. Create the GitHub release.
-9. Confirm GitHub Actions is green for both `main` and the tag.
+10. Push `main` and the tag.
+11. Create the GitHub release. Publishing the release triggers
+    `.github/workflows/publish.yml`, which builds the `open-document-lib`
+    distribution and uploads it to PyPI.
+12. Confirm GitHub Actions is green for `main`, the tag, and the publish run.
+
+### One-time PyPI setup
+
+The publish workflow uses [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/)
+(OIDC) — no API token is stored. Before the first release, register a
+trusted publisher on PyPI for the `open-document-lib` project: owner/repo
+`leiverkus/open-document-skills`, workflow `publish.yml`, environment
+`pypi`. For the very first upload, register it as a *pending* publisher.
 
 ## License
 

@@ -1,7 +1,7 @@
 ---
 name: odg
-description: "Create, read, edit, convert, repair, inspect, or export OpenDocument Graphics/Drawing files (.odg)."
-triggers: [".odg", "ODG", "OpenDocument Graphics", "OpenDocument Drawing", "LibreOffice Draw", "OpenOffice Draw", "Draw document", "odg-Datei", "OpenDocument-Grafik", "Zeichnung", "diagram", "vector drawing"]
+description: "Create, read, edit, convert, repair, inspect, or export OpenDocument Graphics/Drawing files (.odg). Supports diagramming: connectors with shape-to-shape binding, glue points, and shape groups for flowcharts, org charts, and mind maps."
+triggers: [".odg", "ODG", "OpenDocument Graphics", "OpenDocument Drawing", "LibreOffice Draw", "OpenOffice Draw", "Draw document", "odg-Datei", "OpenDocument-Grafik", "Zeichnung", "diagram", "vector drawing", "connector", "Verbinder", "glue point", "Klebepunkt", "group", "Gruppe", "flowchart", "Flussdiagramm", "org chart", "Organigramm", "Mindmap", "flat ODF", ".fodg"]
 dont_use_for: ["text documents (.odt)", "spreadsheets (.ods)", "presentations (.odp)", "generic image editing"]
 license: MIT
 version: "0.9.0"

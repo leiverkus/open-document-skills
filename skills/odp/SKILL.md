@@ -1,7 +1,7 @@
 ---
 name: odp
-description: "Create, read, edit, convert, repair, or inspect OpenDocument Presentation files (.odp)."
-triggers: [".odp", "ODP", "OpenDocument Presentation", "Open Office presentation", "LibreOffice Impress", "Impress deck", "odp-Datei", "OpenDocument-Präsentation", "Folien", "Präsentation"]
+description: "Create, read, edit, convert, repair, or inspect OpenDocument Presentation files (.odp). Supports shape animations (entrance, exit, emphasis, motion paths), slide transitions, and master-page customization."
+triggers: [".odp", "ODP", "OpenDocument Presentation", "Open Office presentation", "LibreOffice Impress", "Impress deck", "odp-Datei", "OpenDocument-Präsentation", "Folien", "Präsentation", "animation", "Animation", "transition", "Übergang", "Folienübergang", "slide transition", "master page", "master slide", "Folienmaster", "flat ODF", ".fodp"]
 dont_use_for: ["text documents (.odt)", "spreadsheets (.ods)", "general presentation advice without .odp file"]
 license: MIT
 version: "0.9.0"

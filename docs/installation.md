@@ -82,6 +82,23 @@ Install a subset:
 python3 scripts/install_skills.py --skills odt odp
 ```
 
+## Use the library directly
+
+The shared helpers are also published to PyPI as `open-document-lib`, for
+Python projects that want the library without the skill bundles:
+
+```bash
+pip install open-document-lib
+pip install open-document-lib[validate]    # + lxml for RelaxNG validation
+pip install open-document-lib[scholarly]   # + bibtexparser for BibTeX
+```
+
+```python
+from odf_lib import pack_flat_odf, replace_text_in_element
+```
+
+See [library-api.md](library-api.md) for the public API.
+
 ## Verify
 
 After installation, each installed skill directory should contain:

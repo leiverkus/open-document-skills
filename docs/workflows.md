@@ -205,14 +205,17 @@ The `validate_refs.py` ODS validator detects: unknown sheet names in named-range
 
 ## Schema validation (--strict)
 
-`validate_refs.py --strict` runs OASIS ODF 1.3 RelaxNG validation against `content.xml` and `META-INF/manifest.xml`. The schemas are downloaded once on first use to `~/.cache/open-document-skills/schemas/` and reused afterwards.
+`validate_refs.py --strict` runs OASIS ODF 1.3 RelaxNG validation against `content.xml` and `META-INF/manifest.xml`. The OASIS `content` schema is shared across formats, so the `--strict` flag works for all four — ODT, ODP, ODS, and ODG. The schemas are downloaded once on first use to `~/.cache/open-document-skills/schemas/` and reused afterwards.
 
 ```bash
-pip install open-document-skills[validate]
+pip install open-document-lib[validate]
 python3 skills/odt/scripts/validate_refs.py output.odt --strict
+python3 skills/ods/scripts/validate_refs.py output.ods --strict
+python3 skills/odp/scripts/validate_refs.py output.odp --strict
+python3 skills/odg/scripts/validate_refs.py output.odg --strict
 ```
 
-Without `--strict`, only the internal consistency checks run (manifest, media, style references, note ids, citation identifiers, cross-references). Use `--strict` before delivery if exact OASIS conformance matters; the strict check catches non-trivial issues like `text:p` containing content the schema does not permit.
+Without `--strict`, only the internal consistency checks run (manifest, media, style references, note ids, citation identifiers, cross-references). Use `--strict` before delivery if exact OASIS conformance matters; the strict check catches non-trivial issues like `text:p` containing content the schema does not permit. Note that LibreOffice-native files often use ODF 1.3 *extended* features (`loext:` extensions) that the pure OASIS schema rejects — `--strict` is strictest against documents the skills generate themselves.
 
 ## DAO branded template (example)
 

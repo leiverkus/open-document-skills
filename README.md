@@ -158,6 +158,25 @@ cd open-document-skills
 python3 scripts/install_skills.py
 ```
 
+## Python library
+
+The shared library behind the four skills is published to PyPI as
+[`open-document-lib`](https://pypi.org/project/open-document-lib/). Use it
+directly in any Python project — no skill bundling required:
+
+```bash
+pip install open-document-lib
+```
+
+```python
+from odf_lib import pack_flat_odf, replace_text_in_element, validate_against_schema
+```
+
+The core has no dependencies beyond the standard library; `[validate]`
+pulls in `lxml` for RelaxNG validation and `[scholarly]` pulls in
+`bibtexparser`. See [docs/library-api.md](docs/library-api.md) for the
+full public API.
+
 ## Requirements
 
 Core scripts use only the Python standard library.
@@ -393,29 +412,34 @@ indicative and machine-dependent.
 
 ## Current Limits
 
-The scripts are intentionally small and conservative.
+The scripts are intentionally small and conservative, but production-deep
+across all four formats.
 
-They currently cover:
+They cover:
 
-- minimal direct generation
-- basic package validation
+- direct generation and template-based editing
+- package validation, including optional RelaxNG validation against the
+  OASIS ODF 1.3 schema (`validate_refs.py --strict`, all four formats)
 - text/formula/shape extraction
 - XML-safe replacements that preserve inline `text:span`, `text:note`, `text:bookmark`, and `text:a`
-- image embedding
-- repacking with `mimetype` first and uncompressed
+- scholarly authoring — footnotes, endnotes, citations (BibTeX/CSL-JSON), cross-references, MathML
+- spreadsheets — named ranges, data validation, embedded charts
+- presentations — animations, slide transitions, master-page customization
+- drawings — connectors with shape binding, glue points, shape groups
+- image embedding with magic-byte MIME detection
 - `meta.xml` lifecycle updates on every edit (`modification-date`, `generator`, `editing-cycles`)
 - flat ODF (`.fodt`/`.fodp`/`.fods`/`.fodg`) roundtrip
 
-They do not yet attempt to fully model every OpenDocument feature, such as:
+They intentionally do **not** attempt to model every OpenDocument feature.
+Out of scope — use LibreOffice for these:
 
 - tracked changes and comments
-- complex indexes and generated tables of contents
-- advanced Impress animations
-- complex Calc charts, named ranges, protection, and pivot tables
-- advanced Draw glue points, groups, and custom path editing
-- RelaxNG validation against the OASIS ODF 1.3 schema
+- generated indexes and tables of contents (LibreOffice builds these from the markers the skills set)
+- Calc pivot tables, conditional formatting, and cell protection
+- full Impress slide-master hierarchies beyond simple page layouts
+- DOCX/PPTX/XLSX import-and-edit — use `pandoc` if you need those round-trips
 
-Those should be added incrementally with fixtures and tests.
+See [ROADMAP.md](ROADMAP.md) for what is planned next.
 
 ## Development
 
