@@ -35,6 +35,9 @@ def validate(path: Path) -> dict[str, object]:
         s.attrib.get(q("style", "name"))
         for s in list(styles.findall(".//style:style", NS)) + list(content.findall(".//style:style", NS))
     }
+    layouts_defined = {
+        p.attrib.get(q("style", "name")) for p in styles.findall(".//style:presentation-page-layout", NS)
+    }
     manifest_paths = set()
     if manifest is not None:
         manifest_paths = {
@@ -48,6 +51,9 @@ def validate(path: Path) -> dict[str, object]:
         style = page.attrib.get(q("draw", "style-name"))
         if style and style not in styles_defined:
             warnings.append(f"Slide {index} references unknown draw style: {style}")
+        layout = page.attrib.get(q("presentation", "presentation-page-layout-name"))
+        if layout and layout not in layouts_defined:
+            errors.append(f"Slide {index} references missing presentation-page-layout: {layout}")
 
     for node in content.iter():
         href = node.attrib.get(q("xlink", "href"))

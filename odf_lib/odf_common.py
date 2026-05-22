@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-VERSION = "1.7.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
+VERSION = "1.8.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
 
 ODF_NAMESPACES: dict[str, str] = {
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",

@@ -344,6 +344,35 @@ class LibreOfficeIntegrationTests(unittest.TestCase):
             self.assertTrue(pdf.exists())
             self.assertGreater(pdf.stat().st_size, 0)
 
+    def test_slide_layouts_render_to_pdf(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odp" / "scripts"
+            spec = tmp_path / "spec.json"
+            spec.write_text(
+                json.dumps(
+                    {
+                        "masters": [{"name": "Brand", "background_color": "#02416C"}],
+                        "slides": [
+                            {"layout": "title-slide", "master": "Brand", "title": "Deck", "subtitle": "v1.8"},
+                            {"layout": "title-content", "title": "Points", "body": ["one", "two"]},
+                            {"layout": "two-content", "title": "Split", "body_left": ["L"], "body_right": ["R"]},
+                            {"layout": "section-header", "title": "Part Two"},
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            deck = tmp_path / "deck.odp"
+            run_script(scripts / "create_minimal_odp.py", spec, deck)
+            relayout = tmp_path / "relayout.odp"
+            run_script(scripts / "set_layout.py", deck, "--slide", "2", "--layout", "title-only", "-o", relayout)
+            outdir = tmp_path / "qa"
+            run_script(scripts / "render.py", relayout, "--outdir", outdir)
+            pdf = outdir / "relayout.pdf"
+            self.assertTrue(pdf.exists())
+            self.assertGreater(pdf.stat().st_size, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

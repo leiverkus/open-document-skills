@@ -80,6 +80,34 @@ never render as blue boxes. For a full branded theme, write a curated
 `styles.xml` that redefines the same named styles and inject it with
 `inject_styles_from_file` (see [examples/deck/](#branded-deck-example)).
 
+### Slide layouts and masters (ODP)
+
+ODP v1.8 adds named slide layouts and multiple master pages. A `draw:page`
+references a master (background/chrome) and a slide layout
+(`style:presentation-page-layout` — the placeholder zones) independently;
+six layouts ship: `title-slide`, `title-content`, `two-content`,
+`section-header`, `title-only`, `blank`.
+
+```bash
+# A spec with per-slide layouts and an extra master:
+cat > deck.json <<'JSON'
+{"masters": [{"name": "Brand", "background_color": "#02416C"}],
+ "slides": [
+   {"layout": "title-slide", "master": "Brand", "title": "Review", "subtitle": "2026"},
+   {"layout": "two-content", "title": "Regions",
+    "body_left": ["North", "East"], "body_right": ["South", "West"]}]}
+JSON
+python3 skills/odp/scripts/create_minimal_odp.py deck.json deck.odp
+
+# Reassign layout/master on existing slides — placeholder frames are moved:
+python3 skills/odp/scripts/set_layout.py deck.odp --slide 2 --layout title-only -o deck.odp
+python3 skills/odp/scripts/list_masters.py deck.odp   # masters + layouts + usage
+```
+
+Specs without a `layout` key are unchanged — `title`/`body` fill the default
+`title-content` layout. `validate_refs.py` flags slides whose master or
+slide-layout reference does not resolve.
+
 ## ODS
 
 Create:

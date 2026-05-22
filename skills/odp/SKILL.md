@@ -4,7 +4,7 @@ description: "Create, read, edit, convert, repair, or inspect OpenDocument Prese
 triggers: [".odp", "ODP", "OpenDocument Presentation", "Open Office presentation", "LibreOffice Impress", "Impress deck", "odp-Datei", "OpenDocument-Präsentation", "Folien", "Präsentation", "animation", "Animation", "transition", "Übergang", "Folienübergang", "slide transition", "master page", "master slide", "Folienmaster", "flat ODF", ".fodp"]
 dont_use_for: ["text documents (.odt)", "spreadsheets (.ods)", "general presentation advice without .odp file"]
 license: MIT
-version: "1.7.0"
+version: "1.8.0"
 ---
 
 # ODP creation, editing, and analysis
@@ -139,6 +139,44 @@ Slides connect to masters through `draw:page/@draw:master-page-name`. A `style:m
 - `presentation:placeholder` or presentation classes on frames - title/body/footer/date placeholders
 
 When changing a repeated background, footer, logo, or title placeholder, inspect the matching `style:master-page` first. Editing each slide separately is only appropriate when the content is slide-specific.
+
+### Slide Layouts
+
+ODF models slides as a flat two-layer reference, not a PowerPoint-style master
+hierarchy: each `draw:page` independently names a **master page** (the chrome —
+background, header/footer) and a **slide layout** (`style:presentation-page-layout`
+— the placeholder zone arrangement). `create_minimal_odp.py` ships six standard
+layouts: `title-slide`, `title-content` (default), `two-content`,
+`section-header`, `title-only`, and `blank`.
+
+```bash
+# Generate a deck with per-slide layouts and an extra master:
+python scripts/create_minimal_odp.py deck.json deck.odp
+# Reassign layout/master on existing slides (placeholder frames are repositioned):
+python scripts/set_layout.py deck.odp --slide 2 --layout two-content -o deck.odp
+python scripts/set_layout.py deck.odp --slide all --master Brand -o deck.odp
+python scripts/list_masters.py deck.odp   # masters + layouts + per-slide usage
+```
+
+Spec shape — a `layout` key per slide selects the layout; content keys fill its
+zones (`title`, `subtitle`, `body`, `body_left`, `body_right`); a top-level
+`masters` array adds extra master pages, and a slide's `master` key picks one:
+
+```json
+{
+  "masters": [{"name": "Brand", "background_color": "#02416C"}],
+  "slides": [
+    {"layout": "title-slide", "master": "Brand", "title": "Q1 Review", "subtitle": "2026"},
+    {"layout": "two-content", "title": "Regions", "body_left": ["North"], "body_right": ["South"]}
+  ]
+}
+```
+
+Specs without a `layout` key behave exactly as before — `title`/`body` fill the
+`title-content` layout. Generator masters carry a `background_color`; for dark
+master backgrounds pair them with branded text styles via
+`inject_styles_from_file`. `validate_refs.py` flags slides whose master or
+slide-layout reference does not resolve.
 
 ### Style and Layout Links
 

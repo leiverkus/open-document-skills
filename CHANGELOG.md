@@ -1,5 +1,37 @@
 # Changelog
 
+## v1.8.0 - 2026-05-22
+
+ODP slide layouts — reclassifying the former "Impress slide-master
+hierarchies" non-goal. ODF has no master-page *hierarchy*: slides reference a
+master page and a slide layout independently. This adds named slide layouts,
+multiple master pages, and per-slide assignment — the achievable equivalent
+of PowerPoint slide layouts.
+
+### Added
+
+- **`odp_layouts.py`** — a slide-layout library: six standard layouts
+  (`title-slide`, `title-content`, `two-content`, `section-header`,
+  `title-only`, `blank`) defined as placeholder-zone data, the single source
+  of truth for both the `style:presentation-page-layout` definitions and
+  frame placement.
+- **`set_layout.py`** — reassign the slide layout and/or master page on one
+  or more slides, repositioning placeholder frames to the new layout's zones.
+- `create_minimal_odp.py` now accepts a per-slide `layout` key (frames are
+  placed at the layout's zones, content keys `title`/`subtitle`/`body`/
+  `body_left`/`body_right`) and a top-level `masters` array for extra master
+  pages with their own background colour.
+
+### Changed
+
+- `create_minimal_odp.py` emits a `style:presentation-page-layout` per layout
+  and tags slide frames with `presentation:class`. Specs without a `layout`
+  key are unchanged — `title`/`body` fill the default `title-content` layout.
+- `list_masters.py` reports slide layouts (`presentation-page-layout` +
+  placeholders) alongside master pages.
+- `validate_refs.py` (ODP) flags slides whose `presentation-page-layout-name`
+  does not resolve to a defined layout.
+
 ## v1.7.0 - 2026-05-22
 
 ODS conditional formatting and pivot tables (ROADMAP Track D, item 5).

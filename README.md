@@ -28,7 +28,7 @@ python skills/odt/scripts/validate_refs.py out.odt
 | Skill | LibreOffice app | Smithery | Triggers |
 | --- | --- | --- | --- |
 | [`odt`](skills/odt) | Writer | [smithery.ai/skills/leiverkus/odt](https://smithery.ai/skills/leiverkus/odt) | author from Markdown, edit ODT, footnotes, citations (BibTeX/CSL-JSON), bookmarks, cross-references, figure/table sequences, MathML formulas, render to PDF |
-| [`odp`](skills/odp) | Impress | [smithery.ai/skills/leiverkus/odp](https://smithery.ai/skills/leiverkus/odp) | clone slide, edit notes, add image, animations (entrance/exit/emphasis/motion), slide transitions, master-page customization (background, header/footer, logo), render deck |
+| [`odp`](skills/odp) | Impress | [smithery.ai/skills/leiverkus/odp](https://smithery.ai/skills/leiverkus/odp) | clone slide, edit notes, add image, named slide layouts, multiple master pages, animations (entrance/exit/emphasis/motion), slide transitions, master-page customization (background, header/footer, logo), render deck |
 | [`ods`](skills/ods) | Calc | [smithery.ai/skills/leiverkus/ods](https://smithery.ai/skills/leiverkus/ods) | set cells/formulas, named ranges, dropdowns + data validation, embedded charts (bar/line/pie/scatter), conditional formatting, pivot tables, export CSV, recalculate |
 | [`odg`](skills/odg) | Draw | [smithery.ai/skills/leiverkus/odg](https://smithery.ai/skills/leiverkus/odg) | edit labels, add shape image, glue points, connectors with shape binding, groups, flowcharts, org charts, export SVG/PNG |
 
@@ -315,7 +315,7 @@ They cover:
 - document review — comments and tracked changes (record edits, then accept or reject)
 - structural editing — bulk restyle, insert/delete blocks, table editing (rows, columns, cells)
 - spreadsheets — named ranges, data validation, embedded charts, conditional formatting, pivot tables
-- presentations — designed default styling, branded-theme injection, animations, slide transitions, master-page customization
+- presentations — designed default styling, branded-theme injection, named slide layouts, multiple master pages, animations, slide transitions, master-page customization
 - drawings — designed styling with per-shape colours, connectors with shape binding, glue points, shape groups
 - rendering to PDF, per-page PNG, or a single contact sheet — a visual design loop, not just final QA
 - image embedding with magic-byte MIME detection
@@ -326,7 +326,7 @@ They intentionally do **not** model every OpenDocument feature.
 Some gaps stay out of scope — use LibreOffice for these:
 
 - generated indexes and tables of contents (LibreOffice builds these from the markers the skills set)
-- full Impress slide-master hierarchies beyond simple page layouts
+- master-page inheritance chains (ODF has no such concept — slides reference a master and a slide layout independently, which the skills do support)
 - DOCX/PPTX/XLSX import-and-edit — use `pandoc` if you need those round-trips
 
 See [ROADMAP.md](ROADMAP.md) for what is planned next.

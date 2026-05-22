@@ -42,10 +42,11 @@ All scripts use the Python standard library.
 
 | Script | Purpose |
 | --- | --- |
-| `create_minimal_odp.py` | Build a minimal ODP from a JSON slide spec, with a designed default theme (drawing-page background, no-fill graphic frame styles, coloured text). |
+| `create_minimal_odp.py` | Build a minimal ODP from a JSON slide spec — designed default theme, six named slide layouts (`title-slide`/`title-content`/`two-content`/`section-header`/`title-only`/`blank`), and optional extra master pages. |
 | `extract_text.py` | Print slide text and speaker notes. |
 | `inspect_package.py` | Summarize slides, notes, images, package files, and manifest entries. |
-| `list_masters.py` | List master pages and page-layout references. |
+| `list_masters.py` | List master pages, slide layouts (`presentation-page-layout` + placeholders), and per-slide usage as JSON. |
+| `set_layout.py` | Reassign the slide layout and/or master page on one or more slides, repositioning placeholder frames to the new layout's zones. |
 | `clone_slide.py` | Clone a slide from a template deck with optional text replacements. |
 | `replace_text.py` | XML-safe text replacement in slides and notes. |
 | `add_image.py` | Add an image to a slide and update package references. |
@@ -58,7 +59,7 @@ All scripts use the Python standard library.
 | `pack_fodp.py` | Convert a zipped ODP to a flat `.fodp` (single XML, Git-friendly). |
 | `unpack_fodp.py` | Convert a flat `.fodp` back to a zipped `.odp` package. |
 | `render.py` | Render ODP to PDF, per-slide PNGs (`--png`), or a single labelled contact sheet (`--contact-sheet`) via LibreOffice/Poppler. |
-| `validate_refs.py` | Validate manifest, embedded image references, animation/transition/master-page targets. Use `--strict` for OASIS RelaxNG schema validation. |
+| `validate_refs.py` | Validate manifest, embedded image references, animation/transition/master-page/slide-layout targets. Use `--strict` for OASIS RelaxNG schema validation. |
 
 ## ODS
 

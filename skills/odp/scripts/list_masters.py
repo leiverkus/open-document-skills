@@ -48,12 +48,27 @@ def summarize(path: Path) -> dict[str, object]:
             }
         )
 
-    return {"master_pages": masters, "slides": slides}
+    layouts: list[dict[str, object]] = []
+    for ppl in styles.findall(".//style:presentation-page-layout", NS):
+        zones = [
+            {
+                "object": ph.attrib.get(q("presentation", "object")),
+                "x": ph.attrib.get(q("svg", "x")),
+                "y": ph.attrib.get(q("svg", "y")),
+                "width": ph.attrib.get(q("svg", "width")),
+                "height": ph.attrib.get(q("svg", "height")),
+            }
+            for ph in ppl.findall("presentation:placeholder", NS)
+        ]
+        layouts.append({"name": ppl.attrib.get(q("style", "name")), "placeholders": zones})
+
+    return {"master_pages": masters, "presentation_page_layouts": layouts, "slides": slides}
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("odp", type=Path)
+    parser.add_argument("--json", action="store_true", help="output JSON (the default and only format)")
     args = parser.parse_args()
     print(json.dumps(summarize(args.odp), ensure_ascii=False, indent=2))
 

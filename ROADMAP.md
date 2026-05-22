@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v1.7.0** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v1.8.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -249,6 +249,25 @@ Track D item 5: the two remaining `xlsx`-skill features that were ODS gaps.
   source/target sheet checks; `--strict` treats the `calcext` extension as
   documented foreign content (warning, not error).
 
+## v1.8 — ODP slide layouts ✅ shipped (2026-05-22)
+
+Reclassifies the former "Impress slide-master hierarchies" non-goal. ODF has
+no master-page *hierarchy*: a slide references a master page (chrome) and a
+slide layout (`style:presentation-page-layout` — placeholder zones)
+independently. v1.8 delivers the achievable equivalent of PowerPoint slide
+layouts.
+
+- ✅ **`odp_layouts.py`** — six standard layouts (`title-slide`,
+  `title-content`, `two-content`, `section-header`, `title-only`, `blank`) as
+  placeholder-zone data; one source of truth for the
+  `style:presentation-page-layout` definitions and frame placement.
+- ✅ **`create_minimal_odp.py`** — per-slide `layout` key drives frame
+  placement; a `masters` array adds extra master pages. Backward compatible.
+- ✅ **`set_layout.py`** — reassign layout/master on existing slides,
+  repositioning placeholder frames.
+- ✅ **`list_masters.py` / `validate_refs.py`** — report slide layouts;
+  flag dangling `presentation-page-layout-name` references.
+
 ### Versioning
 
 `1.0.x` for bug fixes, shipped promptly; a `1.x` minor when something
@@ -262,7 +281,7 @@ These are intentionally out of scope. If you need them, use LibreOffice or anoth
 - **Whole-paragraph / cross-paragraph tracked deletions** — `track_change.py` records tracked deletions of a text run within one paragraph; deleting across paragraph boundaries is deferred. Tracked insertions and comments work anywhere.
 - **Calc conditional-formatting colour scales, data bars, and icon sets** — `add_conditional_format.py` covers value/formula highlighting; the graphical `calcext`-only variants are deferred.
 - **Pivot drill-down and field date-grouping** — `add_pivot_table.py` writes a computed grid and a refreshable definition; interactive drill-down is a LibreOffice concern.
-- **Full Impress slide-master hierarchies** beyond simple page-layouts.
+- **Master-page inheritance chains** — ODF has no such concept; a slide references a master page and a slide layout independently, both supported since v1.8.
 - **Full LibreOffice/Word-processor replacement.**
 - **DOCX/PPTX/XLSX import-and-edit** — the whole point of this project is to avoid those round-trips. Use `pandoc` if you need DOCX in/out.
 

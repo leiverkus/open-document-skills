@@ -6,12 +6,26 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 from xml.etree import ElementTree as ET
 
 from odp_common import ODP_MIMETYPE, ensure_manifest_entry, media_type_for, pack_dir_as_odp, q, unique_picture_name
+from odp_layouts import (
+    DEFAULT_LAYOUT,
+    GRAPHIC_STYLE,
+    LAYOUT_STYLE_NAMES,
+    LAYOUTS,
+    PARAGRAPH_STYLE,
+    build_presentation_page_layout,
+    frame_name,
+)
+
+# Content spec keys that fill layout placeholder zones.
+SLOT_KEYS = {"title", "subtitle", "body", "body_left", "body_right"}
 
 
 def text_frame(
@@ -24,25 +38,27 @@ def text_frame(
     style: str,
     lines: list[str],
     frame_style: str,
+    presentation_class: str | None = None,
 ) -> None:
     """Add a draw:frame with draw:text-box containing styled paragraphs.
 
     *frame_style* names a ``style:family="graphic"`` style — without it the
     frame inherits LibreOffice's default fill and renders as a blue box.
+    *presentation_class*, when given, tags the frame as a layout placeholder
+    (``presentation:class``).
     """
-    frame = ET.SubElement(
-        parent,
-        q("draw", "frame"),
-        {
-            q("draw", "name"): name,
-            q("draw", "style-name"): frame_style,
-            q("draw", "layer"): "layout",
-            q("svg", "x"): x,
-            q("svg", "y"): y,
-            q("svg", "width"): width,
-            q("svg", "height"): height,
-        },
-    )
+    attribs = {
+        q("draw", "name"): name,
+        q("draw", "style-name"): frame_style,
+        q("draw", "layer"): "layout",
+        q("svg", "x"): x,
+        q("svg", "y"): y,
+        q("svg", "width"): width,
+        q("svg", "height"): height,
+    }
+    if presentation_class:
+        attribs[q("presentation", "class")] = presentation_class
+    frame = ET.SubElement(parent, q("draw", "frame"), attribs)
     box = ET.SubElement(frame, q("draw", "text-box"))
     for line in lines:
         paragraph = ET.SubElement(box, q("text", "p"), {q("text", "style-name"): style})
@@ -148,13 +164,18 @@ def _paragraph_style(styles: ET.Element, name: str, size: str, weight: str, colo
     )
 
 
-def build_styles() -> ET.Element:
+def build_styles(masters: list[dict[str, Any]] | None = None) -> ET.Element:
     """Build office:document-styles with a designed default presentation theme.
 
     Emits a ``drawing-page`` background style (referenced by the master page),
-    ``graphic`` frame styles that suppress the default fill, and the paragraph
-    styles Title/Body/Notes. Names stay stable so injected branded styles and
-    customize_master keep working.
+    ``graphic`` frame styles that suppress the default fill, the paragraph
+    styles Title/Body/Notes, and a ``style:presentation-page-layout`` per named
+    layout. Names stay stable so injected branded styles and customize_master
+    keep working.
+
+    *masters* is an optional list of extra master pages, each a dict with a
+    ``name`` and optional ``background_color``. The built-in ``Default`` master
+    is always present.
     """
     root = ET.Element(q("office", "document-styles"), {q("office", "version"): "1.3"})
 
@@ -173,6 +194,10 @@ def build_styles() -> ET.Element:
     _paragraph_style(styles, "Body", "20pt", "normal", BODY_COLOR)
     _paragraph_style(styles, "Notes", "12pt", "normal", NOTES_COLOR)
 
+    # Slide layouts — one style:presentation-page-layout per named layout.
+    for layout_name in LAYOUTS:
+        styles.append(build_presentation_page_layout(layout_name))
+
     # office:automatic-styles — page layout + the drawing-page background
     # style. A master page's drawing-page style must live here (not in
     # office:styles) for LibreOffice to render the slide background.
@@ -187,28 +212,43 @@ def build_styles() -> ET.Element:
             q("style", "print-orientation"): "landscape",
         },
     )
-    dp = ET.SubElement(
-        automatic,
-        q("style", "style"),
-        {q("style", "name"): "dp-default", q("style", "family"): "drawing-page"},
-    )
-    ET.SubElement(
-        dp,
-        q("style", "drawing-page-properties"),
-        {q("draw", "fill"): "solid", q("draw", "fill-color"): BACKGROUND_COLOR},
-    )
 
-    # office:master-styles — the master page references the background style.
+    def drawing_page_style(name: str, color: str) -> None:
+        style = ET.SubElement(
+            automatic,
+            q("style", "style"),
+            {q("style", "name"): name, q("style", "family"): "drawing-page"},
+        )
+        ET.SubElement(
+            style,
+            q("style", "drawing-page-properties"),
+            {q("draw", "fill"): "solid", q("draw", "fill-color"): color},
+        )
+
+    drawing_page_style("dp-default", BACKGROUND_COLOR)
+    for spec in masters or []:
+        name = spec.get("name")
+        if not name or name == "Default":
+            raise SystemExit(f"master {name!r}: each extra master needs a unique name other than 'Default'")
+        drawing_page_style(f"dp-{name}", spec.get("background_color", BACKGROUND_COLOR))
+
+    # office:master-styles — each master page references its background style.
     master_styles = ET.SubElement(root, q("office", "master-styles"))
-    ET.SubElement(
-        master_styles,
-        q("style", "master-page"),
-        {
-            q("style", "name"): "Default",
-            q("style", "page-layout-name"): "Screen",
-            q("draw", "style-name"): "dp-default",
-        },
-    )
+
+    def master_page(name: str, drawing_page: str) -> None:
+        ET.SubElement(
+            master_styles,
+            q("style", "master-page"),
+            {
+                q("style", "name"): name,
+                q("style", "page-layout-name"): "Screen",
+                q("draw", "style-name"): drawing_page,
+            },
+        )
+
+    master_page("Default", "dp-default")
+    for spec in masters or []:
+        master_page(spec["name"], f"dp-{spec['name']}")
     return root
 
 
@@ -255,6 +295,12 @@ def main() -> None:
     slides = spec.get("slides", [])
     if not slides:
         raise SystemExit("Spec must contain a non-empty slides array")
+    masters = spec.get("masters", [])
+    known_masters = {"Default"} | {m.get("name") for m in masters}
+    for index, slide in enumerate(slides, start=1):
+        ref = slide.get("master") or slide.get("master_page", "Default")
+        if ref not in known_masters:
+            raise SystemExit(f"slide {index}: unknown master {ref!r}; defined masters: {sorted(known_masters)}")
 
     with tempfile.TemporaryDirectory() as tmp:
         root_dir = Path(tmp)
@@ -274,32 +320,44 @@ def main() -> None:
         existing_media: set[str] = set()
 
         for index, slide in enumerate(slides, start=1):
+            layout_name = slide.get("layout", DEFAULT_LAYOUT)
+            if layout_name not in LAYOUTS:
+                raise SystemExit(f"slide {index}: unknown layout {layout_name!r}; choose from {sorted(LAYOUTS)}")
             page = ET.SubElement(
                 presentation,
                 q("draw", "page"),
                 {
                     q("draw", "name"): slide.get("name", f"Slide {index}"),
-                    q("draw", "master-page-name"): slide.get("master_page", "Default"),
+                    q("draw", "master-page-name"): slide.get("master") or slide.get("master_page", "Default"),
+                    q("presentation", "presentation-page-layout-name"): LAYOUT_STYLE_NAMES[layout_name],
                 },
             )
-            title = slide.get("title")
-            if title:
-                text_frame(page, "Title", "1cm", "0.8cm", "26cm", "2cm", "Title", [str(title)], "gr-title")
-            body_lines = slide.get("body", [])
-            if isinstance(body_lines, str):
-                body_lines = [body_lines]
-            if body_lines:
+            zones = LAYOUTS[layout_name]
+            for zone in zones:
+                value = slide.get(zone.spec_key)
+                if value is None:
+                    continue
+                lines = [value] if isinstance(value, str) else list(value)
+                if not lines:
+                    continue
                 text_frame(
                     page,
-                    "Body",
-                    "1.4cm",
-                    "3.2cm",
-                    "25cm",
-                    "8cm",
-                    "Body",
-                    [str(line) for line in body_lines],
-                    "gr-body",
+                    frame_name(zone.spec_key),
+                    zone.x,
+                    zone.y,
+                    zone.width,
+                    zone.height,
+                    PARAGRAPH_STYLE[zone.cls],
+                    [str(line) for line in lines],
+                    GRAPHIC_STYLE[zone.cls],
+                    presentation_class=zone.cls,
                 )
+            for key in sorted(SLOT_KEYS - {z.spec_key for z in zones}):
+                if slide.get(key):
+                    print(
+                        f"warning: slide {index} layout {layout_name!r} has no zone for {key!r} — content dropped",
+                        file=sys.stderr,
+                    )
             image = slide.get("image")
             if image:
                 source = Path(image)
@@ -335,7 +393,7 @@ def main() -> None:
                 )
 
         ET.ElementTree(content).write(root_dir / "content.xml", encoding="utf-8", xml_declaration=True)
-        ET.ElementTree(build_styles()).write(root_dir / "styles.xml", encoding="utf-8", xml_declaration=True)
+        ET.ElementTree(build_styles(masters)).write(root_dir / "styles.xml", encoding="utf-8", xml_declaration=True)
         ET.ElementTree(build_meta(spec.get("title"))).write(
             root_dir / "meta.xml", encoding="utf-8", xml_declaration=True
         )

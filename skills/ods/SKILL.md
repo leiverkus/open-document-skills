@@ -4,7 +4,7 @@ description: "Create, read, edit, convert, repair, inspect, analyze, or format O
 triggers: [".ods", "ODS", "OpenDocument Spreadsheet", "Open Office spreadsheet", "LibreOffice Calc", "Calc sheet", "ods-Datei", "OpenDocument-Tabelle", "Tabellenkalkulation", "named range", "named expression", "data validation", "dropdown", "Auswahlliste", "chart", "Diagramm", "Balkendiagramm", "Liniendiagramm", "Kreisdiagramm", "Punktdiagramm", "bar chart", "line chart", "pie chart", "scatter", "conditional formatting", "bedingte Formatierung", "pivot table", "Pivot-Tabelle", "PivotTable", "flat ODF", ".fods"]
 dont_use_for: ["text documents (.odt)", "presentations (.odp)", "analysis where deliverable is not a spreadsheet"]
 license: MIT
-version: "1.7.0"
+version: "1.8.0"
 ---
 
 # ODS creation, editing, and analysis
