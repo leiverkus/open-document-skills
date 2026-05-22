@@ -1,12 +1,19 @@
 # Open Document Skills
 
 [![Tests](https://github.com/leiverkus/open-document-skills/actions/workflows/tests.yml/badge.svg)](https://github.com/leiverkus/open-document-skills/actions/workflows/tests.yml)
+[![PyPI](https://img.shields.io/pypi/v/open-document-lib)](https://pypi.org/project/open-document-lib/)
+[![Python](https://img.shields.io/pypi/pyversions/open-document-lib)](https://pypi.org/project/open-document-lib/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Release](https://img.shields.io/github/v/release/leiverkus/open-document-skills)](https://github.com/leiverkus/open-document-skills/releases)
 
 **Native ODT / ODP / ODS / ODG generation and editing for agents — no DOCX round-trips, no LibreOffice dependency for the core path.**
 
 Four self-contained skills for Codex, Claude Code, and OpenCode that teach an agent to create, inspect, and edit OpenDocument files directly via Python (stdlib only). Edits preserve inline structure (`text:span`, `text:note`, `text:bookmark`, `text:a`), `meta.xml` is updated on every save, and flat single-XML formats (`.fodt`/`.fodp`/`.fods`/`.fodg`) give you Git-friendly diffs. LibreOffice is optional and only needed for rendering, recalculation, and PDF export.
+
+<p align="center">
+  <img src="docs/assets/hero.png" alt="A branded research proposal generated from a JSON spec and rendered to PDF" width="500">
+  <br>
+  <em>From a JSON spec to a finished, branded research proposal — auto-numbered headings, BibTeX citations, a footnote, and a MathML formula. See <a href="examples/dao/">the end-to-end example</a>.</em>
+</p>
 
 ```bash
 # Generate, edit, validate, version — all from the agent shell:
