@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.3.0 - 2026-05-22
+
+A first-class Markdown authoring path for ODT (ROADMAP Track D, item 1).
+The JSON spec was block-level only — a paragraph was plain text, with no
+way to express inline bold, italic, code, or links. An agent now writes
+ordinary Markdown and gets rich-text ODT.
+
+### Added
+
+- **`create_from_markdown.py`** — converts a Markdown file to a styled ODT.
+  A standard-library Markdown parser (`md_parser.py`, no Pandoc) covers a
+  pragmatic CommonMark subset plus GFM tables and footnotes: headings,
+  bold/italic/code, links (inline + reference), nested lists, blockquotes,
+  fenced code blocks, thematic breaks, aligned tables, images, and
+  footnotes (`[^id]`).
+- **Inline rich text** — inline formatting becomes `text:span` runs, links
+  become `text:a`, footnotes become `text:note`; local images are embedded
+  (with dimensions read from PNG/GIF/JPEG headers), remote URLs are linked.
+- **`examples/article/`** — a sample Markdown document exercising every
+  supported construct.
+
+### Fixed
+
+- **`validate_refs.py` (ODT)** recognises `text:list-style` and
+  `text:outline-style` names as valid `text:style-name` targets — a list
+  with a `text:style-name` no longer triggers a spurious style warning.
+
 ## v1.2.0 - 2026-05-22
 
 Proper drawing styling for the ODG skill — the same class of bug v1.1.0

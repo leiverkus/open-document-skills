@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v1.2.0** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v1.3.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -180,11 +180,16 @@ scholarly apparatus (footnotes, BibTeX citations, cross-references, MathML)
 that the `docx` skill lacks first-class; flat-ODF Git diffs; RelaxNG schema
 validation across all four formats; the real-world corpus tests.
 
-## v1.3 — Markdown → ODT authoring (planned)
+## v1.3 — Markdown → ODT authoring ✅ shipped (2026-05-22)
 
 Track D item 1: a first-class Markdown authoring path for ODT, so an agent
-can write rich prose (headings, bold/italic, links, lists, tables, inline
-footnotes/citations) without hand-assembling block JSON.
+writes rich prose without hand-assembling block JSON.
+
+- ✅ **`create_from_markdown.py`** — Markdown → styled ODT with a
+  standard-library parser (`md_parser.py`, no Pandoc).
+- ✅ **Inline rich text** — `text:span` runs, `text:a` links, `text:note`
+  footnotes, GFM tables, embedded/linked images.
+- ✅ **`examples/article/`** — a sample Markdown document.
 
 ### Versioning
 

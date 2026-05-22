@@ -4,7 +4,7 @@ description: "Create, read, edit, convert, repair, or inspect OpenDocument Text 
 triggers: [".odt", "ODT", "OpenDocument Text", "Open Office document", "LibreOffice Writer", "Writer document", "odt-Datei", "OpenDocument-Text", "footnote", "endnote", "citation", "bibliography", "BibTeX", "CSL-JSON", "Fußnote", "Zitation", "Bibliographie", "Quellenangabe", "cross-reference", "Querverweis", "bookmark", "Lesezeichen", "figure", "Abbildung", "Table", "Tabelle", "equation", "Gleichung", "Formel", "MathML", "LaTeX", "flat ODF", ".fodt"]
 dont_use_for: ["spreadsheets (.ods)", "presentations (.odp)", "PDFs as primary deliverable", "general prose editing"]
 license: MIT
-version: "1.2.0"
+version: "1.3.0"
 ---
 
 # ODT creation, editing, and analysis
@@ -110,8 +110,9 @@ Choose the creation path by fidelity needs:
 | Scenario | Use |
 |----------|-----|
 | Institutional letter/report with exact styles, header/footer, page layout | Template-first ODT |
+| Rich prose — headings, bold/italic, links, lists, tables, footnotes | Markdown authoring (`create_from_markdown.py`) |
 | Simple generated memo/report/protocol | Direct ODT XML generation |
-| Existing Markdown/HTML/DOCX source or explicit cross-format conversion | Pandoc/LibreOffice conversion fallback |
+| Existing HTML/DOCX source or explicit cross-format conversion | Pandoc/LibreOffice conversion fallback |
 
 ### Template-First ODT
 
@@ -148,6 +149,34 @@ office:body
 ```
 
 Keep direct generation deliberately small: headings, paragraphs, lists, simple tables, images, and footnotes. Add advanced fields, tracked changes, indexes, or generated tables of contents only when the task requires them and QA confirms they survive LibreOffice rendering.
+
+### Markdown Authoring
+
+When the deliverable is rich prose, write it as Markdown and convert with
+`create_from_markdown.py` — the structure *is* the prose, so there is no
+block-level JSON to hand-assemble:
+
+```bash
+python scripts/create_from_markdown.py article.md article.odt
+python scripts/create_from_markdown.py article.md article.odt --title "Q3 Report"
+```
+
+The Markdown parser is standard-library only (no Pandoc dependency). It
+covers a pragmatic CommonMark subset plus GFM tables and footnotes:
+
+- headings, paragraphs, **bold**/*italic*/`code`, links (inline + reference)
+- bullet and ordered lists, including nesting
+- blockquotes, fenced code blocks, thematic breaks
+- GFM tables with column alignment
+- block and inline images (local files embedded, URLs linked)
+- footnotes (`[^id]` + `[^id]:`) → `text:note`
+
+Inline formatting becomes `text:span` runs, so the output is real rich text,
+not plain paragraphs. Style names are fixed (`Heading1`–`Heading6`, `Body`,
+`Quote`, `CodeBlock`, `Strong`, `Emphasis`, `Code`, …); a branded `styles.xml`
+reusing those names can be injected with `inject_styles_from_file`. Not
+supported: indented code blocks, setext headings, raw HTML, autolinks, and
+task-list checkboxes.
 
 ### Conversion Fallback
 

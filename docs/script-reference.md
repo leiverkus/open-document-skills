@@ -7,6 +7,7 @@ All scripts use the Python standard library.
 | Script | Purpose |
 | --- | --- |
 | `create_minimal_odt.py` | Build a minimal ODT from a JSON document spec. |
+| `create_from_markdown.py` | Build a styled ODT from a Markdown file — rich inline text (`text:span`), links, nested lists, GFM tables, footnotes, images. Stdlib-only parser, no Pandoc. |
 | `extract_text.py` | Print visible document text, including footnotes. |
 | `inspect_package.py` | Summarize package files, manifest entries, images, and document metadata. |
 | `list_styles.py` | List styles found in `styles.xml` and `content.xml`. |

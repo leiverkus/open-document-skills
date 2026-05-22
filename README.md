@@ -17,7 +17,7 @@ Four self-contained skills for Codex, Claude Code, and OpenCode that teach an ag
 
 ```bash
 # Generate, edit, validate, version — all from the agent shell:
-python skills/odt/scripts/create_minimal_odt.py spec.json doc.odt
+python skills/odt/scripts/create_from_markdown.py article.md doc.odt   # rich text from Markdown
 python skills/odt/scripts/replace_text.py doc.odt "{{NAME}}" "Patrick" -o out.odt
 python skills/odt/scripts/pack_fodt.py out.odt -o out.fodt   # diff-friendly XML
 python skills/odt/scripts/validate_refs.py out.odt
@@ -27,7 +27,7 @@ python skills/odt/scripts/validate_refs.py out.odt
 
 | Skill | LibreOffice app | Smithery | Triggers |
 | --- | --- | --- | --- |
-| [`odt`](skills/odt) | Writer | [smithery.ai/skills/leiverkus/odt](https://smithery.ai/skills/leiverkus/odt) | edit ODT, footnotes, citations (BibTeX/CSL-JSON), bookmarks, cross-references, figure/table sequences, MathML formulas, render to PDF |
+| [`odt`](skills/odt) | Writer | [smithery.ai/skills/leiverkus/odt](https://smithery.ai/skills/leiverkus/odt) | author from Markdown, edit ODT, footnotes, citations (BibTeX/CSL-JSON), bookmarks, cross-references, figure/table sequences, MathML formulas, render to PDF |
 | [`odp`](skills/odp) | Impress | [smithery.ai/skills/leiverkus/odp](https://smithery.ai/skills/leiverkus/odp) | clone slide, edit notes, add image, animations (entrance/exit/emphasis/motion), slide transitions, master-page customization (background, header/footer, logo), render deck |
 | [`ods`](skills/ods) | Calc | [smithery.ai/skills/leiverkus/ods](https://smithery.ai/skills/leiverkus/ods) | set cells/formulas, named ranges, dropdowns + data validation, embedded charts (bar/line/pie/scatter), export CSV, recalculate |
 | [`odg`](skills/odg) | Draw | [smithery.ai/skills/leiverkus/odg](https://smithery.ai/skills/leiverkus/odg) | edit labels, add shape image, glue points, connectors with shape binding, groups, flowcharts, org charts, export SVG/PNG |

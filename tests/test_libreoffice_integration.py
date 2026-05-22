@@ -88,6 +88,26 @@ class LibreOfficeIntegrationTests(unittest.TestCase):
             self.assertTrue(pdf.exists())
             self.assertGreater(pdf.stat().st_size, 0)
 
+    def test_markdown_to_odt_renders_to_pdf(self) -> None:
+        """An ODT built from Markdown must render to a non-empty PDF."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odt" / "scripts"
+            src = tmp_path / "doc.md"
+            src.write_text(
+                "# Title\n\nText with **bold** and a [link](https://x.io).\n\n"
+                "- one\n- two\n\n| A | B |\n|---|---|\n| 1 | 2 |\n",
+                encoding="utf-8",
+            )
+            odt = tmp_path / "doc.odt"
+            run_script(scripts / "create_from_markdown.py", src, odt)
+            run_script(scripts / "validate_refs.py", odt, "--strict")
+            outdir = tmp_path / "qa"
+            run_script(scripts / "render.py", odt, "--outdir", outdir)
+            pdf = outdir / "doc.pdf"
+            self.assertTrue(pdf.exists())
+            self.assertGreater(pdf.stat().st_size, 0)
+
     def test_branded_odg_diagram_renders_to_pdf(self) -> None:
         """A base ODG with the branded diagram styles.xml injected must render
         to a non-empty PDF."""

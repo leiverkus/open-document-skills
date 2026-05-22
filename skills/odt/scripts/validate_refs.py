@@ -42,10 +42,12 @@ def validate(path: Path) -> dict[str, object]:
 
     style_names = set()
     for root in [content, styles] if styles is not None else [content]:
-        for style_el in root.findall(".//style:style", NS):
-            name = style_el.attrib.get(q("style", "name"))
-            if name:
-                style_names.add(name)
+        # style:style plus list/outline styles — all valid text:style-name targets.
+        for tag in ("style:style", "text:list-style", "text:outline-style"):
+            for style_el in root.findall(f".//{tag}", NS):
+                name = style_el.attrib.get(q("style", "name"))
+                if name:
+                    style_names.add(name)
 
     manifest_paths = set()
     if manifest is not None:

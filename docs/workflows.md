@@ -18,6 +18,17 @@ Create:
 python3 skills/odt/scripts/create_minimal_odt.py examples/odt_document.json example.odt
 ```
 
+Author from Markdown:
+
+```bash
+python3 skills/odt/scripts/create_from_markdown.py article.md example.odt
+```
+
+`create_from_markdown.py` is the high-level authoring path — write ordinary
+Markdown (headings, bold/italic, links, nested lists, GFM tables, footnotes,
+images) and get rich-text ODT with `text:span` runs. The parser is standard
+library only, no Pandoc. See [examples/article/](#markdown-article-example).
+
 Check:
 
 ```bash
@@ -280,6 +291,19 @@ The build runs `create_minimal_odg.py` (with per-shape `fill`/`stroke`/
 then injects `examples/diagram/styles.xml` (a white-card theme on a light-grey
 page). Per-shape overrides live in `content.xml`, so the theme swap re-themes
 the default-styled shapes while the per-shape colours survive.
+
+## Markdown article (example)
+
+The `examples/article/` directory ships a sample Markdown document:
+
+```bash
+python3 skills/odt/scripts/create_from_markdown.py examples/article/sample.md article.odt
+```
+
+`sample.md` exercises every supported construct — headings, inline
+formatting, links, nested lists, blockquotes, fenced code, a GFM table, a
+thematic break, and a footnote. The conversion is pure Python; LibreOffice
+is only needed for the optional PDF render.
 
 ## Flat ODF (Git-friendly)
 
