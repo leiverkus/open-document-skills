@@ -215,31 +215,15 @@ def main() -> None:
     parser.add_argument(
         "--strict",
         action="store_true",
-        help="also validate content.xml and META-INF/manifest.xml against the OASIS ODF 1.3 RelaxNG schemas (requires lxml; install via `pip install open-document-skills[validate]`)",
+        help="also validate content.xml and META-INF/manifest.xml against the OASIS ODF 1.3 RelaxNG schemas (requires lxml; install via `pip install open-document-lib[validate]`)",
     )
     args = parser.parse_args()
     result = validate(args.odt)
     if args.strict:
         sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
-        from odf_lib.odf_common import validate_against_schema
+        from odf_lib.odf_common import apply_strict_schema_check
 
-        with zipfile.ZipFile(args.odt) as archive:
-            content_bytes = archive.read("content.xml")
-            try:
-                manifest_bytes = archive.read("META-INF/manifest.xml")
-            except KeyError:
-                manifest_bytes = None
-        ok, errs = validate_against_schema(content_bytes, "content")
-        if not ok:
-            for err in errs:
-                result["errors"].append(f"content.xml: {err}")
-        if manifest_bytes is not None:
-            ok_m, errs_m = validate_against_schema(manifest_bytes, "manifest")
-            if not ok_m:
-                for err in errs_m:
-                    result["errors"].append(f"manifest.xml: {err}")
-        if result["errors"]:
-            result["status"] = "errors_found"
+        apply_strict_schema_check(args.odt, result)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     if result["errors"]:
         raise SystemExit(1)

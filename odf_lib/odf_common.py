@@ -565,7 +565,7 @@ def validate_against_schema(xml_bytes_input: bytes, schema_name: str) -> tuple[b
     try:
         from lxml import etree  # type: ignore
     except ImportError:
-        raise SystemExit("Schema validation requires lxml. Install with:\n  pip install open-document-skills[validate]")
+        raise SystemExit("Schema validation requires lxml. Install with:\n  pip install open-document-lib[validate]")
     schema_path: Path = ensure_schema(schema_name)
     rng_doc = etree.parse(str(schema_path))
     relaxng = etree.RelaxNG(rng_doc)
@@ -579,6 +579,41 @@ def validate_against_schema(xml_bytes_input: bytes, schema_name: str) -> tuple[b
         for err in relaxng.error_log:
             errors.append(f"line {err.line}: {err.message}")
     return valid, errors
+
+
+def apply_strict_schema_check(odf_path: Path, result: dict[str, object]) -> None:
+    """Validate an ODF file's content.xml and manifest.xml against the schemas.
+
+    Runs RelaxNG validation against the OASIS ODF 1.3 schemas — the same
+    ``content`` schema covers ODT/ODP/ODS/ODG, so this works for every
+    format. Mutates *result* in place: schema errors are appended to
+    ``result["errors"]`` (prefixed by member name) and ``result["status"]``
+    is set to ``"errors_found"`` when any errors are present.
+
+    Args:
+        odf_path: Path to the ODF package to validate.
+        result: A validation result dict with ``"errors"`` and ``"status"``
+            keys, as returned by a ``validate_refs`` ``validate()`` function.
+    """
+    with zipfile.ZipFile(odf_path) as archive:
+        content_bytes = archive.read("content.xml")
+        try:
+            manifest_bytes: bytes | None = archive.read("META-INF/manifest.xml")
+        except KeyError:
+            manifest_bytes = None
+    errors = result["errors"]
+    if not isinstance(errors, list):  # defensive — validate() always returns a list
+        errors = []
+        result["errors"] = errors
+    ok, errs = validate_against_schema(content_bytes, "content")
+    if not ok:
+        errors.extend(f"content.xml: {err}" for err in errs)
+    if manifest_bytes is not None:
+        ok_m, errs_m = validate_against_schema(manifest_bytes, "manifest")
+        if not ok_m:
+            errors.extend(f"manifest.xml: {err}" for err in errs_m)
+    if errors:
+        result["status"] = "errors_found"
 
 
 def latex_to_mathml(latex: str) -> bytes:

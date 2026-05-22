@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import zipfile
 from pathlib import Path
 
@@ -113,8 +114,18 @@ def validate(path: Path) -> dict[str, object]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("ods", type=Path)
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="also validate content.xml and META-INF/manifest.xml against the OASIS ODF 1.3 RelaxNG schemas (requires lxml; install via `pip install open-document-lib[validate]`)",
+    )
     args = parser.parse_args()
     result = validate(args.ods)
+    if args.strict:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+        from odf_lib.odf_common import apply_strict_schema_check
+
+        apply_strict_schema_check(args.ods, result)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     if result["errors"]:
         raise SystemExit(1)

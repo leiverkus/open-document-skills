@@ -22,6 +22,7 @@ from odf_lib.odf_common import (
     FLAT_EXTENSIONS,
     ODF_NAMESPACES,
     VERSION,
+    apply_strict_schema_check,
     clear_children,
     copy_into_package,
     copy_with_multiple_members,
@@ -99,6 +100,7 @@ __all__ = [
     # Schema validation
     "ensure_schema",
     "validate_against_schema",
+    "apply_strict_schema_check",
     # External tooling
     "find_soffice",
     "find_pandoc",
