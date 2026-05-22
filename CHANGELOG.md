@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.0.1 - 2026-05-22
+
+Bug-fix patch. Skills installed outside a full repo checkout — as a Claude
+plugin bundle, an uploaded Cowork plugin, or a single Smithery skill —
+crashed with `ModuleNotFoundError: No module named 'odf_lib'`, because the
+shared `odf_lib/` package was never bundled with them. Surfaced by testing
+the plugin in Claude Cowork.
+
+### Fixed
+
+- **`install_skills.py` bundles `odf_lib/`** — every per-skill install now
+  carries its own `odf_lib/` copy, and the Claude plugin bundle gets one at
+  its root. Build junk (`__pycache__`, `*.pyc`, `.DS_Store`) is excluded
+  from installs.
+- **Skill scripts locate `odf_lib/` robustly** — the four `*_common.py`
+  modules (and the ODT scripts that import `odf_lib` directly) now search
+  upward from their own location for `odf_lib/odf_common.py` instead of
+  assuming a fixed repo-root depth. This works whether `odf_lib/` sits at a
+  dev repo root or is bundled inside an installed skill or plugin.
+
+### Added
+
+- Regression tests in `tests/test_install.py`: an isolated per-skill
+  install and a Claude plugin bundle must each carry `odf_lib/` and run a
+  script standalone. Total: 225 tests (was 223).
+
 ## v1.0.0 - 2026-05-22
 
 Ecosystem maturity. The shared library is now a published package, schema

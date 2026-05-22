@@ -28,10 +28,12 @@ from odt_common import (
     xml_bytes,
 )
 
-# Add repo root for odf_lib.citation_mapping
-_repo_root = Path(__file__).resolve().parents[3]
-if str(_repo_root) not in sys.path:
-    sys.path.insert(0, str(_repo_root))
+# Locate the bundled odf_lib/ package (see odt_common.py for the rationale).
+for _parent in Path(__file__).resolve().parents:
+    if (_parent / "odf_lib" / "odf_common.py").is_file():
+        if str(_parent) not in sys.path:
+            sys.path.insert(0, str(_parent))
+        break
 
 from odf_lib.citation_mapping import (  # noqa: E402
     bibtex_entry_to_odf_fields,

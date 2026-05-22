@@ -4,7 +4,7 @@ description: "Create, read, edit, convert, repair, inspect, or export OpenDocume
 triggers: [".odg", "ODG", "OpenDocument Graphics", "OpenDocument Drawing", "LibreOffice Draw", "OpenOffice Draw", "Draw document", "odg-Datei", "OpenDocument-Grafik", "Zeichnung", "diagram", "vector drawing", "connector", "Verbinder", "glue point", "Klebepunkt", "group", "Gruppe", "flowchart", "Flussdiagramm", "org chart", "Organigramm", "Mindmap", "flat ODF", ".fodg"]
 dont_use_for: ["text documents (.odt)", "spreadsheets (.ods)", "presentations (.odp)", "generic image editing"]
 license: MIT
-version: "1.0.0"
+version: "1.0.1"
 ---
 
 # ODG creation, editing, and analysis

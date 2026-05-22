@@ -15,6 +15,9 @@ DEFAULT_SKILLS = ("odt", "odp", "ods", "odg")
 PLUGIN_FILES = ("README.md", "LICENSE")
 PLUGIN_DIRS = (".claude-plugin", "skills")
 
+# Junk that must never end up in an installed skill or plugin bundle.
+_IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc", ".DS_Store")
+
 
 def default_codex_destination() -> Path:
     codex_home = os.environ.get("CODEX_HOME")
@@ -52,7 +55,10 @@ def install_skill(name: str, dest: Path, replace: bool) -> str:
         if not replace:
             return f"skip {name}: already exists at {target}"
         shutil.rmtree(target)
-    shutil.copytree(source, target)
+    shutil.copytree(source, target, ignore=_IGNORE)
+    # Bundle the shared odf_lib/ package so the skill runs standalone —
+    # the scripts search upward from their own location for odf_lib/.
+    shutil.copytree(ROOT / "odf_lib", target / "odf_lib", ignore=_IGNORE)
     return f"install {name}: {target}"
 
 
@@ -72,7 +78,10 @@ def install_claude_plugin(dest: Path, replace: bool) -> None:
     for filename in PLUGIN_FILES:
         shutil.copy2(ROOT / filename, dest / filename)
     for dirname in PLUGIN_DIRS:
-        shutil.copytree(ROOT / dirname, dest / dirname)
+        shutil.copytree(ROOT / dirname, dest / dirname, ignore=_IGNORE)
+    # Bundle the shared odf_lib/ package at the plugin root so the skill
+    # scripts resolve it via their upward search.
+    shutil.copytree(ROOT / "odf_lib", dest / "odf_lib", ignore=_IGNORE)
     print(f"install claude-plugin: {dest}")
 
 

@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import sys
 import zipfile
 from pathlib import Path
 
@@ -118,7 +117,7 @@ def main() -> None:
     args = parser.parse_args()
     result = validate(args.odg)
     if args.strict:
-        sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+        # odg_common (imported above) has already put odf_lib on sys.path.
         from odf_lib.odf_common import apply_strict_schema_check
 
         apply_strict_schema_check(args.odg, result)

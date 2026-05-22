@@ -11,10 +11,17 @@ import sys
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-# Add repo root to sys.path so we can import from lib/
-_repo_root = Path(__file__).resolve().parents[3]
-if str(_repo_root) not in sys.path:
-    sys.path.insert(0, str(_repo_root))
+# Locate the bundled odf_lib/ package — at the repo root in a dev
+# checkout, or inside the skill directory when installed standalone.
+for _parent in Path(__file__).resolve().parents:
+    if (_parent / "odf_lib" / "odf_common.py").is_file():
+        if str(_parent) not in sys.path:
+            sys.path.insert(0, str(_parent))
+        break
+else:
+    raise ImportError(
+        "odf_lib not found near this script — reinstall the skill so its bundled odf_lib/ directory is present"
+    )
 
 # Single consolidated import block from odf_lib.odf_common.
 from odf_lib.odf_common import (  # noqa: E402, I001
