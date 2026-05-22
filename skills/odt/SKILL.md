@@ -4,7 +4,7 @@ description: "Create, read, edit, convert, repair, or inspect OpenDocument Text 
 triggers: [".odt", "ODT", "OpenDocument Text", "Open Office document", "LibreOffice Writer", "Writer document", "odt-Datei", "OpenDocument-Text", "footnote", "endnote", "citation", "bibliography", "BibTeX", "CSL-JSON", "Fußnote", "Zitation", "Bibliographie", "Quellenangabe", "cross-reference", "Querverweis", "bookmark", "Lesezeichen", "figure", "Abbildung", "Table", "Tabelle", "equation", "Gleichung", "Formel", "MathML", "LaTeX", "flat ODF", ".fodt"]
 dont_use_for: ["spreadsheets (.ods)", "presentations (.odp)", "PDFs as primary deliverable", "general prose editing"]
 license: MIT
-version: "1.5.0"
+version: "1.6.0"
 ---
 
 # ODT creation, editing, and analysis
@@ -438,6 +438,39 @@ with `office:change-info`); insertions are wrapped in `text:change-start` /
 the removed text into the region. LibreOffice shows them as underline /
 strike-through with a change bar. Deletions operate on a text run within one
 paragraph; insertions work at any anchor.
+
+## Structural Editing
+
+Beyond inline text replacement, four scripts restructure an existing
+document — bulk restyle, insert and delete whole blocks, and edit tables.
+
+```bash
+# Bulk-restyle: apply a style to matching paragraphs/headings.
+python scripts/restyle.py doc.odt --headings --style "DAO-Heading-1" -o out.odt
+python scripts/restyle.py doc.odt --current-style "Body" --style "DAO-Body" -o out.odt
+python scripts/restyle.py doc.odt --level 2 --style "Sub" -o out.odt
+
+# Insert a block fragment (same JSON `blocks` format as create_minimal_odt):
+python scripts/insert_blocks.py doc.odt --blocks frag.json \
+    --after-anchor "Introduction" -o out.odt    # or --before-anchor / --at-paragraph N / --at start|end
+
+# Delete a whole block:
+python scripts/delete_block.py doc.odt --anchor "Obsolete heading" -o out.odt
+python scripts/delete_block.py doc.odt --paragraph 3 --type table -o out.odt
+
+# Edit a table by name:
+python scripts/edit_table.py doc.odt --table "Results" --add-row 2024 1500 -o out.odt
+python scripts/edit_table.py doc.odt --table "Results" --add-column "Note" -o out.odt
+python scripts/edit_table.py doc.odt --table "Results" --set-cell 2 3 "ok" -o out.odt
+python scripts/edit_table.py doc.odt --table "Results" --delete-row 5 -o out.odt
+```
+
+`restyle.py` changes `text:style-name` on `text:p`/`text:h`; selectors
+(`--current-style`, `--headings`/`--paragraphs`, `--level`) combine.
+`insert_blocks.py` consumes a JSON `blocks` array (heading/paragraph/list/
+table); for images and footnotes use `add_image.py`/`add_footnote.py`.
+`edit_table.py` expands `number-columns-repeated`/`number-rows-repeated`
+before editing, so it works on LibreOffice-saved tables too.
 
 ## ODT Notes
 

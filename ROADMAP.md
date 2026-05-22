@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v1.5.0** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v1.6.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -169,7 +169,7 @@ by leverage:
    `office:annotation`. → **v1.5.**
 4. **Richer editing primitives.** Bulk restyle ("apply this style to every
    heading"), insert-section, table editing are thinner than the `docx`
-   skill's formatting-preserving edits.
+   skill's formatting-preserving edits. → **v1.6.**
 5. **ODS depth.** Conditional formatting and pivot tables — handled by
    `xlsx`, currently non-goals here.
 6. **Polished template library.** Overlaps Track C.
@@ -217,6 +217,20 @@ accept or reject, and attach comments.
   tracked deletion.
 - ✅ **Resolve** — `resolve_changes.py` accepts or rejects changes (`--all`
   or `--id`).
+
+## v1.6 — Richer editing primitives (ODT) ✅ shipped (2026-05-22)
+
+Track D item 4: structural editing of an existing document, matching the
+`docx` skill's formatting-preserving edits.
+
+- ✅ **`restyle.py`** — bulk-set `text:style-name` on paragraphs/headings
+  matching `--current-style`, `--headings`/`--paragraphs`, `--level`.
+- ✅ **`insert_blocks.py`** — splice a JSON `blocks` fragment in after/before
+  an anchor, at a paragraph index, or at body start/end; shares the
+  `build_block` dispatch with `create_minimal_odt.py`.
+- ✅ **`delete_block.py`** — remove a paragraph/heading/list/table.
+- ✅ **`edit_table.py`** — add/delete rows and columns, set cells, by table
+  name; expands repeated-cell/row shorthands first.
 
 ### Versioning
 

@@ -9,6 +9,7 @@ import shutil
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 from xml.etree import ElementTree as ET
 
 from odt_common import ODT_MIMETYPE, ensure_manifest_entry, media_type_for, pack_dir_as_odt, q, unique_picture_name
@@ -82,6 +83,33 @@ def add_image(parent: ET.Element, href: str, width: str, height: str) -> None:
             q("xlink", "actuate"): "onLoad",
         },
     )
+
+
+CONTENT_BLOCK_TYPES = {"heading", "paragraph", "list", "table"}
+
+
+def build_block(block: dict[str, Any], parent: ET.Element) -> None:
+    """Append one content block (heading/paragraph/list/table) to *parent*.
+
+    Shared by create_minimal_odt and insert_blocks.py so both consume the
+    same ``blocks`` JSON format. Image and footnote blocks need package or
+    inline machinery and are handled by their dedicated scripts.
+    """
+    kind = block.get("type", "paragraph")
+    style = block.get("style")
+    style_str = str(style) if style is not None else None
+    if kind == "heading":
+        add_heading(parent, str(block.get("text", "")), int(block.get("level", 1) or 1), style=style_str)
+    elif kind == "paragraph":
+        add_paragraph(parent, str(block.get("text", "")), style=style_str or "Body")
+    elif kind == "list":
+        items = block.get("items", [])
+        add_list(parent, [str(item) for item in items] if isinstance(items, list) else [])
+    elif kind == "table":
+        rows = block.get("rows", [])
+        add_table(parent, rows if isinstance(rows, list) else [], str(block.get("name", "Table")))
+    else:
+        raise SystemExit(f"Unsupported content block type: {kind}")
 
 
 def build_styles() -> ET.Element:
@@ -171,15 +199,8 @@ def main() -> None:
             add_heading(text, str(spec["title"]), 1)
         for block in spec.get("blocks", []):
             kind = block.get("type", "paragraph")
-            style = block.get("style")
-            if kind == "heading":
-                add_heading(text, str(block.get("text", "")), int(block.get("level", 1)), style=style)
-            elif kind == "paragraph":
-                add_paragraph(text, str(block.get("text", "")), style=style or "Body")
-            elif kind == "list":
-                add_list(text, [str(item) for item in block.get("items", [])])
-            elif kind == "table":
-                add_table(text, block.get("rows", []), str(block.get("name", "Table")))
+            if kind in CONTENT_BLOCK_TYPES:
+                build_block(block, text)
             elif kind == "footnote":
                 add_note(text, str(block.get("text", "")))
             elif kind == "image":

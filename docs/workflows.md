@@ -251,6 +251,27 @@ strike-through (deletions) with a change bar in the margin. Tracked
 deletions operate on a text run within one paragraph; insertions and
 comments work at any anchor.
 
+## Structural editing (ODT)
+
+Beyond `replace_text.py`, four scripts restructure an existing document:
+
+```bash
+# Bulk-restyle every heading:
+python3 skills/odt/scripts/restyle.py doc.odt --headings --style "DAO-Heading-1" -o out.odt
+
+# Insert a block fragment (JSON blocks array) after an anchor:
+python3 skills/odt/scripts/insert_blocks.py doc.odt --blocks frag.json --after-anchor "Summary" -o out.odt
+
+# Delete a block; edit a table by name:
+python3 skills/odt/scripts/delete_block.py doc.odt --anchor "Obsolete section" -o out.odt
+python3 skills/odt/scripts/edit_table.py doc.odt --table "Results" --add-row 2024 1500 -o out.odt
+```
+
+`insert_blocks.py` reuses the `blocks` JSON format of `create_minimal_odt.py`,
+so one call can splice in a whole multi-block fragment. `edit_table.py`
+supports `--add-row`/`--add-column`/`--delete-row`/`--delete-column`/
+`--set-cell`.
+
 ## Spreadsheet authoring: ranges, validation, charts (ODS)
 
 ODS v0.6 adds direct ODF-native helpers for the three core spreadsheet features beyond plain cells:

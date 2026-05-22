@@ -28,6 +28,10 @@ All scripts use the Python standard library.
 | `track_change.py` | Record an edit as a tracked change — `--insert`, `--delete`, or `--replace`. |
 | `list_changes.py` | List all tracked changes as JSON with id, kind, author, date, and text. |
 | `resolve_changes.py` | Accept or reject tracked changes (`--all` or `--id`). |
+| `restyle.py` | Bulk-set `text:style-name` on paragraphs/headings matching `--current-style`, `--headings`/`--paragraphs`, `--level`. |
+| `insert_blocks.py` | Insert a JSON `blocks` fragment (heading/paragraph/list/table) after/before an anchor, at a paragraph index, or at body start/end. |
+| `delete_block.py` | Delete a whole block (paragraph/heading/list/table) by anchor text or index. |
+| `edit_table.py` | Edit a table by name — add/delete rows and columns, set cells. |
 | `pack_odt.py` | Repack an unpacked ODT directory with correct `mimetype` handling. |
 | `pack_fodt.py` | Convert a zipped ODT to a flat `.fodt` (single XML, Git-friendly). |
 | `unpack_fodt.py` | Convert a flat `.fodt` back to a zipped `.odt` package. |

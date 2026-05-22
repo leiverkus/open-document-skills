@@ -127,6 +127,48 @@ class LibreOfficeIntegrationTests(unittest.TestCase):
             self.assertTrue(sheet.exists())
             self.assertGreater(sheet.stat().st_size, 0)
 
+    def test_structural_edits_render_to_pdf(self) -> None:
+        """An ODT restyled, with blocks inserted/deleted and a table edited,
+        must still render to a non-empty PDF."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odt" / "scripts"
+            spec = tmp_path / "spec.json"
+            spec.write_text(
+                json.dumps(
+                    {
+                        "title": "Edits",
+                        "blocks": [
+                            {"type": "heading", "level": 1, "text": "Keep"},
+                            {"type": "paragraph", "text": "Anchor paragraph."},
+                            {"type": "paragraph", "text": "Drop this paragraph."},
+                            {"type": "table", "name": "Grid", "rows": [["a", "b"], ["1", "2"]]},
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            frag = tmp_path / "frag.json"
+            frag.write_text(json.dumps([{"type": "paragraph", "text": "Inserted."}]), encoding="utf-8")
+            current = tmp_path / "0.odt"
+            run_script(scripts / "create_minimal_odt.py", spec, current)
+            steps = [
+                ("restyle.py", ["--headings", "--style", "Heading2"]),
+                ("insert_blocks.py", ["--blocks", str(frag), "--after-anchor", "Anchor paragraph"]),
+                ("edit_table.py", ["--table", "Grid", "--add-row", "3", "4"]),
+                ("delete_block.py", ["--anchor", "Drop this paragraph"]),
+            ]
+            for index, (script, extra) in enumerate(steps, start=1):
+                nxt = tmp_path / f"{index}.odt"
+                run_script(scripts / script, current, *extra, "-o", nxt)
+                current = nxt
+            run_script(scripts / "validate_refs.py", current, "--strict")
+            outdir = tmp_path / "qa"
+            run_script(scripts / "render.py", current, "--outdir", outdir)
+            pdf = outdir / "4.pdf"
+            self.assertTrue(pdf.exists())
+            self.assertGreater(pdf.stat().st_size, 0)
+
     def test_tracked_changes_and_comments_render_to_pdf(self) -> None:
         """An ODT with tracked changes and a comment must render to a non-empty PDF."""
         with tempfile.TemporaryDirectory() as tmp:

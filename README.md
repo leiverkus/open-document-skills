@@ -313,6 +313,7 @@ They cover:
 - XML-safe replacements that preserve inline `text:span`, `text:note`, `text:bookmark`, and `text:a`
 - scholarly authoring — footnotes, endnotes, citations (BibTeX/CSL-JSON), cross-references, MathML
 - document review — comments and tracked changes (record edits, then accept or reject)
+- structural editing — bulk restyle, insert/delete blocks, table editing (rows, columns, cells)
 - spreadsheets — named ranges, data validation, embedded charts
 - presentations — designed default styling, branded-theme injection, animations, slide transitions, master-page customization
 - drawings — designed styling with per-shape colours, connectors with shape binding, glue points, shape groups

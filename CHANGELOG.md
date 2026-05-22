@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.6.0 - 2026-05-22
+
+Richer editing primitives for ODT (ROADMAP Track D, item 4). Benchmarked
+against the `docx` skill's strength — formatting-preserving structural
+edits. The skill could replace text and add inline apparatus, but could not
+restructure an existing document; four new scripts close that.
+
+### Added
+
+- **`restyle.py`** — bulk-set `text:style-name` on paragraphs and headings
+  matching `--current-style`, `--headings`/`--paragraphs`, and/or `--level`.
+- **`insert_blocks.py`** — splice a block fragment into an existing document.
+  The fragment is a JSON `blocks` array (the same format `create_minimal_odt`
+  consumes); position via `--after-anchor`/`--before-anchor`/`--at-paragraph`/
+  `--at start|end`.
+- **`delete_block.py`** — remove a whole block (paragraph, heading, list, or
+  table) by anchor text or index.
+- **`edit_table.py`** — edit a table by name: `--add-row`, `--add-column`,
+  `--delete-row`, `--delete-column`, `--set-cell`. Expands
+  `number-columns-repeated`/`number-rows-repeated` shorthands first, so it
+  works on LibreOffice-saved tables.
+
+### Changed
+
+- `create_minimal_odt.py` exposes a shared `build_block` dispatch for the
+  heading/paragraph/list/table block types; `insert_blocks.py` reuses it.
+
 ## v1.5.0 - 2026-05-22
 
 Tracked changes and comments for ODT (ROADMAP Track D, item 3). Benchmarked
