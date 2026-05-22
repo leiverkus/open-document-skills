@@ -1,0 +1,21 @@
+{
+  "name": "leiverkus-skills",
+  "description": "Agent skills for OpenDocument Format files — ODT, ODP, ODS, and ODG.",
+  "owner": {
+    "name": "Patrick Leiverkus",
+    "url": "https://github.com/leiverkus"
+  },
+  "plugins": [
+    {
+      "name": "open-document-skills",
+      "source": {
+        "source": "github",
+        "repo": "leiverkus/open-document-skills"
+      },
+      "description": "Create, edit, validate, and convert OpenDocument files (ODT, ODP, ODS, ODG) — four skills, stdlib-only.",
+      "version": "1.0.0",
+      "homepage": "https://github.com/leiverkus/open-document-skills",
+      "license": "MIT"
+    }
+  ]
+}

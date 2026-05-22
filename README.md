@@ -89,6 +89,17 @@ The skills are available through three channels — pick what fits your setup:
 
 Browse and install via [smithery.ai](https://smithery.ai). Install one or more skills directly through the Smithery UI: [odt](https://smithery.ai/skills/leiverkus/odt), [odp](https://smithery.ai/skills/leiverkus/odp), [ods](https://smithery.ai/skills/leiverkus/ods), [odg](https://smithery.ai/skills/leiverkus/odg).
 
+### Claude Code plugin marketplace
+
+The repository is also a Claude Code plugin marketplace. Add it once, then install the plugin — all four skills come bundled:
+
+```text
+/plugin marketplace add leiverkus/open-document-skills
+/plugin install open-document-skills@leiverkus-skills
+```
+
+`/plugin marketplace update` pulls later releases.
+
 ### Open Agent Skills CLI
 
 The [vercel-labs/skills](https://github.com/vercel-labs/skills) CLI installs across Claude Code, Codex, Cursor, OpenCode, and 50+ other agents:
