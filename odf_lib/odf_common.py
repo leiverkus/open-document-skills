@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-VERSION = "1.4.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
+VERSION = "1.5.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
 
 ODF_NAMESPACES: dict[str, str] = {
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
@@ -805,6 +805,66 @@ def insert_after_text_in_element(element: ET.Element, anchor: str, new_element: 
     parent.insert(sibling_index + 1, new_element)
     new_element.tail = suffix if suffix else None
     return True
+
+
+def extract_text_range_from_element(element: ET.Element, needle: str, marker: ET.Element) -> str | None:
+    """Cut the first occurrence of *needle* out of *element*, leaving *marker*.
+
+    Splits the text slot containing the match into prefix and suffix, removes
+    the matched text, and inserts *marker* between them — as a child (text
+    slot) or a sibling (tail slot). The matched run must lie within a single
+    text slot; if it straddles an inline child (e.g. a ``text:span`` boundary),
+    the function returns ``None`` and makes no change. Used to record a tracked
+    deletion: the marker is the ``text:change`` placeholder.
+
+    Args:
+        element: The paragraph-like container to search.
+        needle: The exact text run to remove.
+        marker: The element to leave at the cut point.
+
+    Returns:
+        The removed text, or ``None`` if *needle* was not found within a
+        single text slot.
+    """
+    if not needle:
+        return None
+    slots: list[tuple[ET.Element, str]] = _collect_text_slots(element)
+    values: list[str] = [getattr(n, a) or "" for n, a in slots]
+    combined: str = "".join(values)
+    idx: int = combined.find(needle)
+    if idx < 0:
+        return None
+    end: int = idx + len(needle)
+    running: int = 0
+    target: int = -1
+    local: int = 0
+    for i, value in enumerate(values):
+        if running <= idx < running + len(value):
+            if end <= running + len(value):  # whole run within this one slot
+                target = i
+                local = idx - running
+            break
+        running += len(value)
+    if target < 0:
+        return None  # not found, or the run straddles an inline child
+    node, attr = slots[target]
+    value = values[target]
+    prefix: str = value[:local]
+    suffix: str = value[local + len(needle) :]
+    if attr == "text":
+        node.text = prefix or None
+        node.insert(0, marker)
+        marker.tail = suffix or None
+        return needle
+    node.tail = prefix or None
+    parent_map: dict[ET.Element, ET.Element] = _build_parent_map(element)
+    parent: ET.Element | None = parent_map.get(node)
+    if parent is None:
+        return None
+    pos: int = list(parent).index(node)
+    parent.insert(pos + 1, marker)
+    marker.tail = suffix or None
+    return needle
 
 
 def replace_pattern_with_element_in_element(

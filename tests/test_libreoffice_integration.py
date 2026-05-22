@@ -127,6 +127,42 @@ class LibreOfficeIntegrationTests(unittest.TestCase):
             self.assertTrue(sheet.exists())
             self.assertGreater(sheet.stat().st_size, 0)
 
+    def test_tracked_changes_and_comments_render_to_pdf(self) -> None:
+        """An ODT with tracked changes and a comment must render to a non-empty PDF."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odt" / "scripts"
+            src = tmp_path / "doc.md"
+            src.write_text(
+                "# Review\n\nThe quick brown fox jumps over the lazy dog.\n",
+                encoding="utf-8",
+            )
+            odt = tmp_path / "doc.odt"
+            run_script(scripts / "create_from_markdown.py", src, odt)
+            commented = tmp_path / "commented.odt"
+            run_script(
+                scripts / "add_comment.py", odt, "--anchor", "fox", "--author", "Rev", "--text", "Note", "-o", commented
+            )
+            tracked = tmp_path / "tracked.odt"
+            run_script(
+                scripts / "track_change.py",
+                commented,
+                "--replace",
+                "brown",
+                "--with",
+                "red",
+                "--author",
+                "Rev",
+                "-o",
+                tracked,
+            )
+            run_script(scripts / "validate_refs.py", tracked, "--strict")
+            outdir = tmp_path / "qa"
+            run_script(scripts / "render.py", tracked, "--outdir", outdir)
+            pdf = outdir / "tracked.pdf"
+            self.assertTrue(pdf.exists())
+            self.assertGreater(pdf.stat().st_size, 0)
+
     def test_markdown_to_odt_renders_to_pdf(self) -> None:
         """An ODT built from Markdown must render to a non-empty PDF."""
         with tempfile.TemporaryDirectory() as tmp:

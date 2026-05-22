@@ -1,5 +1,41 @@
 # Changelog
 
+## v1.5.0 - 2026-05-22
+
+Tracked changes and comments for ODT (ROADMAP Track D, item 3). Benchmarked
+against the `docx` skill's redlining: an agent can record its edits as
+tracked changes a human accepts or rejects, and attach comments — the
+document-review workflow, ODF-native, no DOCX round-trip.
+
+### Added
+
+- **Comments** — `add_comment.py` inserts an `office:annotation` (point or
+  range) with author, date, and body; `list_comments.py` lists them as JSON.
+- **Tracked changes** — `track_change.py` records an edit as a tracked
+  change: `--insert`, `--delete`, or `--replace`. Insertions are wrapped in
+  `text:change-start`/`text:change-end`; deletions leave a `text:change`
+  marker and move the removed text into a `text:deletion` region.
+  `list_changes.py` lists changes as JSON.
+- **Resolve** — `resolve_changes.py` accepts or rejects tracked changes,
+  all at once (`--all`) or one by id (`--id`).
+- **`extract_text_range_from_element`** — a new `odf_lib` walker helper that
+  cuts a text run out of a paragraph and leaves a marker; the basis for
+  tracked deletions. Added to the public API.
+
+### Changed
+
+- **`validate_refs.py` (ODT)** gained checks for comments (duplicate
+  annotation names, unmatched annotation/annotation-end ranges) and tracked
+  changes (change markers must reference an existing `changed-region`).
+- **`extract_text.py`** no longer leaks comment-body text into the extracted
+  document text — `office:annotation` subtrees are skipped.
+
+### Notes
+
+- Tracked deletions operate on a text run within a single paragraph;
+  whole-paragraph / cross-paragraph deletion is deferred. Tracked insertions
+  and comments work at any anchor.
+
 ## v1.4.0 - 2026-05-22
 
 The visual feedback loop (ROADMAP Track D, item 2). Benchmarked against

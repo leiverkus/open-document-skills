@@ -4,7 +4,7 @@ description: "Create, read, edit, convert, repair, or inspect OpenDocument Text 
 triggers: [".odt", "ODT", "OpenDocument Text", "Open Office document", "LibreOffice Writer", "Writer document", "odt-Datei", "OpenDocument-Text", "footnote", "endnote", "citation", "bibliography", "BibTeX", "CSL-JSON", "Fußnote", "Zitation", "Bibliographie", "Quellenangabe", "cross-reference", "Querverweis", "bookmark", "Lesezeichen", "figure", "Abbildung", "Table", "Tabelle", "equation", "Gleichung", "Formel", "MathML", "LaTeX", "flat ODF", ".fodt"]
 dont_use_for: ["spreadsheets (.ods)", "presentations (.odp)", "PDFs as primary deliverable", "general prose editing"]
 license: MIT
-version: "1.4.0"
+version: "1.5.0"
 ---
 
 # ODT creation, editing, and analysis
@@ -391,6 +391,53 @@ python scripts/add_math.py input.odt --paragraph 3 \
 ```
 
 Formulas are embedded as `Object N/` sub-packages — the LibreOffice-native convention — with proper manifest entries (`application/vnd.oasis.opendocument.formula`). LibreOffice opens, renders, and roundtrips them.
+
+## Tracked Changes and Comments
+
+For document review, record edits as tracked changes a human can accept or
+reject, and attach comments — no DOCX round-trip needed.
+
+### Comments
+
+```bash
+# Point comment after an anchor:
+python scripts/add_comment.py doc.odt --anchor "claim" \
+    --author "Reviewer" --text "Source?" -o out.odt
+
+# Range comment spanning a phrase:
+python scripts/add_comment.py doc.odt --start-anchor "Solar" \
+    --end-anchor "additions" --author "Editor" --text "Verify." -o out.odt
+
+python scripts/list_comments.py out.odt          # JSON
+```
+
+A comment is an `office:annotation` (point) or an `office:annotation` /
+`office:annotation-end` pair (range), each with `dc:creator`, `dc:date`, and
+a `text:p` body.
+
+### Tracked changes
+
+```bash
+# Record an insertion, a deletion, or a replacement:
+python scripts/track_change.py doc.odt --insert " (draft)" \
+    --anchor "Report" --author "Reviewer" -o out.odt
+python scripts/track_change.py doc.odt --delete "very " --author "Reviewer" -o out.odt
+python scripts/track_change.py doc.odt --replace "old term" \
+    --with "new term" --author "Reviewer" -o out.odt
+
+python scripts/list_changes.py out.odt           # JSON
+
+# Accept or reject — all changes or one by id:
+python scripts/resolve_changes.py out.odt --accept --all -o final.odt
+python scripts/resolve_changes.py out.odt --reject --id ct2 -o final.odt
+```
+
+Each change is a `text:changed-region` (`text:insertion` / `text:deletion`,
+with `office:change-info`); insertions are wrapped in `text:change-start` /
+`text:change-end` markers, deletions leave a `text:change` marker and move
+the removed text into the region. LibreOffice shows them as underline /
+strike-through with a change bar. Deletions operate on a text run within one
+paragraph; insertions work at any anchor.
 
 ## ODT Notes
 

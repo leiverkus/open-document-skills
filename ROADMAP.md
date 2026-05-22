@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v1.4.0** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v1.5.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -166,8 +166,7 @@ by leverage:
    render mode + sharper SKILL.md guidance would close most of this. → **v1.4.**
 3. **Tracked changes + comments (ODT).** The `docx` skill does redlining —
    a top review use case. ODF supports `text:tracked-changes` and
-   `office:annotation`; an `add_comment.py` and tracked-changes support
-   would close it. (Currently an explicit non-goal — see below.)
+   `office:annotation`. → **v1.5.**
 4. **Richer editing primitives.** Bulk restyle ("apply this style to every
    heading"), insert-section, table editing are thinner than the `docx`
    skill's formatting-preserving edits.
@@ -204,6 +203,21 @@ final check.
   `pdf_to_pngs`, `build_contact_sheet`); the four `render.py` are thin CLIs.
 - ✅ **SKILL.md** reframed: render-early-and-iterate, not render-once-at-the-end.
 
+## v1.5 — Tracked changes & comments (ODT) ✅ shipped (2026-05-22)
+
+Track D item 3: redlining — record edits as tracked changes a human can
+accept or reject, and attach comments.
+
+- ✅ **Comments** — `add_comment.py` (point + range), `list_comments.py`;
+  `office:annotation` with author, date, body.
+- ✅ **Tracked changes** — `track_change.py` (`--insert`/`--delete`/
+  `--replace`), `list_changes.py`; `text:tracked-changes` with
+  `change-start`/`change-end`/`change` markers. New walker helper
+  `extract_text_range_from_element` cuts a run out of the body for a
+  tracked deletion.
+- ✅ **Resolve** — `resolve_changes.py` accepts or rejects changes (`--all`
+  or `--id`).
+
 ### Versioning
 
 `1.0.x` for bug fixes, shipped promptly; a `1.x` minor when something
@@ -214,7 +228,7 @@ the published `open-document-lib` API — avoided unless clearly necessary.
 
 These are intentionally out of scope. If you need them, use LibreOffice or another tool:
 
-- **Tracked changes** (`text:tracked-changes`) — preservation is hard across tools; recommend round-tripping through LibreOffice for now. Under reconsideration as Track D item 3.
+- **Whole-paragraph / cross-paragraph tracked deletions** — `track_change.py` records tracked deletions of a text run within one paragraph; deleting across paragraph boundaries is deferred. Tracked insertions and comments work anywhere.
 - **Complex Calc pivots and conditional formatting** — build in LibreOffice for now, then read with our skills. Under reconsideration as Track D item 5.
 - **Full Impress slide-master hierarchies** beyond simple page-layouts.
 - **Full LibreOffice/Word-processor replacement.**

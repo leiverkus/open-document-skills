@@ -227,6 +227,30 @@ python3 skills/odt/scripts/list_citations.py output.odt --json
 
 LibreOffice renders citations through its bibliography style and generates the bibliography index from the inserted `text:bibliography-mark` elements. BibTeX support requires `pip install open-document-skills[scholarly]`; CSL-JSON uses stdlib only.
 
+## Document review: tracked changes and comments (ODT)
+
+Record edits as tracked changes a human can accept or reject, and attach
+comments — the redlining workflow, ODF-native:
+
+```bash
+# Comment on a passage:
+python3 skills/odt/scripts/add_comment.py doc.odt --anchor "claim" \
+    --author "Reviewer" --text "Needs a source." -o reviewed.odt
+
+# Record edits as tracked changes:
+python3 skills/odt/scripts/track_change.py reviewed.odt \
+    --replace "old wording" --with "clearer wording" --author "Reviewer" -o reviewed.odt
+
+# Inspect, then accept or reject:
+python3 skills/odt/scripts/list_changes.py reviewed.odt
+python3 skills/odt/scripts/resolve_changes.py reviewed.odt --accept --all -o final.odt
+```
+
+LibreOffice shows tracked changes as underline (insertions) and
+strike-through (deletions) with a change bar in the margin. Tracked
+deletions operate on a text run within one paragraph; insertions and
+comments work at any anchor.
+
 ## Spreadsheet authoring: ranges, validation, charts (ODS)
 
 ODS v0.6 adds direct ODF-native helpers for the three core spreadsheet features beyond plain cells:

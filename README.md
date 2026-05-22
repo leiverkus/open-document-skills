@@ -42,7 +42,7 @@ python skills/odt/scripts/validate_refs.py out.odt
 
 ## What this is not
 
-Not a LibreOffice replacement, and not a substitute for full ODF feature coverage. Generated tables of contents and DOCX/PPTX/XLSX import-and-edit are explicit non-goals; a few features LibreOffice still handles better — tracked changes, Calc conditional formatting — are on the [roadmap](ROADMAP.md) rather than permanently excluded. See [Current Limits](#current-limits). The goal is to make the 80% of ODF automation that agents need safe, repeatable, and dependency-light.
+Not a LibreOffice replacement, and not a substitute for full ODF feature coverage. Generated tables of contents and DOCX/PPTX/XLSX import-and-edit are explicit non-goals; Calc conditional formatting and pivot tables are on the [roadmap](ROADMAP.md) rather than permanently excluded. See [Current Limits](#current-limits). The goal is to make the 80% of ODF automation that agents need safe, repeatable, and dependency-light.
 
 ## Repository Layout
 
@@ -312,6 +312,7 @@ They cover:
 - text/formula/shape extraction
 - XML-safe replacements that preserve inline `text:span`, `text:note`, `text:bookmark`, and `text:a`
 - scholarly authoring — footnotes, endnotes, citations (BibTeX/CSL-JSON), cross-references, MathML
+- document review — comments and tracked changes (record edits, then accept or reject)
 - spreadsheets — named ranges, data validation, embedded charts
 - presentations — designed default styling, branded-theme injection, animations, slide transitions, master-page customization
 - drawings — designed styling with per-shape colours, connectors with shape binding, glue points, shape groups
@@ -323,7 +324,6 @@ They cover:
 They intentionally do **not** model every OpenDocument feature. Some gaps are
 on the [roadmap](ROADMAP.md):
 
-- tracked changes and comments
 - Calc conditional formatting and pivot tables
 
 Others stay out of scope — use LibreOffice for these:

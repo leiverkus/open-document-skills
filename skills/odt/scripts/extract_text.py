@@ -14,14 +14,23 @@ from odt_common import NS, q
 
 
 def element_text(element: ET.Element) -> str:
+    """Visible text of *element*, excluding office:annotation comment bodies."""
     parts: list[str] = []
-    for node in element.iter():
-        if node.text:
-            parts.append(node.text)
+
+    def walk(node: ET.Element) -> None:
         if node.tag == q("text", "line-break"):
             parts.append("\n")
-        if node.tail:
-            parts.append(node.tail)
+        if node.text:
+            parts.append(node.text)
+        for child in node:
+            # A comment's body text is not document text — skip it but keep
+            # the annotation's tail (real text after the comment marker).
+            if child.tag != q("office", "annotation"):
+                walk(child)
+            if child.tail:
+                parts.append(child.tail)
+
+    walk(element)
     return " ".join("".join(parts).split())
 
 

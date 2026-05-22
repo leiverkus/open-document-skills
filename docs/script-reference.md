@@ -23,6 +23,11 @@ All scripts use the Python standard library.
 | `add_sequence.py` | Auto-numbered `text:sequence` (Figure/Table/Equation) with on-demand `text:sequence-decls`; also `text:sequence-ref`. |
 | `list_refs.py` | List bookmarks, reference-marks, sequences, and references as JSON. |
 | `add_math.py` | Embed a MathML formula via LaTeX (Pandoc), MathML file, or inline MathML; uses LibreOffice-native `Object N/` sub-packages. |
+| `add_comment.py` | Insert an `office:annotation` comment (point or range) with author, date, and body. |
+| `list_comments.py` | List all comments as JSON with name, author, date, text, and context. |
+| `track_change.py` | Record an edit as a tracked change — `--insert`, `--delete`, or `--replace`. |
+| `list_changes.py` | List all tracked changes as JSON with id, kind, author, date, and text. |
+| `resolve_changes.py` | Accept or reject tracked changes (`--all` or `--id`). |
 | `pack_odt.py` | Repack an unpacked ODT directory with correct `mimetype` handling. |
 | `pack_fodt.py` | Convert a zipped ODT to a flat `.fodt` (single XML, Git-friendly). |
 | `unpack_fodt.py` | Convert a flat `.fodt` back to a zipped `.odt` package. |

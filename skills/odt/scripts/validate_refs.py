@@ -207,6 +207,59 @@ def validate(path: Path) -> dict[str, object]:
         if count > 1:
             errors.append(f"Duplicate text:note id {note_id!r} ({count} occurrences)")
 
+    # Comment checks: duplicate names, unmatched ranges, missing author/date.
+    annotation_names: dict[str, int] = {}
+    for annotation in content.iter(q("office", "annotation")):
+        name = annotation.attrib.get(q("office", "name"))
+        if name:
+            annotation_names[name] = annotation_names.get(name, 0) + 1
+        if annotation.find(q("dc", "creator")) is None or annotation.find(q("dc", "date")) is None:
+            warnings.append(f"office:annotation missing dc:creator or dc:date (name={name or '?'})")
+    for name, count in annotation_names.items():
+        if count > 1:
+            errors.append(f"Duplicate office:annotation name {name!r} ({count} occurrences)")
+    annotation_end_names = [e.attrib.get(q("office", "name")) for e in content.iter(q("office", "annotation-end"))]
+    for name in annotation_end_names:
+        if name and name not in annotation_names:
+            errors.append(f"office:annotation-end {name!r} has no matching office:annotation")
+    for name in annotation_end_names:
+        if annotation_end_names.count(name) > 1:
+            errors.append(f"Duplicate office:annotation-end name {name!r}")
+            break
+
+    # Tracked-change checks: change markers must reference a changed-region.
+    region_ids: dict[str, int] = {}
+    for region in content.iter(q("text", "changed-region")):
+        rid = region.attrib.get(q("text", "id"))
+        if rid:
+            region_ids[rid] = region_ids.get(rid, 0) + 1
+    for rid, count in region_ids.items():
+        if count > 1:
+            errors.append(f"Duplicate text:changed-region id {rid!r} ({count} occurrences)")
+    referenced: set[str] = set()
+    change_start_ids: list[str] = []
+    change_end_ids: list[str] = []
+    for tag, bucket in (
+        ("change", None),
+        ("change-start", change_start_ids),
+        ("change-end", change_end_ids),
+    ):
+        for marker in content.iter(q("text", tag)):
+            cid = marker.attrib.get(q("text", "change-id"))
+            if cid is None:
+                continue
+            referenced.add(cid)
+            if bucket is not None:
+                bucket.append(cid)
+            if cid not in region_ids:
+                errors.append(f"text:{tag} references missing changed-region {cid!r}")
+    for cid in set(change_start_ids) | set(change_end_ids):
+        if change_start_ids.count(cid) != change_end_ids.count(cid):
+            errors.append(f"Unmatched tracked-change start/end for {cid!r}")
+    for rid in region_ids:
+        if rid not in referenced:
+            warnings.append(f"text:changed-region {rid!r} is not referenced by any change marker")
+
     return {"status": "ok" if not errors else "errors_found", "errors": errors, "warnings": sorted(set(warnings))}
 
 
