@@ -84,13 +84,43 @@ project a dependable 1.0.
 - ✅ **Performance benchmarks** — `benchmarks/run_benchmarks.py` measures large-document latency; representative numbers published in the README.
 - ✅ **Final polish** — skill-trigger audit, README "Current Limits" refresh, CONTRIBUTING release-checklist fixes. Plus two robustness fixes: schema-clean table generation and per-invocation LibreOffice profiles.
 
-## v1.x — Future
+## Beyond 1.0 — three tracks
 
-Direction beyond 1.0, driven by adoption signals and real-world use:
+The format-feature roadmap is complete: four formats at production depth, a
+published library, a real-world corpus. Further format depth has diminishing
+returns without users pulling for it. Post-1.0 work is organised as three
+tracks — **not** a fixed `vX.Y` schedule — pursued as time and adoption allow.
 
-- **Companion template repository** — DAO/Solearis branded templates (grant proposal, handout, conference poster) as separate Smithery listings depending on the core skills.
-- **CI typecheck** — `mypy`/`pyright` gate (the library already ships `py.typed`).
-- **Deeper format coverage** as concrete use cases arrive — e.g. Calc pivot tables, richer chart styling, generated indexes — added incrementally with fixtures and tests.
+### Track A — Adoption
+
+The project has strong code and few users; that is the real constraint.
+
+- Follow the community plugin-directory submission through to listing.
+- A flagship example: a realistic DFG/DAI-style research proposal — footnotes, BibTeX citations, cross-references, MathML, DAO branding — rendered to PDF and screenshotted in the README. The scholarly-German workflow is the differentiation against generic document tools.
+- A README hero GIF/screenshot: JSON spec → rendered PDF.
+- Watch the adoption signals (Smithery activations, PyPI downloads, GitHub stars) that this document says drive the pace.
+
+### Track B — Packaging and quality hardening
+
+The v1.0.1 `odf_lib`-bundling bug existed because CI only exercised the full
+repo checkout, never an installed skill.
+
+- CI matrix across Python 3.10–3.13 (the library declares `>=3.10`; CI runs only 3.12).
+- A CI job that exercises the **installed** form — the single-skill / `npx skills` scenario — building on the `tests/test_install.py` regression tests.
+- A `mypy`/`pyright` typecheck gate; the library already ships `py.typed`.
+
+### Track C — Companion templates
+
+Branded, ready-to-use templates (grant proposal, conference handout, poster)
+for the academic niche — a separate repository depending on the core skills.
+This is what turns the toolkit into something a non-technical researcher can
+pick up directly; the highest-value piece of genuinely new work.
+
+### Versioning
+
+`1.0.x` for bug fixes, shipped promptly. A `1.1` only when Track C lands
+something user-facing. A `2.0` only for a breaking change to the published
+`open-document-lib` API — avoided unless clearly necessary.
 
 ## Explicit non-goals (stays in Current Limits)
 
@@ -106,16 +136,10 @@ These are intentionally out of scope. If you need them, use LibreOffice or anoth
 
 - Open a GitHub issue with a concrete use case ("I need to do X with format Y, current scripts don't handle Z").
 - Open a discussion if your use case overlaps multiple milestones — order may shift.
-- Pull requests welcome — bug fixes, fixtures for under-tested cases, and the v1.x items above. See [CONTRIBUTING.md](CONTRIBUTING.md).
+- Pull requests welcome — bug fixes, fixtures for under-tested cases, and the tracks above. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Pace
 
-The v0.1–v1.0 roadmap is complete: all four formats have production depth, the library is published to PyPI, and the test suite plus real-world corpus guard against regressions. The project is now in **stable maintenance**.
-
-Post-1.0 work is adoption-driven (Smithery `totalActivations`, PyPI downloads, GitHub stars, issue volume):
-
-- **Bug fixes** ship promptly as `1.0.x` patch releases regardless of adoption.
-- **`1.x` feature work** — companion templates, deeper format coverage — is pulled in when a concrete use case arrives, not pushed on a schedule. Strong adoption accelerates it; weak adoption keeps the project in pure maintenance mode.
-- **A `2.0`** would only follow a breaking change to the published `open-document-lib` API — avoided unless clearly necessary.
+The v0.1–v1.0 roadmap is complete: all four formats have production depth, the library is published to PyPI, and the test suite plus real-world corpus guard against regressions. The project is now in **stable maintenance** — bug fixes ship promptly, and the three tracks above advance as adoption (Smithery activations, PyPI downloads, GitHub stars, issue volume) and time allow. Pausing to gather real-world usage is itself a valid state.
 
 No specific release dates promised. Each release is a coherent unit and ships when it is feature-complete and tested.
