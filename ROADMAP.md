@@ -106,14 +106,16 @@ These are intentionally out of scope. If you need them, use LibreOffice or anoth
 
 - Open a GitHub issue with a concrete use case ("I need to do X with format Y, current scripts don't handle Z").
 - Open a discussion if your use case overlaps multiple milestones — order may shift.
-- Pull requests welcome, especially toward v1.0 (PyPI packaging, performance benchmarks). See [CONTRIBUTING.md](CONTRIBUTING.md).
+- Pull requests welcome — bug fixes, fixtures for under-tested cases, and the v1.x items above. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Pace
 
-Adoption signals (Smithery `totalActivations`, GitHub stars, issue volume) drive timing:
+The v0.1–v1.0 roadmap is complete: all four formats have production depth, the library is published to PyPI, and the test suite plus real-world corpus guard against regressions. The project is now in **stable maintenance**.
 
-- **Strong pull**: v0.3 ships within 4–6 weeks of v0.2.1.
-- **Moderate pull**: v0.4 first (polish makes the project look professional for later submissions/integrations), v0.3 follows.
-- **Weak pull**: maintenance-mode releases; v0.3 work shifts to the personal DAO branch until usage materializes.
+Post-1.0 work is adoption-driven (Smithery `totalActivations`, PyPI downloads, GitHub stars, issue volume):
 
-No specific release dates promised. Each milestone is a coherent unit; releases happen when the milestone is feature-complete and tested.
+- **Bug fixes** ship promptly as `1.0.x` patch releases regardless of adoption.
+- **`1.x` feature work** — companion templates, deeper format coverage — is pulled in when a concrete use case arrives, not pushed on a schedule. Strong adoption accelerates it; weak adoption keeps the project in pure maintenance mode.
+- **A `2.0`** would only follow a breaking change to the published `open-document-lib` API — avoided unless clearly necessary.
+
+No specific release dates promised. Each release is a coherent unit and ships when it is feature-complete and tested.
