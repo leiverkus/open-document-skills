@@ -93,9 +93,7 @@ class SchemaValidationTests(unittest.TestCase):
         """A minimal generated ODP must pass the OASIS RelaxNG schema."""
         with tempfile.TemporaryDirectory() as tmp:
             odp = _generate("odp", MINIMAL_SPECS["odp"], Path(tmp))
-            result = run_script(
-                SKILLS / "odp" / "scripts" / "validate_refs.py", odp, "--strict", check=False
-            )
+            result = run_script(SKILLS / "odp" / "scripts" / "validate_refs.py", odp, "--strict", check=False)
             payload = json.loads(result.stdout)
             self.assertEqual(payload["status"], "ok", payload.get("errors"))
 
@@ -103,9 +101,7 @@ class SchemaValidationTests(unittest.TestCase):
         """A minimal generated ODG must pass the OASIS RelaxNG schema."""
         with tempfile.TemporaryDirectory() as tmp:
             odg = _generate("odg", MINIMAL_SPECS["odg"], Path(tmp))
-            result = run_script(
-                SKILLS / "odg" / "scripts" / "validate_refs.py", odg, "--strict", check=False
-            )
+            result = run_script(SKILLS / "odg" / "scripts" / "validate_refs.py", odg, "--strict", check=False)
             payload = json.loads(result.stdout)
             self.assertEqual(payload["status"], "ok", payload.get("errors"))
 
@@ -117,9 +113,7 @@ class SchemaValidationTests(unittest.TestCase):
         """
         with tempfile.TemporaryDirectory() as tmp:
             ods = _generate("ods", MINIMAL_SPECS["ods"], Path(tmp))
-            result = run_script(
-                SKILLS / "ods" / "scripts" / "validate_refs.py", ods, "--strict", check=False
-            )
+            result = run_script(SKILLS / "ods" / "scripts" / "validate_refs.py", ods, "--strict", check=False)
             payload = json.loads(result.stdout)
             self.assertEqual(payload["status"], "ok", payload.get("errors"))
 
@@ -137,9 +131,7 @@ class SchemaValidationTests(unittest.TestCase):
                         dst.writestr(name, b"<not-valid-odf/>")
                     else:
                         dst.writestr(name, src.read(name))
-            result = run_script(
-                SKILLS / "ods" / "scripts" / "validate_refs.py", broken, "--strict", check=False
-            )
+            result = run_script(SKILLS / "ods" / "scripts" / "validate_refs.py", broken, "--strict", check=False)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("content.xml", result.stdout)
 

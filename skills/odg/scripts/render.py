@@ -35,16 +35,18 @@ def main() -> None:
     for fmt in formats:
         profile = tempfile.mkdtemp(prefix="odf-soffice-")
         try:
-            run([
-                soffice,
-                f"-env:UserInstallation=file://{profile}",
-                "--headless",
-                "--convert-to",
-                fmt,
-                "--outdir",
-                str(args.outdir),
-                str(args.odg),
-            ])
+            run(
+                [
+                    soffice,
+                    f"-env:UserInstallation=file://{profile}",
+                    "--headless",
+                    "--convert-to",
+                    fmt,
+                    "--outdir",
+                    str(args.outdir),
+                    str(args.odg),
+                ]
+            )
         finally:
             shutil.rmtree(profile, ignore_errors=True)
         print(args.outdir / f"{args.odg.stem}.{fmt}")

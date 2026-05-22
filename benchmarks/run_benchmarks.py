@@ -80,7 +80,13 @@ def bench_odt(rows: list, tmp: Path, quick: bool) -> None:
     back = tmp / "round.odt"
     edited = tmp / "edited.odt"
     timed(rows, "ODT", "create_minimal", f"{n} paragraphs", lambda: run(scripts / "create_minimal_odt.py", spec, odt))
-    timed(rows, "ODT", "replace_text", f"{n} paragraphs", lambda: run(scripts / "replace_text.py", odt, "WORD", "TERM", "-o", edited))
+    timed(
+        rows,
+        "ODT",
+        "replace_text",
+        f"{n} paragraphs",
+        lambda: run(scripts / "replace_text.py", odt, "WORD", "TERM", "-o", edited),
+    )
     timed(rows, "ODT", "validate_refs", f"{n} paragraphs", lambda: run(scripts / "validate_refs.py", odt))
     timed(rows, "ODT", "pack_fodt", f"{n} paragraphs", lambda: run(scripts / "pack_fodt.py", odt, "-o", flat))
     timed(rows, "ODT", "unpack_fodt", f"{n} paragraphs", lambda: run(scripts / "unpack_fodt.py", flat, "-o", back))
@@ -99,7 +105,13 @@ def bench_ods(rows: list, tmp: Path, quick: bool) -> None:
     ods = tmp / "book.ods"
     edited = tmp / "edited.ods"
     timed(rows, "ODS", "create_minimal", f"{cells} cells", lambda: run(scripts / "create_minimal_ods.py", spec, ods))
-    timed(rows, "ODS", "replace_cells", f"{cells} cells", lambda: run(scripts / "replace_cells.py", ods, "Data!A1=changed", "-o", edited))
+    timed(
+        rows,
+        "ODS",
+        "replace_cells",
+        f"{cells} cells",
+        lambda: run(scripts / "replace_cells.py", ods, "Data!A1=changed", "-o", edited),
+    )
     timed(rows, "ODS", "validate_refs", f"{cells} cells", lambda: run(scripts / "validate_refs.py", ods))
 
 
@@ -114,7 +126,13 @@ def bench_odp(rows: list, tmp: Path, quick: bool) -> None:
     odp = tmp / "deck.odp"
     cloned = tmp / "cloned.odp"
     timed(rows, "ODP", "create_minimal", f"{n} slides", lambda: run(scripts / "create_minimal_odp.py", spec, odp))
-    timed(rows, "ODP", "clone_slide", f"{n} slides", lambda: run(scripts / "clone_slide.py", odp, "-o", cloned, "--source-slide", "1"))
+    timed(
+        rows,
+        "ODP",
+        "clone_slide",
+        f"{n} slides",
+        lambda: run(scripts / "clone_slide.py", odp, "-o", cloned, "--source-slide", "1"),
+    )
     timed(rows, "ODP", "validate_refs", f"{n} slides", lambda: run(scripts / "validate_refs.py", odp))
 
 

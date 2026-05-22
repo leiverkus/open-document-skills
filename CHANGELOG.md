@@ -1,5 +1,54 @@
 # Changelog
 
+## v1.0.0 - 2026-05-22
+
+Ecosystem maturity. The shared library is now a published package, schema
+validation reaches every format, and performance is measured. No new
+format features — this release makes the project a dependable 1.0.
+
+### Added
+
+- **`open-document-lib` on PyPI** — the shared library is installable as a
+  standalone distribution (`pip install open-document-lib`), so third-party
+  Python projects can use the helpers directly. The directory `lib/` was
+  renamed to `odf_lib/` (a PyPI-safe import name); `pyproject.toml` gained
+  a build system, packaging metadata, and classifiers; `odf_lib/__init__.py`
+  exposes a curated 36-name public API covered by semantic versioning.
+  `docs/library-api.md` documents it.
+- **`.github/workflows/publish.yml`** — builds the distribution and uploads
+  it to PyPI on every published GitHub release, via PyPI Trusted Publishing
+  (OIDC, no stored token).
+- **`--strict` schema validation for all four formats** — `validate_refs.py`
+  in ODP, ODS, and ODG gained the RelaxNG validation flag that previously
+  existed only for ODT. A shared `apply_strict_schema_check()` helper backs
+  all four. `tests/test_schema_validation.py` exercises every format; CI
+  runs it as the schema gate.
+- **Performance benchmarks** — `benchmarks/run_benchmarks.py` generates
+  large documents (2000-paragraph ODT, 100k-cell ODS, 100-slide ODP,
+  500-shape ODG) and times the core operations; `benchmarks/README.md` and
+  a Performance section in the README publish representative numbers.
+  `tests/test_benchmarks.py` smoke-tests the script on every build. Total:
+  223 tests (was 218).
+
+### Fixed
+
+- **Table-column declarations** — `create_minimal_odt.py` and
+  `create_minimal_ods.py` emitted `table:table` elements with rows but no
+  `table:table-column` declarations, which the OASIS schema rejects.
+  Generated spreadsheets are now schema-clean under `--strict`.
+- **LibreOffice profile collisions** — `render.py` (ODT/ODP/ODG) and
+  `recalc.py` (ODS) now give each `soffice` invocation a private
+  `-env:UserInstallation` profile, so back-to-back renders no longer
+  collide on the shared profile lock.
+
+### Changed
+
+- Skill triggers audited: ODP advertises animation/transition/master-page
+  terms and ODG advertises connector/glue-point/group/flowchart terms
+  (shipped in v0.7/v0.8 but not previously discoverable); all four list
+  flat-ODF terms. The README "Current Limits" section was rewritten to
+  reflect everything shipped through v0.9.
+
 ## v0.9.0 - 2026-05-22
 
 Real-world corpus tests. A robustness release — no new features. Every v0.2–v0.8

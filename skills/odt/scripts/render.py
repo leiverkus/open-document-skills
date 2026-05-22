@@ -51,16 +51,18 @@ def main() -> None:
     soffice = find_soffice()
     profile = tempfile.mkdtemp(prefix="odf-soffice-")
     try:
-        run([
-            soffice,
-            f"-env:UserInstallation=file://{profile}",
-            "--headless",
-            "--convert-to",
-            "pdf",
-            "--outdir",
-            str(args.outdir),
-            str(args.odt),
-        ])
+        run(
+            [
+                soffice,
+                f"-env:UserInstallation=file://{profile}",
+                "--headless",
+                "--convert-to",
+                "pdf",
+                "--outdir",
+                str(args.outdir),
+                str(args.odt),
+            ]
+        )
     finally:
         shutil.rmtree(profile, ignore_errors=True)
     pdf = args.outdir / f"{args.odt.stem}.pdf"

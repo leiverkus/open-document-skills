@@ -31,16 +31,18 @@ def main() -> None:
     soffice = find_soffice()
     profile = tempfile.mkdtemp(prefix="odf-soffice-")
     try:
-        run([
-            soffice,
-            f"-env:UserInstallation=file://{profile}",
-            "--headless",
-            "--convert-to",
-            "ods",
-            "--outdir",
-            str(args.outdir),
-            str(target),
-        ])
+        run(
+            [
+                soffice,
+                f"-env:UserInstallation=file://{profile}",
+                "--headless",
+                "--convert-to",
+                "ods",
+                "--outdir",
+                str(args.outdir),
+                str(target),
+            ]
+        )
     finally:
         shutil.rmtree(profile, ignore_errors=True)
     print(target)

@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v0.9.0** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v1.0.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -74,13 +74,23 @@ implicitly assumed our own generators' output structure.
 - ✅ **`tests/test_corpus.py`** — roundtrip tests for every v0.2–v0.8 helper against each fixture; skips cleanly when the corpus is absent.
 - ✅ **Two foreign-ODF bugs fixed**: `validate_refs.py` handling of trailing-slash-free `draw:object` refs and dangling `ObjectReplacements/` previews; `pack_flat_odf`/`unpack_flat_odf` preservation of full `Object N/` sub-packages (charts, formulas).
 
-## v1.0 — Ecosystem maturity
+## v1.0 — Ecosystem maturity ✅ shipped (2026-05-22)
 
-- **PyPI publication of the library** — extract `lib/odf_common.py` as the standalone `open-document-lib` package; the skill scripts continue to depend on it. Third-party Python projects can `pip install open-document-lib` and use the helpers without skill bundling.
-- **Final polish** — documentation review, skill-trigger audit, CONTRIBUTING refresh.
-- **Performance benchmarks** — measured edit latency on 1000+ page documents, 100k+ cell spreadsheets, 100+ slide decks. Published in the README so consumers know the limits.
-- **Companion template repository** — DAO/Solearis branded templates (grant proposal, handout, conference poster) published as separate Smithery listings, depending on the core skills.
-- **CI schema gate** — every generated test output passes ODF 1.3 validation as a CI hard requirement.
+The maturity release: no new format features, just the steps that make the
+project a dependable 1.0.
+
+- ✅ **PyPI publication** — the shared library ships as `open-document-lib` (`pip install open-document-lib`). `lib/` was renamed to the PyPI-safe `odf_lib/`; `pyproject.toml` gained a build system and packaging metadata; a curated public API is documented in `docs/library-api.md`. `.github/workflows/publish.yml` uploads on release via Trusted Publishing.
+- ✅ **Schema validation for all four formats** — `validate_refs.py --strict` (OASIS ODF 1.3 RelaxNG) extended from ODT to ODP/ODS/ODG via a shared `apply_strict_schema_check` helper. The test suite is the CI schema gate.
+- ✅ **Performance benchmarks** — `benchmarks/run_benchmarks.py` measures large-document latency; representative numbers published in the README.
+- ✅ **Final polish** — skill-trigger audit, README "Current Limits" refresh, CONTRIBUTING release-checklist fixes. Plus two robustness fixes: schema-clean table generation and per-invocation LibreOffice profiles.
+
+## v1.x — Future
+
+Direction beyond 1.0, driven by adoption signals and real-world use:
+
+- **Companion template repository** — DAO/Solearis branded templates (grant proposal, handout, conference poster) as separate Smithery listings depending on the core skills.
+- **CI typecheck** — `mypy`/`pyright` gate (the library already ships `py.typed`).
+- **Deeper format coverage** as concrete use cases arrive — e.g. Calc pivot tables, richer chart styling, generated indexes — added incrementally with fixtures and tests.
 
 ## Explicit non-goals (stays in Current Limits)
 
