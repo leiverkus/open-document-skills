@@ -419,7 +419,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development and release chec
 
 ## Release Status
 
-Current release: `v0.8.0` — adds ODG depth: glue points, connectors with shape-to-shape binding, and group/ungroup operations. All four skills (ODT/ODP/ODS/ODG) now have production-level depth. See [ROADMAP.md](ROADMAP.md) for v0.9 (real-world corpus tests + final polish) and v1.0 (PyPI publication + ecosystem maturity).
+Current release: `v0.9.0` — a robustness release. Every helper is now exercised against a committed corpus of 17 LibreOffice-native ODF fixtures (`tests/test_corpus.py`), which uncovered and fixed two foreign-ODF bugs in `validate_refs` and the flat-ODF roundtrip. No new features — all four skills (ODT/ODP/ODS/ODG) remain at production-level depth. See [ROADMAP.md](ROADMAP.md) for v1.0 (PyPI publication + final polish + ecosystem maturity).
 
 ## License
 

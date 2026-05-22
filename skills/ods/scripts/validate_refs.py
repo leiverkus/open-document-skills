@@ -36,14 +36,21 @@ def validate(path: Path) -> dict[str, object]:
         href = node.attrib.get(q("xlink", "href"))
         if href and not href.startswith("#") and "://" not in href:
             package_path = href.lstrip("./")
-            # Sub-package directory references (e.g. './Object 1/') resolve
-            # via the directory contents, validated separately below.
-            if package_path.endswith("/"):
-                continue
-            if package_path not in names:
-                errors.append(f"Missing package media target: {href}")
-            if manifest_paths and package_path not in manifest_paths:
-                warnings.append(f"Media target not listed in manifest: {package_path}")
+            # Sub-package object references (e.g. './Object 1' / './Object 1/')
+            # resolve via directory contents — validated in the draw:object loop.
+            is_object_ref = node.tag == q("draw", "object")
+            # ObjectReplacements/* is LibreOffice's optional preview-bitmap cache.
+            is_replacement = package_path.startswith("ObjectReplacements/")
+            if package_path.endswith("/") or is_object_ref:
+                pass
+            elif is_replacement:
+                if package_path not in names:
+                    warnings.append(f"Missing object-replacement preview: {package_path}")
+            else:
+                if package_path not in names:
+                    errors.append(f"Missing package media target: {href}")
+                if manifest_paths and package_path not in manifest_paths:
+                    warnings.append(f"Media target not listed in manifest: {package_path}")
         formula = node.attrib.get(q("table", "formula"))
         if formula and "#REF!" in formula:
             errors.append(f"Formula contains #REF!: {formula}")

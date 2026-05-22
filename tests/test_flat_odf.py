@@ -156,6 +156,59 @@ class FlatOdfTests(unittest.TestCase):
             for picture in pictures:
                 self.assertIn(picture, entries)
 
+    def test_flat_odf_preserves_chart_object_subpackage(self) -> None:
+        """Regression: a chart's ``Object N/`` sub-package must survive a
+        flat-ODF roundtrip — packed inline, then restored to its own member.
+
+        Corpus tests caught two bugs here: (1) pack inlined only content.xml
+        and dropped styles.xml/meta.xml, (2) unpack picked the wrong child
+        when LibreOffice's ``<draw:object>`` already held a ``<loext:p/>``,
+        leaving the chart body stranded in the host ``content.xml``.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "ods" / "scripts"
+            spec = write_json(
+                tmp_path / "wb.json",
+                {
+                    "sheets": [
+                        {
+                            "name": "Data",
+                            "rows": [["Q", "Sales"], ["Q1", "10"], ["Q2", "20"]],
+                        }
+                    ]
+                },
+            )
+            ods = tmp_path / "wb.ods"
+            run_script(scripts / "create_minimal_ods.py", spec, ods)
+            charted = tmp_path / "chart.ods"
+            run_script(
+                scripts / "add_chart.py", ods, "--type", "bar",
+                "--data", "Data.A1:B3", "--title", "Sales", "--cell", "Data.D1",
+                "-o", charted,
+            )
+            fods = tmp_path / "chart.fods"
+            run_script(scripts / "pack_fods.py", charted, "-o", fods)
+            roundtrip = tmp_path / "round.ods"
+            run_script(scripts / "unpack_fods.py", fods, "-o", roundtrip)
+            run_script(scripts / "validate_refs.py", roundtrip)
+            with zipfile.ZipFile(roundtrip) as archive:
+                names = archive.namelist()
+                object_content = [
+                    n for n in names
+                    if n.startswith("Object ") and n.endswith("/content.xml")
+                ]
+                self.assertEqual(
+                    len(object_content), 1,
+                    "chart Object N/content.xml must survive the roundtrip",
+                )
+                chart_xml = archive.read(object_content[0]).decode("utf-8")
+                host_xml = archive.read("content.xml").decode("utf-8")
+            self.assertIn("chart:chart", chart_xml,
+                          "chart body must live in its own sub-package")
+            self.assertNotIn("chart:chart", host_xml,
+                             "chart body must not leak into the host content.xml")
+
     def test_flat_mimetype_attribute_matches_source(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)

@@ -58,15 +58,24 @@ def validate(path: Path) -> dict[str, object]:
         href = node.attrib.get(q("xlink", "href"))
         if href and not href.startswith("#") and "://" not in href:
             package_path = href.lstrip("./")
-            # Sub-package directory references (e.g. './Object 1/') resolve
-            # via the directory contents, not as a single file. Validate them
-            # in the dedicated draw:object loop below.
-            if package_path.endswith("/"):
-                continue
-            if package_path not in names:
-                errors.append(f"Missing package media target: {href}")
-            if manifest_paths and package_path not in manifest_paths:
-                warnings.append(f"Media target not listed in manifest: {package_path}")
+            # Sub-package object references (e.g. './Object 1' or './Object 1/')
+            # resolve via the directory contents, not as a single file — they are
+            # validated in the dedicated draw:object loop below.
+            is_object_ref = node.tag == q("draw", "object")
+            # ObjectReplacements/* are LibreOffice's optional preview-bitmap
+            # cache; LibreOffice itself emits the reference even when the
+            # bitmap is absent, so a missing one is at most a warning.
+            is_replacement = package_path.startswith("ObjectReplacements/")
+            if package_path.endswith("/") or is_object_ref:
+                pass  # handled by the draw:object check
+            elif is_replacement:
+                if package_path not in names:
+                    warnings.append(f"Missing object-replacement preview: {package_path}")
+            else:
+                if package_path not in names:
+                    errors.append(f"Missing package media target: {href}")
+                if manifest_paths and package_path not in manifest_paths:
+                    warnings.append(f"Media target not listed in manifest: {package_path}")
         for attr in STYLE_ATTRS:
             style = node.attrib.get(attr)
             if style and style not in style_names:

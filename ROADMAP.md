@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v0.8.0** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v0.9.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -64,16 +64,22 @@ Closed the largest gap relative to general-purpose tools (pandoc, docx skills): 
 - ✅ Group / ungroup (`group_shapes.py`, `ungroup.py`)
 - ✅ Combined `list_structure.py` + validate_refs extensions
 
-## v0.9 — Corpus tests + polish (next)
+## v0.9 — Real-world corpus tests ✅ shipped (2026-05-22)
 
-- **Real-world corpus tests** — kuratiertes MIT-Sample-Set (~15-20 ODF-Dateien, alle vier Formate, verschiedene Komplexitätsstufen) im Repo. Roundtrip-Tests für alle v0.2-v0.8-Helper gegen jede Fixture.
-- **Final polish** vor v1.0: dokumentations-Review, Skill-Trigger-Audit, Performance-Benchmarks für große Dokumente.
+A pure robustness release — no new features. Closed the blind spot where helpers
+implicitly assumed our own generators' output structure.
+
+- ✅ **Corpus build pipeline** (`tests/fixtures/corpus/build_corpus.py`) — generates base files, enriches with the `add_*` skills, round-trips each through `soffice --convert-to` for LibreOffice-native structure.
+- ✅ **17 committed corpus fixtures** spanning all four formats and every depth feature, MIT-licensed (content is ours).
+- ✅ **`tests/test_corpus.py`** — roundtrip tests for every v0.2–v0.8 helper against each fixture; skips cleanly when the corpus is absent.
+- ✅ **Two foreign-ODF bugs fixed**: `validate_refs.py` handling of trailing-slash-free `draw:object` refs and dangling `ObjectReplacements/` previews; `pack_flat_odf`/`unpack_flat_odf` preservation of full `Object N/` sub-packages (charts, formulas).
 
 ## v1.0 — Ecosystem maturity
 
 - **PyPI publication of the library** — extract `lib/odf_common.py` as the standalone `open-document-lib` package; the skill scripts continue to depend on it. Third-party Python projects can `pip install open-document-lib` and use the helpers without skill bundling.
-- **Companion template repository** — DAO/Solearis branded templates (grant proposal, handout, conference poster) published as separate Smithery listings, depending on the core skills.
+- **Final polish** — documentation review, skill-trigger audit, CONTRIBUTING refresh.
 - **Performance benchmarks** — measured edit latency on 1000+ page documents, 100k+ cell spreadsheets, 100+ slide decks. Published in the README so consumers know the limits.
+- **Companion template repository** — DAO/Solearis branded templates (grant proposal, handout, conference poster) published as separate Smithery listings, depending on the core skills.
 - **CI schema gate** — every generated test output passes ODF 1.3 validation as a CI hard requirement.
 
 ## Explicit non-goals (stays in Current Limits)
@@ -90,7 +96,7 @@ These are intentionally out of scope. If you need them, use LibreOffice or anoth
 
 - Open a GitHub issue with a concrete use case ("I need to do X with format Y, current scripts don't handle Z").
 - Open a discussion if your use case overlaps multiple milestones — order may shift.
-- Pull requests welcome, especially for v0.4 (robustness) and v0.5 (format depth). See [CONTRIBUTING.md](CONTRIBUTING.md).
+- Pull requests welcome, especially toward v1.0 (PyPI packaging, performance benchmarks). See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Pace
 

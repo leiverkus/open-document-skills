@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-VERSION = "0.8.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
+VERSION = "0.9.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
 
 ODF_NAMESPACES: dict[str, str] = {
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
@@ -1196,6 +1196,130 @@ def _sniff_image_extension(data: bytes) -> str:
     return ".bin"
 
 
+def _object_media_types(manifest_bytes: bytes | None) -> dict[str, str]:
+    """Map ``Object N`` directory names to their manifest media-types."""
+    if not manifest_bytes:
+        return {}
+    manifest_ns: str = ODF_NAMESPACES["manifest"]
+    result: dict[str, str] = {}
+    try:
+        root = ET.fromstring(manifest_bytes)
+    except ET.ParseError:
+        return {}
+    for entry in root.findall(f".//{{{manifest_ns}}}file-entry"):
+        path = entry.attrib.get(f"{{{manifest_ns}}}full-path", "")
+        media = entry.attrib.get(f"{{{manifest_ns}}}media-type", "")
+        if path.startswith("Object ") and path.endswith("/") and media:
+            result[path.rstrip("/")] = media
+    return result
+
+
+def _flatten_object(members: dict[str, bytes], mimetype: str | None) -> ET.Element:
+    """Merge an embedded object's sub-package members into one flat document.
+
+    Args:
+        members: Mapping of member filename (e.g. ``"content.xml"``) to bytes.
+        mimetype: Object media-type for the ``office:mimetype`` attribute.
+
+    Returns:
+        A nested ``<office:document>`` element ready to inline inside
+        ``<draw:object>``.
+    """
+    office_ns: str = ODF_NAMESPACES["office"]
+    doc: ET.Element = ET.Element(
+        f"{{{office_ns}}}document", {f"{{{office_ns}}}version": "1.3"}
+    )
+    if mimetype:
+        doc.set(f"{{{office_ns}}}mimetype", mimetype)
+    roots: dict[str, ET.Element] = {}
+    for name, data in members.items():
+        try:
+            roots[name] = ET.fromstring(data)
+        except ET.ParseError:
+            continue
+
+    def pick(member: str, names: set[str]) -> list[ET.Element]:
+        root = roots.get(member)
+        return [] if root is None else [c for c in root if local_name(c.tag) in names]
+
+    for child in pick("meta.xml", {"meta"}):
+        doc.append(child)
+    for child in pick("settings.xml", {"settings"}):
+        doc.append(child)
+    for child in pick("content.xml", {"scripts"}):
+        doc.append(child)
+    for child in pick("styles.xml", {"font-face-decls"}):
+        doc.append(child)
+    for child in pick("styles.xml", {"styles"}):
+        doc.append(child)
+    merged_auto: ET.Element = ET.SubElement(doc, f"{{{office_ns}}}automatic-styles")
+    for member in ("styles.xml", "content.xml"):
+        for auto in pick(member, {"automatic-styles"}):
+            for grandchild in list(auto):
+                merged_auto.append(grandchild)
+    for child in pick("styles.xml", {"master-styles"}):
+        doc.append(child)
+    for child in pick("content.xml", {"body"}):
+        doc.append(child)
+    return doc
+
+
+def _split_object_flat(doc: ET.Element) -> tuple[dict[str, bytes], str | None]:
+    """Split a flat object ``<office:document>`` back into sub-package members.
+
+    Args:
+        doc: The nested ``<office:document>`` inlined inside ``<draw:object>``.
+
+    Returns:
+        A ``(members, mimetype)`` pair where ``members`` maps member filenames
+        to serialized bytes.
+    """
+    office_ns: str = ODF_NAMESPACES["office"]
+    mimetype: str | None = doc.attrib.get(f"{{{office_ns}}}mimetype")
+    content_doc: ET.Element = ET.Element(
+        f"{{{office_ns}}}document-content", {f"{{{office_ns}}}version": "1.3"}
+    )
+    styles_doc: ET.Element = ET.Element(
+        f"{{{office_ns}}}document-styles", {f"{{{office_ns}}}version": "1.3"}
+    )
+    meta_doc: ET.Element = ET.Element(
+        f"{{{office_ns}}}document-meta", {f"{{{office_ns}}}version": "1.3"}
+    )
+    settings_doc: ET.Element = ET.Element(
+        f"{{{office_ns}}}document-settings", {f"{{{office_ns}}}version": "1.3"}
+    )
+    content_auto: ET.Element = ET.SubElement(
+        content_doc, f"{{{office_ns}}}automatic-styles"
+    )
+    has_styles = has_meta = has_settings = False
+    for child in list(doc):
+        name: str = local_name(child.tag)
+        if name == "meta":
+            meta_doc.append(child)
+            has_meta = True
+        elif name == "settings":
+            settings_doc.append(child)
+            has_settings = True
+        elif name == "scripts":
+            content_doc.insert(0, child)
+        elif name in {"font-face-decls", "styles", "master-styles"}:
+            styles_doc.append(child)
+            has_styles = True
+        elif name == "automatic-styles":
+            for grandchild in list(child):
+                content_auto.append(grandchild)
+        elif name == "body":
+            content_doc.append(child)
+    members: dict[str, bytes] = {"content.xml": xml_bytes(content_doc)}
+    if has_styles:
+        members["styles.xml"] = xml_bytes(styles_doc)
+    if has_meta:
+        members["meta.xml"] = xml_bytes(meta_doc)
+    if has_settings:
+        members["settings.xml"] = xml_bytes(settings_doc)
+    return members, mimetype
+
+
 def pack_flat_odf(input_zip: Path, output_flat: Path) -> None:
     """Convert a zipped ODF package to flat (single-XML) ODF.
 
@@ -1223,6 +1347,17 @@ def pack_flat_odf(input_zip: Path, output_flat: Path) -> None:
         pictures: dict[str, bytes] = {
             name: archive.read(name) for name in archive.namelist() if name.startswith("Pictures/")
         }
+        # Embedded objects (charts, formulas) live under 'Object N/' as full
+        # sub-packages (content.xml plus optional styles.xml/meta.xml).
+        object_members: dict[str, bytes] = {
+            name: archive.read(name)
+            for name in archive.namelist()
+            if name.startswith("Object ") and not name.endswith("/")
+        }
+        try:
+            object_manifest: bytes | None = archive.read("META-INF/manifest.xml")
+        except KeyError:
+            object_manifest = None
 
     flat_root: ET.Element = ET.Element(
         f"{{{office_ns}}}document",
@@ -1269,6 +1404,30 @@ def pack_flat_odf(input_zip: Path, output_flat: Path) -> None:
                 image.attrib.pop(attr, None)
             binary: ET.Element = ET.SubElement(image, f"{{{office_ns}}}binary-data")
             binary.text = base64.b64encode(pictures[href]).decode("ascii")
+
+    # Embed object sub-packages (charts, formulas): inline the object's
+    # full sub-package as a nested <office:document> inside its <draw:object>.
+    object_media: dict[str, str] = _object_media_types(object_manifest)
+    for obj in list(flat_root.iter(f"{{{draw_ns}}}object")):
+        href_obj: str | None = obj.attrib.get(f"{{{xlink_ns}}}href")
+        if not href_obj:
+            continue
+        obj_dir: str = href_obj.lstrip("./").rstrip("/")
+        members: dict[str, bytes] = {
+            name[len(obj_dir) + 1:]: data
+            for name, data in object_members.items()
+            if name.startswith(obj_dir + "/")
+        }
+        if "content.xml" not in members:
+            continue
+        for attr in (
+            f"{{{xlink_ns}}}href",
+            f"{{{xlink_ns}}}type",
+            f"{{{xlink_ns}}}show",
+            f"{{{xlink_ns}}}actuate",
+        ):
+            obj.attrib.pop(attr, None)
+        obj.append(_flatten_object(members, object_media.get(obj_dir)))
 
     output_flat.write_bytes(xml_bytes(flat_root))
 
@@ -1347,6 +1506,35 @@ def unpack_flat_odf(input_flat: Path, output_zip: Path) -> None:
         image.set(f"{{{xlink_ns}}}show", "embed")
         image.set(f"{{{xlink_ns}}}actuate", "onLoad")
 
+    # Extract inlined object sub-packages (charts, formulas) back to Object N/.
+    math_ns: str = ODF_NAMESPACES["math"]
+    chart_ns: str = ODF_NAMESPACES["chart"]
+    objects: dict[str, bytes] = {}
+    object_media: dict[str, str] = {}
+    object_count = 0
+    for obj in content_doc.iter(f"{{{draw_ns}}}object"):
+        doc_child: ET.Element | None = obj.find(f"{{{office_ns}}}document")
+        if doc_child is None:
+            continue
+        object_count += 1
+        obj_dir = f"Object {object_count}"
+        members, declared_mime = _split_object_flat(doc_child)
+        for member_name, member_bytes in members.items():
+            objects[f"{obj_dir}/{member_name}"] = member_bytes
+        if declared_mime:
+            object_media[obj_dir] = declared_mime
+        elif doc_child.find(f".//{{{math_ns}}}math") is not None:
+            object_media[obj_dir] = "application/vnd.oasis.opendocument.formula"
+        elif doc_child.find(f".//{{{chart_ns}}}chart") is not None:
+            object_media[obj_dir] = "application/vnd.oasis.opendocument.chart"
+        else:
+            object_media[obj_dir] = "application/vnd.oasis.opendocument.text"
+        obj.remove(doc_child)
+        obj.set(f"{{{xlink_ns}}}href", f"./{obj_dir}/")
+        obj.set(f"{{{xlink_ns}}}type", "simple")
+        obj.set(f"{{{xlink_ns}}}show", "embed")
+        obj.set(f"{{{xlink_ns}}}actuate", "onLoad")
+
     manifest_doc: ET.Element = ET.Element(
         f"{{{manifest_ns}}}manifest",
         {f"{{{manifest_ns}}}version": "1.3"},
@@ -1378,6 +1566,18 @@ def unpack_flat_odf(input_flat: Path, output_zip: Path) -> None:
                 f"{{{manifest_ns}}}media-type": media_type_for(Path(picture_path)),
             },
         )
+    for obj_dir, media in object_media.items():
+        ET.SubElement(
+            manifest_doc,
+            f"{{{manifest_ns}}}file-entry",
+            {f"{{{manifest_ns}}}full-path": f"{obj_dir}/", f"{{{manifest_ns}}}media-type": media},
+        )
+    for object_path in objects:
+        ET.SubElement(
+            manifest_doc,
+            f"{{{manifest_ns}}}file-entry",
+            {f"{{{manifest_ns}}}full-path": object_path, f"{{{manifest_ns}}}media-type": "text/xml"},
+        )
 
     with zipfile.ZipFile(output_zip, "w") as archive:
         archive.writestr("mimetype", mimetype, compress_type=zipfile.ZIP_STORED)
@@ -1387,6 +1587,8 @@ def unpack_flat_odf(input_flat: Path, output_zip: Path) -> None:
         archive.writestr("settings.xml", xml_bytes(settings_doc), compress_type=zipfile.ZIP_DEFLATED)
         archive.writestr("META-INF/manifest.xml", xml_bytes(manifest_doc), compress_type=zipfile.ZIP_DEFLATED)
         for path, data in pictures.items():
+            archive.writestr(path, data, compress_type=zipfile.ZIP_DEFLATED)
+        for path, data in objects.items():
             archive.writestr(path, data, compress_type=zipfile.ZIP_DEFLATED)
 
 

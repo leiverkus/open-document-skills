@@ -63,6 +63,21 @@ python3 examples/build_examples.py --render --png
 
 Generated example outputs are written to `examples/output/` and are ignored by Git.
 
+## Real-World Corpus
+
+`tests/fixtures/corpus/` holds LibreOffice-native ODF fixtures that `tests/test_corpus.py`
+runs every helper against. The fixtures are committed, so the tests run anywhere without
+LibreOffice. If you change anything structural — the flat-ODF pack/unpack format, the
+`validate_refs` checks, or the shared XML helpers in `lib/odf_common.py` — regenerate the
+corpus so it reflects current output, then re-run the suite:
+
+```bash
+python3 tests/fixtures/corpus/build_corpus.py   # requires LibreOffice (soffice)
+python3 -m unittest discover -s tests
+```
+
+`build_corpus.py` is a maintainer tool, not part of CI.
+
 ## Adding or Changing Scripts
 
 Keep scripts small, deterministic, and standard-library-only unless there is a strong reason to add a dependency.

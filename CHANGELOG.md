@@ -1,5 +1,47 @@
 # Changelog
 
+## v0.9.0 - 2026-05-22
+
+Real-world corpus tests. A robustness release — no new features. Every v0.2–v0.8
+helper is now exercised against a curated set of **LibreOffice-native** ODF files,
+closing the blind spot where helpers implicitly assumed our own generators' output
+structure.
+
+### Added
+
+- **Corpus build pipeline** (`tests/fixtures/corpus/build_corpus.py`) — maintainer
+  tool that generates base files via `create_minimal_*`, enriches each with the
+  `add_*` skills (footnotes, citations, charts, animations, connectors, …), then
+  round-trips every file through `soffice --convert-to`. The result has
+  LibreOffice-native structure (different automatic-styles, full settings.xml,
+  `loext:` extensions, different element order) — exactly what the foreign-ODF
+  bugs need to surface. Requires LibreOffice; run only when refreshing the corpus.
+- **17 committed corpus fixtures** (`tests/fixtures/corpus/*.{odt,odp,ods,odg}`,
+  ~155 KB) covering minimal documents plus every depth feature, with
+  `tests/fixtures/corpus/README.md` documenting origin, MIT licensing, and the
+  regeneration command.
+- **`tests/test_corpus.py`** — roundtrip tests over every fixture: internal
+  `validate_refs`, flat-ODF pack→unpack→validate, re-pack stability, and
+  format-specific edit operations. Skips cleanly if the corpus is absent.
+- Regression test `test_flat_odf_preserves_chart_object_subpackage` in
+  `tests/test_flat_odf.py`. Total: 218 (was 209).
+
+### Fixed
+
+- **`validate_refs.py` (ODT + ODS)** — LibreOffice writes `draw:object`
+  references *without* a trailing slash (`./Object 1`) and emits dangling
+  `./ObjectReplacements/Object 1` preview references with no backing file.
+  The general media-target check now skips `draw:object` nodes (the dedicated
+  object check handles them) and downgrades missing `ObjectReplacements/`
+  previews to a warning.
+- **`pack_flat_odf` / `unpack_flat_odf`** — embedded objects (charts, formulas)
+  are full sub-packages with their own `content.xml`, `styles.xml`, and
+  `meta.xml`. Packing previously inlined only `content.xml` and dropped the
+  rest; unpacking then picked the wrong child when LibreOffice's `<draw:object>`
+  already held a `<loext:p/>`, stranding the chart body in the host
+  `content.xml`. Objects are now inlined as a nested `<office:document>` and
+  restored with all members and manifest entries intact.
+
 ## v0.8.0 - 2026-05-21
 
 ODG depth: glue points, connectors with shape-to-shape binding, group/ungroup. Final format-depth release before the v0.9 corpus tests + v1.0 polish.
