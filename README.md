@@ -38,11 +38,11 @@ python skills/odt/scripts/validate_refs.py out.odt
 - **Stdlib-only core.** Every generator, validator, and edit script runs without `pip install` — `xml.etree.ElementTree` and `zipfile` only. LibreOffice is needed only for rendering and recalculation.
 - **Structure-preserving edits.** `replace_text` keeps footnotes, hyperlinks, and inline formatting intact. `add_image` updates the manifest and `meta.xml`. `replace_cells` handles typed values and formulas.
 - **Audit-friendly.** Every edit writes `meta:modification-date`, `meta:generator`, and increments `meta:editing-cycles`. Pack to `.fodt` and `git diff` works.
-- **Tested.** 76 unit + integration tests run on every push; CI installs LibreOffice so the render/recalc paths are exercised too.
+- **Tested.** Over 200 unit and integration tests run on every push across Python 3.10–3.13; CI installs LibreOffice so the render/recalc paths are exercised too.
 
 ## What this is not
 
-Not a LibreOffice replacement. Not a substitute for full ODF feature coverage (tracked changes, complex TOCs, Impress animations, Calc pivots, Draw glue points, RelaxNG schema validation are explicit non-goals — see [Current Limits](#current-limits)). The goal is to make the 80% of ODF automation that agents need safe, repeatable, and dependency-light.
+Not a LibreOffice replacement, and not a substitute for full ODF feature coverage. Tracked changes, generated tables of contents, Calc pivot tables, and DOCX/PPTX/XLSX import-and-edit are explicit non-goals — see [Current Limits](#current-limits). The goal is to make the 80% of ODF automation that agents need safe, repeatable, and dependency-light.
 
 ## Repository Layout
 
@@ -87,6 +87,7 @@ Detailed documentation lives in [docs/index.md](docs/index.md):
 - [Agent Compatibility](docs/agent-compatibility.md)
 - [OpenDocument Workflows](docs/workflows.md)
 - [Script Reference](docs/script-reference.md)
+- [Library API](docs/library-api.md)
 
 ## Installation
 
@@ -235,136 +236,6 @@ LibreOffice usually provides `soffice` inside the app bundle, not directly on th
 
 The render/recalc scripts look for that macOS path automatically. They also check common Linux and Windows locations.
 
-## Skills
-
-### ODT
-
-OpenDocument Text / LibreOffice Writer.
-
-Focus:
-
-- template-first document editing
-- direct ODT XML generation
-- headings, paragraphs, lists, tables, footnotes, images
-- style/page-layout awareness
-- PDF QA through LibreOffice
-
-Useful scripts:
-
-```bash
-python skills/odt/scripts/create_minimal_odt.py document.json output.odt
-python skills/odt/scripts/extract_text.py output.odt
-python skills/odt/scripts/inspect_package.py output.odt
-python skills/odt/scripts/replace_text.py input.odt "{{NAME}}" "Patrick Leiverkus" -o output.odt
-python skills/odt/scripts/add_image.py input.odt figure.png -o output.odt
-python skills/odt/scripts/add_footnote.py input.odt --anchor "claim" --body "Source: ..." -o output.odt
-python skills/odt/scripts/fill_citations.py template.odt --source refs.bib -o output.odt
-python skills/odt/scripts/add_bookmark.py input.odt --name K1 --anchor "Chapter 1" -o output.odt
-python skills/odt/scripts/add_math.py input.odt --latex 'E = mc^2' --anchor "Equation" -o output.odt
-python skills/odt/scripts/pack_fodt.py output.odt -o output.fodt
-python skills/odt/scripts/validate_refs.py output.odt
-```
-
-Script reference: see [docs/script-reference.md](docs/script-reference.md).
-
-### ODP
-
-OpenDocument Presentation / LibreOffice Impress.
-
-Focus:
-
-- template-first presentations
-- direct ODP XML generation
-- `draw:page`, speaker notes, master pages
-- slide text/media inspection
-- package and visual QA
-
-Useful scripts:
-
-```bash
-python skills/odp/scripts/create_minimal_odp.py slides.json output.odp
-python skills/odp/scripts/extract_text.py output.odp
-python skills/odp/scripts/inspect_package.py output.odp
-python skills/odp/scripts/clone_slide.py template.odp --source-slide 1 --name "Agenda" -o output.odp
-python skills/odp/scripts/add_image.py input.odp figure.png -o output.odp
-python skills/odp/scripts/validate_refs.py output.odp
-```
-
-Script reference: see [docs/script-reference.md](docs/script-reference.md).
-
-### ODS
-
-OpenDocument Spreadsheet / LibreOffice Calc.
-
-Focus:
-
-- direct ODS XML generation
-- template-first spreadsheet editing
-- typed cell values
-- formulas
-- repeated rows/cells
-- CSV export and formula QA
-
-Useful scripts:
-
-```bash
-python skills/ods/scripts/create_minimal_ods.py workbook.json output.ods
-python skills/ods/scripts/extract_sheets.py output.ods
-python skills/ods/scripts/extract_formulas.py output.ods
-python skills/ods/scripts/replace_cells.py input.ods 'Data!B2=42' 'Data!C2=formula:of:=[.B2]*2' -o output.ods
-python skills/ods/scripts/export_csv.py output.ods --sheet Data --output data.csv
-python skills/ods/scripts/validate_refs.py output.ods
-```
-
-Script reference: see [docs/script-reference.md](docs/script-reference.md).
-
-### ODG
-
-OpenDocument Graphics / LibreOffice Draw.
-
-Focus:
-
-- direct ODG XML generation
-- template-first diagram editing
-- vector shapes, text boxes, lines, connectors, images
-- geometry inspection
-- PDF/SVG/PNG export QA
-
-Useful scripts:
-
-```bash
-python skills/odg/scripts/create_minimal_odg.py drawing.json output.odg
-python skills/odg/scripts/extract_text.py output.odg
-python skills/odg/scripts/extract_shapes.py output.odg
-python skills/odg/scripts/inspect_package.py output.odg
-python skills/odg/scripts/replace_text.py input.odg "{{LABEL}}" "Updated label" -o output.odg
-python skills/odg/scripts/validate_refs.py output.odg
-```
-
-Script reference: see [docs/script-reference.md](docs/script-reference.md).
-
-## Testing
-
-Run the test suite:
-
-```bash
-python -m unittest discover -s tests
-```
-
-The tests create minimal ODT, ODP, ODS, and ODG files, then exercise extraction, validation, editing, media insertion, and export helpers.
-
-LibreOffice integration tests are included. They render ODT/ODP/ODG files and recalculate ODS files when `soffice` is available. If LibreOffice is not available, those tests are skipped.
-
-GitHub Actions runs the same suite on every push and pull request. The workflow installs LibreOffice and Poppler with `apt` on Ubuntu so the LibreOffice integration tests run in CI instead of being skipped.
-
-Reusable example inputs live in `tests/fixtures/`:
-
-- `odt_document.json`
-- `odp_slides.json`
-- `ods_workbook.json`
-- `odg_drawing.json`
-- `image.svg`
-
 ## Examples
 
 Runnable examples live in `examples/`. They are meant as a practical first test layer for users of the skills:
@@ -459,27 +330,11 @@ Out of scope — use LibreOffice for these:
 
 See [ROADMAP.md](ROADMAP.md) for what is planned next.
 
-## Development
+## Contributing & releases
 
-Recommended loop:
-
-```bash
-python -m unittest discover -s tests
-git status --short
-```
-
-When adding a new script or behavior:
-
-1. Add the smallest useful script interface.
-2. Add or update a smoke test.
-3. Run local tests.
-4. Push and let GitHub Actions verify the repo.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development and release checklist.
-
-## Release Status
-
-Current release: `v1.0.2`. All four skills (ODT/ODP/ODS/ODG) are at production-level depth; the shared library is published to PyPI as [`open-document-lib`](https://pypi.org/project/open-document-lib/). v1.0.0 brought ecosystem maturity (PyPI packaging, RelaxNG schema validation for every format, performance benchmarks); v1.0.1 fixed skill-bundle packaging so installed skills carry their `odf_lib/` dependency; v1.0.2 added a Python 3.10–3.13 CI matrix and a mypy type-check gate — which immediately caught a latent bug. See [CHANGELOG.md](CHANGELOG.md) for details and [ROADMAP.md](ROADMAP.md) for what comes next.
+Development setup, the test loop, and the release checklist live in
+[CONTRIBUTING.md](CONTRIBUTING.md). Version history is in
+[CHANGELOG.md](CHANGELOG.md); planned work is in [ROADMAP.md](ROADMAP.md).
 
 ## License
 
