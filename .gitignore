@@ -10,3 +10,4 @@ examples/dao/output/
 /dist/
 /build/
 *.egg-info/
+benchmarks/results.md

@@ -373,6 +373,24 @@ python skills/odt/scripts/unpack_fodt.py document.fodt -o document.odt
 
 See [docs/workflows.md](docs/workflows.md#flat-odf-git-friendly) for details.
 
+## Performance
+
+The helpers are pure-Python and stream through ZIP packages without loading
+LibreOffice. End-to-end CLI latency on a representative laptop:
+
+| Format | Document | Create | Edit | Validate |
+|--------|----------|--------|------|----------|
+| ODT | 2000 paragraphs | 55 ms | 54 ms (`replace_text`) | 48 ms |
+| ODS | 100 000 cells (1000×100) | 398 ms | 428 ms (`replace_cells`) | 689 ms |
+| ODP | 100 slides | 45 ms | 42 ms (`clone_slide`) | 42 ms |
+| ODG | 500 shapes | 47 ms | — | 44 ms |
+
+Every timing includes Python interpreter startup (~40 ms), so small
+documents are startup-bound; large spreadsheets are the heaviest case and
+still finish well under a second. Reproduce or re-measure with
+[`benchmarks/run_benchmarks.py`](benchmarks/README.md). Numbers are
+indicative and machine-dependent.
+
 ## Current Limits
 
 The scripts are intentionally small and conservative.
