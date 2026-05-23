@@ -27,6 +27,7 @@ else:
 from odf_lib.odf_common import (  # noqa: E402, I001
     build_contact_sheet,
     clear_children,
+    convert_with_soffice,
     copy_into_package as _copy_base,
     embed_pictures as _embed_pictures_base,
     ensure_manifest_entry as _ensure_base,
@@ -67,6 +68,7 @@ __all__ = [
     "theme_font_faces",
     "build_contact_sheet",
     "clear_children",
+    "convert_with_soffice",
     "copy_into_package",
     "copy_slide",
     "embed_pictures",

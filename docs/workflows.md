@@ -452,6 +452,56 @@ python3 skills/odg/scripts/validate_refs.py output.odg --strict
 
 Without `--strict`, only the internal consistency checks run (manifest, media, style references, note ids, citation identifiers, cross-references). Use `--strict` before delivery if exact OASIS conformance matters; the strict check catches non-trivial issues like `text:p` containing content the schema does not permit. Note that LibreOffice-native files often use ODF 1.3 *extended* features (`loext:` extensions) that the pure OASIS schema rejects — `--strict` is strictest against documents the skills generate themselves.
 
+## Format conversion (ODF ↔ OOXML)
+
+Each non-drawing skill (ODT, ODS, ODP) ships a `convert.py` that bridges
+to its Microsoft Office counterpart via headless LibreOffice:
+
+```bash
+# ODT ↔ DOCX/DOC:
+python3 skills/odt/scripts/convert.py doc.odt   --to docx --outdir qa
+python3 skills/odt/scripts/convert.py from.docx --to odt  --outdir qa
+python3 skills/odt/scripts/convert.py legacy.doc --to odt --outdir qa
+
+# ODS ↔ XLSX/XLS:
+python3 skills/ods/scripts/convert.py book.ods   --to xlsx --outdir qa
+python3 skills/ods/scripts/convert.py from.xlsx  --to ods  --outdir qa
+
+# ODP ↔ PPTX/PPT:
+python3 skills/odp/scripts/convert.py deck.odp   --to pptx --outdir qa
+python3 skills/odp/scripts/convert.py from.pptx  --to odp  --outdir qa
+```
+
+**The bridge pattern** — when you receive a DOCX/XLSX/PPTX and need our
+skills' edits applied, then export back:
+
+```bash
+python3 skills/odt/scripts/convert.py incoming.docx --to odt --outdir work
+python3 skills/odt/scripts/replace_text.py work/incoming.odt "TBD" "Approved" -o edited.odt
+python3 skills/odt/scripts/validate_refs.py edited.odt
+python3 skills/odt/scripts/convert.py edited.odt --to docx --outdir out
+```
+
+Each conversion runs inside an isolated `-env:UserInstallation` temp profile
+(same pattern as `render.py`, `recalc.py`, and `update_indexes.py`). The
+real LibreOffice user profile is never touched.
+
+**Fidelity caveats**: soffice handles prose, simple tables, basic formulas,
+images, and master pages well. Round-tripping documents with complex
+features (master-page chains, embedded MathML, advanced bibliography,
+macros/VBA, conditional-formatting graphical variants, custom-path
+animations, exotic fonts) can lose detail. Inspect the output before
+relying on it. Cross-family conversions (ODT → XLSX, etc.) are rejected
+by `convert.py` with a hint pointing to the right skill — soffice itself
+does not support them either.
+
+Note: a DOCX→ODT round-trip produces internally-consistent ODF that opens
+cleanly in LibreOffice and `validate_refs.py` accepts, but it typically
+fails `validate_refs.py --strict` (OASIS RelaxNG) because LibreOffice's
+DOCX importer emits `loext:` extension attributes. Use non-strict validation
+on round-tripped documents; reserve `--strict` for ODF the skills generate
+themselves.
+
 ## DAO branded template (example)
 
 The `examples/dao/` directory ships a complete grant-proposal pipeline with DAO branding:

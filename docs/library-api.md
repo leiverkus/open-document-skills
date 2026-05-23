@@ -150,11 +150,12 @@ helpers) is internal and may change without notice.
 | `find_pandoc() -> str \| None` | Locate the `pandoc` binary. |
 | `latex_to_mathml(latex) -> bytes` | Convert a LaTeX snippet to MathML via Pandoc. |
 
-### Rendering
+### Rendering / Conversion
 
 | Signature | Description |
 |---|---|
-| `render_to_pdf(odf_path, outdir) -> Path` | Render an ODF file to PDF via LibreOffice (isolated profile). |
+| `convert_with_soffice(input_path, target_format, outdir, filter_name=None) -> Path` | Convert via headless LibreOffice with an isolated temp profile. Used for OOXML conversion (`docx`/`xlsx`/`pptx` and the legacy `doc`/`xls`/`ppt`), PDF rendering, and same-format re-saves. |
+| `render_to_pdf(odf_path, outdir) -> Path` | Render an ODF file to PDF via LibreOffice (thin wrapper around `convert_with_soffice`). |
 | `pdf_to_pngs(pdf_path, outdir, dpi=150) -> list[Path]` | Render each PDF page to a PNG via `pdftoppm` (Poppler). |
 | `build_contact_sheet(images, output_path, columns=0) -> Path` | Compose page thumbnails into one labelled grid image. Requires Pillow (`pip install open-document-lib[render]`). |
 

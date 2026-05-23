@@ -27,6 +27,7 @@ else:
 # Single consolidated import block from odf_lib.odf_common.
 from odf_lib.odf_common import (  # noqa: E402, I001
     build_contact_sheet,
+    convert_with_soffice,
     copy_with_multiple_members as _copy_members_base,
     ensure_manifest_entry as _ensure_base,
     find_soffice,
@@ -65,6 +66,7 @@ __all__ = [
     "cell_text",
     "cell_value",
     "col_to_index",
+    "convert_with_soffice",
     "copy_with_multiple_members",
     "ensure_cell",
     "ensure_manifest_entry",

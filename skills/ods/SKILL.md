@@ -1,10 +1,10 @@
 ---
 name: ods
-description: "Create, read, edit, convert, repair, inspect, analyze, or format OpenDocument Spreadsheet files (.ods). Supports named ranges, data validation (dropdowns and range constraints), embedded charts (bar, line, pie, scatter), conditional formatting, and pivot tables."
-triggers: [".ods", "ODS", "OpenDocument Spreadsheet", "Open Office spreadsheet", "LibreOffice Calc", "Calc sheet", "ods-Datei", "OpenDocument-Tabelle", "Tabellenkalkulation", "named range", "named expression", "data validation", "dropdown", "Auswahlliste", "chart", "Diagramm", "Balkendiagramm", "Liniendiagramm", "Kreisdiagramm", "Punktdiagramm", "bar chart", "line chart", "pie chart", "scatter", "conditional formatting", "bedingte Formatierung", "pivot table", "Pivot-Tabelle", "PivotTable", "flat ODF", ".fods"]
+description: "Create, read, edit, convert, repair, inspect, analyze, or format OpenDocument Spreadsheet files (.ods) — including bidirectional conversion to XLSX/XLS via headless LibreOffice. Supports named ranges, data validation (dropdowns and range constraints), embedded charts (bar, line, pie, scatter), conditional formatting, and pivot tables."
+triggers: [".ods", "ODS", "OpenDocument Spreadsheet", "Open Office spreadsheet", "LibreOffice Calc", "Calc sheet", "ods-Datei", "OpenDocument-Tabelle", "Tabellenkalkulation", "named range", "named expression", "data validation", "dropdown", "Auswahlliste", "chart", "Diagramm", "Balkendiagramm", "Liniendiagramm", "Kreisdiagramm", "Punktdiagramm", "bar chart", "line chart", "pie chart", "scatter", "conditional formatting", "bedingte Formatierung", "pivot table", "Pivot-Tabelle", "PivotTable", "flat ODF", ".fods", ".xlsx", "XLSX", ".xls", "Excel", "Excel-Datei", "MS Excel", "Microsoft Excel"]
 dont_use_for: ["text documents (.odt)", "presentations (.odp)", "analysis where deliverable is not a spreadsheet"]
 license: MIT
-version: "1.10.0"
+version: "1.11.0"
 ---
 
 # ODS creation, editing, and analysis
@@ -289,6 +289,36 @@ the target range, so LibreOffice shows it immediately; a matching ODF-core
 
 `validate_refs.py` also catches dangling `style:map` style references and pivot
 tables whose source or target range names an unknown sheet.
+
+## Format Conversion (Excel: XLSX/XLS)
+
+For one-shot conversion between ODS and Microsoft Excel formats, `convert.py`
+wraps `soffice --headless --convert-to` with an isolated temp profile:
+
+```bash
+# ODS → XLSX:
+python scripts/convert.py book.ods --to xlsx --outdir qa
+
+# XLSX → ODS (the bridge: edit an Excel file with our skills, then export back):
+python scripts/convert.py source.xlsx --to ods --outdir qa
+python scripts/replace_cells.py qa/source.ods --cell "Sheet1.A1=Updated" -o edited.ods
+python scripts/convert.py edited.ods --to xlsx --outdir qa
+
+# Legacy MS Excel 97-2003 (.xls):
+python scripts/convert.py book.ods --to xls --outdir qa
+python scripts/convert.py legacy.xls --to ods --outdir qa
+```
+
+**Fidelity caveat**: soffice handles cell values, basic formatting, and most
+formulas well. Macros (VBA), advanced pivot-table options, conditional-
+formatting graphical variants (data bars, icon sets), and some chart styles
+can be lost or rendered differently on round-trip. Always inspect the
+output before relying on it.
+
+For text documents, use the **odt** skill's `convert.py` (ODT ↔ DOCX/DOC);
+for presentations, the **odp** skill's `convert.py` (ODP ↔ PPTX/PPT). The
+script enforces format families — cross-family conversions are rejected
+with a clear hint.
 
 ## Formula and Data Rules
 

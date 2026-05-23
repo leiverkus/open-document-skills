@@ -1,5 +1,44 @@
 # Changelog
 
+## v1.11.0 - 2026-05-23
+
+OOXML format conversion — bidirectional bridges between ODT/ODS/ODP and
+their Microsoft Office counterparts (DOCX/XLSX/PPTX) plus the legacy MS
+Office binary formats (DOC/XLS/PPT) via headless LibreOffice. Closes the
+last remaining interop gap with the OOXML world; the README "DOCX/PPTX/XLSX
+import-and-edit" non-goal is now precisely scoped to in-place native-OOXML
+editing only, with one-shot conversion shipping here.
+
+### Added
+
+- **`convert_with_soffice(input, target_format, outdir, filter_name=None)`**
+  in `odf_lib.odf_common` — the canonical soffice-convert helper, in the
+  published API. Spawns soffice with an isolated `-env:UserInstallation`
+  temp profile (real user profile is never touched), runs
+  `--convert-to <fmt>`, returns the output path. Same pattern as
+  `recalc.py` / `update_indexes.py`.
+- **`skills/odt/scripts/convert.py`** — ODT ↔ DOCX / DOC.
+- **`skills/ods/scripts/convert.py`** — ODS ↔ XLSX / XLS.
+- **`skills/odp/scripts/convert.py`** — ODP ↔ PPTX / PPT.
+
+### Changed
+
+- **`render_to_pdf`** is now a one-line wrapper around
+  `convert_with_soffice` (PDF is just one of many target formats). Existing
+  callers (`render.py` in all four skills) work unchanged.
+- The three skill `*_common.py` modules (ODT/ODS/ODP) re-export
+  `convert_with_soffice` for parity with `find_soffice` / `render_to_pdf`.
+
+### Documentation
+
+- New "Format conversion" sections in `odt/SKILL.md`, `ods/SKILL.md`, and
+  `odp/SKILL.md` documenting bidirectional usage, legacy formats, and
+  fidelity caveats (master pages, MathML, advanced bibliography, macros,
+  conditional-formatting graphical variants, animations).
+- The README "DOCX/PPTX/XLSX import-and-edit" non-goal entry is rewritten
+  to clarify that **one-shot conversion** is in scope (v1.11) while
+  **in-place native-OOXML editing** remains pandoc/python-docx territory.
+
 ## v1.10.0 - 2026-05-23
 
 Generated indexes for ODT — the last remaining "Out of scope" entry in the

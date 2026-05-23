@@ -1,10 +1,10 @@
 ---
 name: odp
-description: "Create, read, edit, convert, repair, or inspect OpenDocument Presentation files (.odp). Supports shape animations (entrance, exit, emphasis, motion paths), slide transitions, and master-page customization."
-triggers: [".odp", "ODP", "OpenDocument Presentation", "Open Office presentation", "LibreOffice Impress", "Impress deck", "odp-Datei", "OpenDocument-Präsentation", "Folien", "Präsentation", "animation", "Animation", "transition", "Übergang", "Folienübergang", "slide transition", "master page", "master slide", "Folienmaster", "flat ODF", ".fodp"]
+description: "Create, read, edit, convert, repair, or inspect OpenDocument Presentation files (.odp) — including bidirectional conversion to PPTX/PPT via headless LibreOffice. Supports shape animations (entrance, exit, emphasis, motion paths), slide transitions, and master-page customization."
+triggers: [".odp", "ODP", "OpenDocument Presentation", "Open Office presentation", "LibreOffice Impress", "Impress deck", "odp-Datei", "OpenDocument-Präsentation", "Folien", "Präsentation", "animation", "Animation", "transition", "Übergang", "Folienübergang", "slide transition", "master page", "master slide", "Folienmaster", "flat ODF", ".fodp", ".pptx", "PPTX", ".ppt", "PowerPoint", "PowerPoint-Datei", "MS PowerPoint", "Microsoft PowerPoint"]
 dont_use_for: ["text documents (.odt)", "spreadsheets (.ods)", "general presentation advice without .odp file"]
 license: MIT
-version: "1.10.0"
+version: "1.11.0"
 ---
 
 # ODP creation, editing, and analysis
@@ -472,6 +472,41 @@ The final pass of a loop you should already be running while building the deck:
 6. Do not deliver until a final pass shows no unresolved content, package, or visual issues relevant to the user's request.
 
 For template-based decks, always verify at least one slide using each master page/layout that was touched.
+
+## Format Conversion (PowerPoint: PPTX/PPT)
+
+For one-shot conversion between ODP and Microsoft PowerPoint formats,
+`convert.py` wraps `soffice --headless --convert-to` with an isolated temp
+profile:
+
+```bash
+# ODP → PPTX:
+python scripts/convert.py deck.odp --to pptx --outdir qa
+
+# PPTX → ODP (the bridge: edit a PowerPoint deck with our skills, then export back):
+python scripts/convert.py source.pptx --to odp --outdir qa
+python scripts/add_animation.py qa/source.odp --slide 1 --shape "title" \
+    --effect "entrance:fade-in" -o edited.odp
+python scripts/convert.py edited.odp --to pptx --outdir qa
+
+# Legacy MS PowerPoint 97-2003 (.ppt):
+python scripts/convert.py deck.odp --to ppt --outdir qa
+python scripts/convert.py legacy.ppt --to odp --outdir qa
+```
+
+**Fidelity caveat**: soffice handles text, basic shapes, images, and master
+pages well. Slide layouts (the ODF `presentation-page-layout` introduced in
+v1.8) map approximately to PowerPoint slide layouts but are not perfectly
+equivalent. Animations and transitions usually round-trip; some advanced
+SMIL motion paths or custom-path effects may simplify or be dropped. Fonts
+in particular substitute very differently across PowerPoint, LibreOffice
+Impress, and Keynote — always render the output in the target application
+before delivering.
+
+For text documents, use the **odt** skill's `convert.py` (ODT ↔ DOCX/DOC);
+for spreadsheets, the **ods** skill's `convert.py` (ODS ↔ XLSX/XLS). The
+script enforces format families — cross-family conversions are rejected
+with a clear hint.
 
 ## ODP Notes
 

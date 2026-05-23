@@ -42,6 +42,7 @@ All scripts use the Python standard library.
 | `pack_fodt.py` | Convert a zipped ODT to a flat `.fodt` (single XML, Git-friendly). |
 | `unpack_fodt.py` | Convert a flat `.fodt` back to a zipped `.odt` package. |
 | `render.py` | Render ODT to PDF, per-page PNGs (`--png`), or a single labelled contact sheet (`--contact-sheet`) via LibreOffice/Poppler. |
+| `convert.py` | Bidirectional conversion to/from Microsoft Word: ODT ↔ DOCX/DOC via headless LibreOffice. Isolated `-env:UserInstallation` temp profile — your real LibreOffice profile is never touched. |
 | `validate_refs.py` | Validate manifest, embedded image references, note id consistency, citation field completeness, leftover citation placeholders, cross-reference targets. Use `--strict` for OASIS RelaxNG schema validation (requires `pip install open-document-lib[validate]`). |
 
 ## ODP
@@ -65,6 +66,7 @@ All scripts use the Python standard library.
 | `pack_fodp.py` | Convert a zipped ODP to a flat `.fodp` (single XML, Git-friendly). |
 | `unpack_fodp.py` | Convert a flat `.fodp` back to a zipped `.odp` package. |
 | `render.py` | Render ODP to PDF, per-slide PNGs (`--png`), or a single labelled contact sheet (`--contact-sheet`) via LibreOffice/Poppler. |
+| `convert.py` | Bidirectional conversion to/from Microsoft PowerPoint: ODP ↔ PPTX/PPT via headless LibreOffice. |
 | `validate_refs.py` | Validate manifest, embedded image references, animation/transition/master-page/slide-layout targets. Use `--strict` for OASIS RelaxNG schema validation. |
 
 ## ODS
@@ -91,6 +93,7 @@ All scripts use the Python standard library.
 | `unpack_fods.py` | Convert a flat `.fods` back to a zipped `.ods` package. |
 | `recalc.py` | Recalculate a workbook through LibreOffice and validate references. |
 | `render.py` | Render ODS to PDF, per-page PNGs (`--png`), or a single labelled contact sheet (`--contact-sheet`) via LibreOffice/Poppler. |
+| `convert.py` | Bidirectional conversion to/from Microsoft Excel: ODS ↔ XLSX/XLS via headless LibreOffice. |
 | `validate_refs.py` | Validate manifest/package references, formula errors, named ranges, data validation, and chart targets. Use `--strict` for OASIS RelaxNG schema validation. |
 
 ## ODG

@@ -472,6 +472,58 @@ class LibreOfficeIntegrationTests(unittest.TestCase):
             self.assertTrue(pdf.exists())
             self.assertGreater(pdf.stat().st_size, 0)
 
+    def test_odt_docx_odt_bridge(self) -> None:
+        """Round-trip ODT → DOCX → ODT produces an ODT that passes the skill's
+        internal consistency checks and renders to a non-empty PDF.
+
+        Note: strict OASIS RelaxNG validation is *not* asserted here.
+        LibreOffice's DOCX importer emits `loext:` extension attributes and
+        slightly different attribute combinations on round-trip that don't
+        match the strict ODF 1.3 schema, even though the document opens
+        cleanly. This is a documented fidelity limitation of OOXML
+        conversion — non-strict validation is the right gate.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odt" / "scripts"
+            spec = tmp_path / "spec.json"
+            spec.write_text(
+                json.dumps(
+                    {
+                        "title": "Bridge",
+                        "blocks": [
+                            {"type": "heading", "level": 1, "text": "Section A"},
+                            {"type": "paragraph", "text": "Some prose."},
+                            {"type": "heading", "level": 2, "text": "Section B"},
+                            {"type": "paragraph", "text": "More prose."},
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            odt = tmp_path / "doc.odt"
+            run_script(scripts / "create_minimal_odt.py", spec, odt)
+
+            qa = tmp_path / "qa"
+            run_script(scripts / "convert.py", odt, "--to", "docx", "--outdir", qa)
+            self.assertTrue((qa / "doc.docx").exists())
+
+            qa2 = tmp_path / "qa2"
+            run_script(scripts / "convert.py", qa / "doc.docx", "--to", "odt", "--outdir", qa2)
+            roundtripped = qa2 / "doc.odt"
+            self.assertTrue(roundtripped.exists())
+
+            # Internal consistency must still hold (non-strict validation).
+            result = json.loads(run_script(scripts / "validate_refs.py", roundtripped).stdout)
+            self.assertEqual(result["status"], "ok", msg=str(result))
+
+            # And the document must render to a non-empty PDF.
+            outdir = tmp_path / "pdf"
+            run_script(scripts / "render.py", roundtripped, "--outdir", outdir)
+            pdf = outdir / "doc.pdf"
+            self.assertTrue(pdf.exists())
+            self.assertGreater(pdf.stat().st_size, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

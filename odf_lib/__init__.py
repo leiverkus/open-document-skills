@@ -26,6 +26,7 @@ from odf_lib.odf_common import (
     build_contact_sheet,
     build_index_body_placeholder,
     clear_children,
+    convert_with_soffice,
     copy_into_package,
     copy_with_multiple_members,
     embed_pictures,
@@ -113,10 +114,11 @@ __all__ = [
     "find_soffice",
     "find_pandoc",
     "latex_to_mathml",
-    # Rendering
+    # Rendering / conversion
     "render_to_pdf",
     "pdf_to_pngs",
     "build_contact_sheet",
+    "convert_with_soffice",
     # Themes
     "Theme",
     "THEMES",

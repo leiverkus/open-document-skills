@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v1.10.0** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v1.11.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -308,6 +308,30 @@ one-off Basic macro, then `soffice` headless.
   illustration index without a matching `text:sequence` group,
   alphabetical index without `text:alphabetical-index-mark`).
 
+## v1.11 — OOXML format conversion ✅ shipped (2026-05-23)
+
+Bidirectional bridges between ODT/ODS/ODP and their Microsoft Office
+counterparts (DOCX/XLSX/PPTX) plus the legacy MS Office binary formats
+(DOC/XLS/PPT) via headless LibreOffice. Closes the last interop gap with
+the OOXML world; the previous "DOCX/PPTX/XLSX import-and-edit" non-goal is
+now precisely scoped to **in-place native-OOXML editing** only —
+**one-shot conversion** in either direction ships here.
+
+- ✅ **`convert_with_soffice(input, target_format, outdir, filter_name=None)`**
+  in `odf_lib.odf_common`, in the public API. The canonical soffice-convert
+  helper: isolated `-env:UserInstallation` temp profile, `--convert-to`,
+  cleanup. `render_to_pdf` is now a one-line wrapper around it (PDF is just
+  another target format).
+- ✅ **`convert.py` per skill** — `skills/{odt,ods,odp}/scripts/convert.py`,
+  each handling its format family bidirectionally. ODT skill: ODT ↔ DOCX/DOC.
+  ODS skill: ODS ↔ XLSX/XLS. ODP skill: ODP ↔ PPTX/PPT.
+- ✅ **Cross-family rejection** — `convert.py` validates the input extension
+  against its family and exits with a clear hint pointing to the right skill.
+- ✅ **Tests** — `tests/test_convert.py` covers helper unit, per-skill
+  round-trips, legacy-format smoke, and cross-family rejection.
+  `test_libreoffice_integration.py` adds an ODT→DOCX→ODT bridge test
+  asserting non-strict validation passes and the result renders to PDF.
+
 ### Versioning
 
 `1.0.x` for bug fixes, shipped promptly; a `1.x` minor when something
@@ -323,7 +347,7 @@ These are intentionally out of scope. If you need them, use LibreOffice or anoth
 - **Pivot drill-down and field date-grouping** — `add_pivot_table.py` writes a computed grid and a refreshable definition; interactive drill-down is a LibreOffice concern.
 - **Master-page inheritance chains** — ODF has no such concept; a slide references a master page and a slide layout independently, both supported since v1.8.
 - **Full LibreOffice/Word-processor replacement.**
-- **DOCX/PPTX/XLSX import-and-edit** — the whole point of this project is to avoid those round-trips. Use `pandoc` if you need DOCX in/out.
+- **In-place native-OOXML editing** (open a `.docx`/`.xlsx`/`.pptx`, edit as DOCX/XLSX/PPTX, save back as DOCX/XLSX/PPTX) — the whole point of this project is native ODF. Use `python-docx`, `openpyxl`, `python-pptx`, or `pandoc`. **One-shot conversion** in either direction ships in v1.11 via `convert.py` per skill; for sustained DOCX work the natural pattern is `convert.py → edit as ODF → convert.py` back.
 
 ## How to influence the roadmap
 

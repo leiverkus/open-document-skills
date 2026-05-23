@@ -5,9 +5,9 @@
 [![Python](https://img.shields.io/pypi/pyversions/open-document-lib)](https://pypi.org/project/open-document-lib/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Native ODT / ODP / ODS / ODG generation and editing for agents — no DOCX round-trips, no LibreOffice dependency for the core path.**
+**Native ODT / ODP / ODS / ODG generation and editing for agents — plus bidirectional bridges to DOCX/XLSX/PPTX. No LibreOffice dependency for the core path.**
 
-Four self-contained skills for Codex, Claude Code, and OpenCode that teach an agent to create, inspect, and edit OpenDocument files directly via Python (stdlib only). Edits preserve inline structure (`text:span`, `text:note`, `text:bookmark`, `text:a`), `meta.xml` is updated on every save, and flat single-XML formats (`.fodt`/`.fodp`/`.fods`/`.fodg`) give you Git-friendly diffs. LibreOffice is optional and only needed for rendering, recalculation, and PDF export.
+Four self-contained skills for Codex, Claude Code, and OpenCode that teach an agent to create, inspect, and edit OpenDocument files directly via Python (stdlib only). Edits preserve inline structure (`text:span`, `text:note`, `text:bookmark`, `text:a`), `meta.xml` is updated on every save, and flat single-XML formats (`.fodt`/`.fodp`/`.fods`/`.fodg`) give you Git-friendly diffs. LibreOffice is optional — needed only for rendering, formula recalculation, PDF export, generated-index refresh, and the new (v1.11) OOXML bridge.
 
 <p align="center">
   <img src="docs/assets/hero.png" alt="A branded presentation title slide generated from a JSON spec — deep-blue theme, white typography, logo" width="640">
@@ -34,7 +34,7 @@ python skills/odt/scripts/validate_refs.py out.odt
 
 ## Why use these
 
-- **Native ODF, not converted from DOCX.** No font drift, no lost styles, no PDF round-trips.
+- **Native ODF — and a bridge to DOCX/XLSX/PPTX when you need it.** Generation and editing stay native (no font drift, no lost styles); when interop demands it, `convert.py` per skill round-trips through Microsoft Office formats via headless LibreOffice.
 - **Stdlib-only core.** Every generator, validator, and edit script runs without `pip install` — `xml.etree.ElementTree` and `zipfile` only. LibreOffice is needed only for rendering and recalculation.
 - **Structure-preserving edits.** `replace_text` keeps footnotes, hyperlinks, and inline formatting intact. `add_image` updates the manifest and `meta.xml`. `replace_cells` handles typed values and formulas.
 - **Audit-friendly.** Every edit writes `meta:modification-date`, `meta:generator`, and increments `meta:editing-cycles`. Pack to `.fodt` and `git diff` works.
@@ -65,11 +65,12 @@ Covers:
 - image embedding with magic-byte MIME detection
 - `meta.xml` lifecycle updates on every edit (`modification-date`, `generator`, `editing-cycles`)
 - flat ODF (`.fodt`/`.fodp`/`.fods`/`.fodg`) roundtrip
+- bidirectional conversion to and from Microsoft Office: ODT ↔ DOCX/DOC, ODS ↔ XLSX/XLS, ODP ↔ PPTX/PPT via headless LibreOffice (one `convert.py` per skill)
 
 Out of scope — use LibreOffice or another tool for these:
 
 - master-page inheritance chains (ODF has no such concept — slides reference a master and a slide layout independently, which the skills do support)
-- DOCX/PPTX/XLSX import-and-edit — use `pandoc` if you need those round-trips
+- **in-place** native-OOXML editing (open `.docx`/`.xlsx`/`.pptx`, edit as DOCX/XLSX/PPTX, save as DOCX/XLSX/PPTX) — use `python-docx`, `openpyxl`, `python-pptx`, or `pandoc`. One-shot conversion in either direction ships in v1.11 (above); for sustained DOCX work the natural pattern is `convert.py → edit as ODF → convert.py` back.
 
 See [ROADMAP.md](ROADMAP.md) for what is planned next.
 
@@ -260,7 +261,9 @@ Some workflows are intentionally optional because they require LibreOffice:
 - render ODT/ODP/ODG to PDF or images
 - export ODG to SVG/PNG
 - recalculate ODS formulas
-- round-trip conversions from DOCX/PPTX/XLSX or Markdown/HTML
+- refresh generated indexes in ODT (table of contents, bibliography, alphabetical index)
+- convert between ODF and Microsoft Office formats (DOCX/XLSX/PPTX, and legacy DOC/XLS/PPT)
+- round-trip conversions from Markdown/HTML
 
 The skills treat these as QA or interoperability steps. Native ODF package generation and XML-safe edits remain the preferred path when the target deliverable is an ODF file.
 

@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-VERSION = "1.10.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
+VERSION = "1.11.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
 
 ODF_NAMESPACES: dict[str, str] = {
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
@@ -1769,11 +1769,74 @@ def local_name(tag: str) -> str:
     return tag.split("}", 1)[1] if tag.startswith("{") else tag
 
 
+def convert_with_soffice(
+    input_path: Path,
+    target_format: str,
+    outdir: Path,
+    filter_name: str | None = None,
+) -> Path:
+    """Convert *input_path* to *target_format* via headless LibreOffice.
+
+    Spawns soffice with an isolated ``-env:UserInstallation`` temp profile
+    (so concurrent calls do not clash, and the real user profile is never
+    touched), runs ``--convert-to``, and returns the output file path.
+
+    Used for PDF rendering (see :func:`render_to_pdf`), OOXML conversion
+    (``docx``/``xlsx``/``pptx`` and the legacy ``doc``/``xls``/``ppt``), and
+    same-format re-saves (e.g. ``--convert-to ods`` to refresh formulas as
+    in :file:`skills/ods/scripts/recalc.py`).
+
+    Args:
+        input_path: Source file.
+        target_format: soffice format identifier (e.g. ``"pdf"``, ``"docx"``,
+            ``"ods"``). Determines the output extension.
+        outdir: Directory for the output (created if absent).
+        filter_name: Optional explicit LibreOffice filter name. When set,
+            soffice receives ``f"{target_format}:{filter_name}"`` — useful
+            to pin a specific filter version where soffice's default would
+            be ambiguous (rare).
+
+    Returns:
+        Path to the converted file (``outdir / f"{input_path.stem}.{target_format}"``).
+
+    Raises:
+        SystemExit: If LibreOffice fails or the output file is not produced.
+    """
+    import subprocess
+
+    outdir.mkdir(parents=True, exist_ok=True)
+    soffice: str = find_soffice()
+    convert_arg: str = f"{target_format}:{filter_name}" if filter_name else target_format
+    profile: str = tempfile.mkdtemp(prefix="odf-soffice-")
+    try:
+        result = subprocess.run(
+            [
+                soffice,
+                f"-env:UserInstallation=file://{profile}",
+                "--headless",
+                "--convert-to",
+                convert_arg,
+                "--outdir",
+                str(outdir),
+                str(input_path),
+            ],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+    finally:
+        shutil.rmtree(profile, ignore_errors=True)
+    output: Path = outdir / f"{input_path.stem}.{target_format}"
+    if result.returncode != 0 or not output.exists():
+        raise SystemExit(f"LibreOffice failed to convert {input_path.name} to {target_format}:\n{result.stdout}")
+    return output
+
+
 def render_to_pdf(odf_path: Path, outdir: Path) -> Path:
     """Render an ODF file to PDF with LibreOffice.
 
-    Uses an isolated, throwaway user profile so concurrent renders do not
-    clash. The PDF is written to *outdir* as ``<stem>.pdf``.
+    Thin wrapper around :func:`convert_with_soffice` with ``target_format="pdf"``;
+    retained for backward compatibility and as the dedicated PDF entry point.
 
     Args:
         odf_path: Source ODF file.
@@ -1785,33 +1848,7 @@ def render_to_pdf(odf_path: Path, outdir: Path) -> Path:
     Raises:
         SystemExit: If LibreOffice fails or the PDF is not produced.
     """
-    import subprocess
-
-    outdir.mkdir(parents=True, exist_ok=True)
-    soffice: str = find_soffice()
-    profile: str = tempfile.mkdtemp(prefix="odf-soffice-")
-    try:
-        result = subprocess.run(
-            [
-                soffice,
-                f"-env:UserInstallation=file://{profile}",
-                "--headless",
-                "--convert-to",
-                "pdf",
-                "--outdir",
-                str(outdir),
-                str(odf_path),
-            ],
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
-    finally:
-        shutil.rmtree(profile, ignore_errors=True)
-    pdf: Path = outdir / f"{odf_path.stem}.pdf"
-    if result.returncode != 0 or not pdf.exists():
-        raise SystemExit(f"LibreOffice failed to render {odf_path.name}:\n{result.stdout}")
-    return pdf
+    return convert_with_soffice(odf_path, "pdf", outdir)
 
 
 def pdf_to_pngs(pdf_path: Path, outdir: Path, dpi: int = 150) -> list[Path]:

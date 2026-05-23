@@ -1,10 +1,10 @@
 ---
 name: odt
-description: "Create, read, edit, convert, repair, or inspect OpenDocument Text files (.odt). Includes scholarly authoring: footnotes, endnotes, citations (BibTeX/CSL-JSON), cross-references (bookmarks, reference-marks, figure/table sequences), MathML formulas (from LaTeX), and generated indexes (table of contents, bibliography, illustration/table index, alphabetical index)."
-triggers: [".odt", "ODT", "OpenDocument Text", "Open Office document", "LibreOffice Writer", "Writer document", "odt-Datei", "OpenDocument-Text", "footnote", "endnote", "citation", "bibliography", "BibTeX", "CSL-JSON", "Fußnote", "Zitation", "Bibliographie", "Quellenangabe", "cross-reference", "Querverweis", "bookmark", "Lesezeichen", "figure", "Abbildung", "Table", "Tabelle", "equation", "Gleichung", "Formel", "MathML", "LaTeX", "flat ODF", ".fodt", "table of contents", "Inhaltsverzeichnis", "TOC", "Literaturverzeichnis", "index", "Index", "Abbildungsverzeichnis", "Tabellenverzeichnis", "alphabetical index", "alphabetisches Register"]
+description: "Create, read, edit, convert, repair, or inspect OpenDocument Text files (.odt) — including bidirectional conversion to DOCX/DOC via headless LibreOffice. Includes scholarly authoring: footnotes, endnotes, citations (BibTeX/CSL-JSON), cross-references (bookmarks, reference-marks, figure/table sequences), MathML formulas (from LaTeX), and generated indexes (table of contents, bibliography, illustration/table index, alphabetical index)."
+triggers: [".odt", "ODT", "OpenDocument Text", "Open Office document", "LibreOffice Writer", "Writer document", "odt-Datei", "OpenDocument-Text", "footnote", "endnote", "citation", "bibliography", "BibTeX", "CSL-JSON", "Fußnote", "Zitation", "Bibliographie", "Quellenangabe", "cross-reference", "Querverweis", "bookmark", "Lesezeichen", "figure", "Abbildung", "Table", "Tabelle", "equation", "Gleichung", "Formel", "MathML", "LaTeX", "flat ODF", ".fodt", "table of contents", "Inhaltsverzeichnis", "TOC", "Literaturverzeichnis", "index", "Index", "Abbildungsverzeichnis", "Tabellenverzeichnis", "alphabetical index", "alphabetisches Register", ".docx", "DOCX", ".doc", "Word document", "Word-Dokument", "MS Word", "Microsoft Word"]
 dont_use_for: ["spreadsheets (.ods)", "presentations (.odp)", "PDFs as primary deliverable", "general prose editing"]
 license: MIT
-version: "1.10.0"
+version: "1.11.0"
 ---
 
 # ODT creation, editing, and analysis
@@ -193,6 +193,36 @@ pandoc input.md --reference-doc=template.odt -o output.odt
 ```
 
 Set explicit heading hierarchy in the source. Avoid manually faking headings with bold text.
+
+### Format Conversion (Word: DOCX/DOC)
+
+For one-shot conversion between ODT and Microsoft Word formats, `convert.py`
+wraps `soffice --headless --convert-to` with an isolated temp profile:
+
+```bash
+# ODT → DOCX:
+python scripts/convert.py doc.odt --to docx --outdir qa
+
+# DOCX → ODT (the bridge: edit a Word document with our skills, then export back):
+python scripts/convert.py source.docx --to odt --outdir qa
+python scripts/replace_text.py qa/source.odt "Old text" "New text" -o edited.odt
+python scripts/convert.py edited.odt --to docx --outdir qa
+
+# Legacy MS Word 97-2003 (.doc):
+python scripts/convert.py doc.odt --to doc --outdir qa
+python scripts/convert.py legacy.doc --to odt --outdir qa
+```
+
+**Fidelity caveat**: soffice handles the 80% case (prose, simple tables,
+footnotes, basic styles) well. Round-tripping documents with complex master
+pages, embedded MathML, advanced bibliography features, or heavy custom
+formatting can lose detail. Inspect the output before relying on it.
+
+For spreadsheets, use the **ods** skill's `convert.py` (ODS ↔ XLSX/XLS); for
+presentations, the **odp** skill's `convert.py` (ODP ↔ PPTX/PPT). The skill
+boundary enforces format families — cross-family conversions (e.g. ODT →
+XLSX) are not supported by soffice and the script rejects them with a clear
+hint.
 
 ## Themes
 
