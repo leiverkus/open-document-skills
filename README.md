@@ -55,7 +55,7 @@ Covers:
   OASIS ODF 1.3 schema (`validate_refs.py --strict`, all four formats)
 - text/formula/shape extraction
 - XML-safe replacements that preserve inline `text:span`, `text:note`, `text:bookmark`, and `text:a`
-- scholarly authoring — footnotes, endnotes, citations (BibTeX/CSL-JSON), cross-references, MathML
+- scholarly authoring — footnotes, endnotes, citations (BibTeX/CSL-JSON), cross-references, MathML, and generated indexes (table of contents, bibliography, illustration/table index, alphabetical index) refreshed via headless LibreOffice
 - document review — comments and tracked changes (record edits, then accept or reject)
 - structural editing — bulk restyle, insert/delete blocks, table editing (rows, columns, cells)
 - spreadsheets — named ranges, data validation, embedded charts, conditional formatting, pivot tables
@@ -68,7 +68,6 @@ Covers:
 
 Out of scope — use LibreOffice or another tool for these:
 
-- generated indexes and tables of contents (LibreOffice builds these from the markers the skills set)
 - master-page inheritance chains (ODF has no such concept — slides reference a master and a slide layout independently, which the skills do support)
 - DOCX/PPTX/XLSX import-and-edit — use `pandoc` if you need those round-trips
 

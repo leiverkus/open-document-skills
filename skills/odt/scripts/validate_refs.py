@@ -260,6 +260,54 @@ def validate(path: Path) -> dict[str, object]:
         if rid not in referenced:
             warnings.append(f"text:changed-region {rid!r} is not referenced by any change marker")
 
+    # Generated indexes: each container should have content that will produce
+    # entries when LibreOffice refreshes it. Warn (not error) on emptiness — an
+    # empty index is structurally valid ODF, just probably unintentional.
+    toc_source_tag = q("text", "table-of-content-source")
+    headings = list(content.iter(q("text", "h")))
+    for toc in content.iter(q("text", "table-of-content")):
+        toc_name = toc.attrib.get(q("text", "name"), "?")
+        source = toc.find(toc_source_tag)
+        if source is None:
+            continue
+        max_lvl = int(source.attrib.get(q("text", "outline-level"), "10") or "10")
+        if not any(int(h.attrib.get(q("text", "outline-level"), "1") or "1") <= max_lvl for h in headings):
+            warnings.append(f"text:table-of-content {toc_name!r} has no matching headings (refresh will be empty)")
+
+    bib_marks = list(content.iter(q("text", "bibliography-mark")))
+    for bib in content.iter(q("text", "bibliography")):
+        if not bib_marks:
+            bib_name = bib.attrib.get(q("text", "name"), "?")
+            warnings.append(
+                f"text:bibliography {bib_name!r} but no text:bibliography-mark in body (refresh will be empty)"
+            )
+
+    used_sequence_names: set[str] = {s.attrib.get(q("text", "name"), "") for s in content.iter(q("text", "sequence"))}
+    for container_local, source_local in (
+        ("illustration-index", "illustration-index-source"),
+        ("table-index", "table-index-source"),
+    ):
+        for container in content.iter(q("text", container_local)):
+            cname = container.attrib.get(q("text", "name"), "?")
+            src = container.find(q("text", source_local))
+            if src is None:
+                continue
+            wanted = src.attrib.get(q("text", "caption-sequence-name"), "")
+            if wanted and wanted not in used_sequence_names:
+                warnings.append(
+                    f"text:{container_local} {cname!r} references caption-sequence-name {wanted!r} "
+                    "but no matching text:sequence is in the body (refresh will be empty)"
+                )
+
+    index_marks = list(content.iter(q("text", "alphabetical-index-mark")))
+    for ai in content.iter(q("text", "alphabetical-index")):
+        if not index_marks:
+            ai_name = ai.attrib.get(q("text", "name"), "?")
+            warnings.append(
+                f"text:alphabetical-index {ai_name!r} but no text:alphabetical-index-mark in body "
+                "(refresh will be empty)"
+            )
+
     return {"status": "ok" if not errors else "errors_found", "errors": errors, "warnings": sorted(set(warnings))}
 
 

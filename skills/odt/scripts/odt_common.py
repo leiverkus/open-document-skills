@@ -27,6 +27,7 @@ else:
 # Single consolidated import block from odf_lib.odf_common.
 from odf_lib.odf_common import (  # noqa: E402, I001
     build_contact_sheet,
+    build_index_body_placeholder,
     clear_children,
     copy_into_package as _copy_base,
     copy_with_multiple_members as _copy_members_base,
@@ -78,6 +79,7 @@ __all__ = [
     "get_theme",
     "theme_font_faces",
     "build_contact_sheet",
+    "build_index_body_placeholder",
     "clear_children",
     "copy_into_package",
     "copy_with_multiple_members",

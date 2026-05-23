@@ -278,6 +278,51 @@ python3 skills/odt/scripts/list_citations.py output.odt --json
 
 LibreOffice renders citations through its bibliography style and generates the bibliography index from the inserted `text:bibliography-mark` elements. BibTeX support requires `pip install open-document-skills[scholarly]`; CSL-JSON uses stdlib only.
 
+### Generated tables of contents and indexes (ODT)
+
+ODT carries four index types. Each is inserted as a *container* with a
+configuration source plus an empty `text:index-body` placeholder; the
+entries are filled by LibreOffice when `update_indexes.py` opens the
+document and dispatches a refresh.
+
+```bash
+# Table of contents (default outline level 3):
+python3 skills/odt/scripts/add_toc.py doc.odt --at start \
+    --title "Inhalt" --levels 3 -o doc.odt
+
+# Bibliography — entries come from text:bibliography-mark
+# (add via add_citation.py / fill_citations.py):
+python3 skills/odt/scripts/add_bibliography.py doc.odt --at end \
+    --title "Literatur" -o doc.odt
+
+# Illustration / table / equation index — pick the sequence to index:
+python3 skills/odt/scripts/add_illustration_index.py doc.odt --at end \
+    --sequence Figure -o doc.odt
+
+# Alphabetical index — combine the container with point markers:
+python3 skills/odt/scripts/add_alphabetical_index.py doc.odt --at end -o doc.odt
+python3 skills/odt/scripts/add_index_mark.py doc.odt --anchor "Datierung" \
+    --key1 "Methoden" --key2 "C14" -o doc.odt
+
+# Refresh every index body via headless LibreOffice (mirrors recalc.py for ODS):
+python3 skills/odt/scripts/update_indexes.py doc.odt --outdir qa
+```
+
+`update_indexes.py` writes an isolated `-env:UserInstallation` temp profile
+with a one-off `Standard/Module1.RefreshIndexes` Basic macro, invokes
+`soffice` on the document + macro URL, then removes the temp profile. The
+real LibreOffice user profile is never touched. On platforms where headless
+macro execution is blocked (notably some macOS LibreOffice bundles) the
+script reports a clear diagnosis and the workaround: open the file once in
+LibreOffice GUI and press F9 (Tools → Update → Update All Indexes), then
+save.
+
+`validate_refs.py` warns when an index container is structurally empty:
+TOC with no matching headings, bibliography without `text:bibliography-mark`,
+illustration index pointing at a `caption-sequence-name` that nothing in
+the body uses, or alphabetical index without any
+`text:alphabetical-index-mark`.
+
 ## Document review: tracked changes and comments (ODT)
 
 Record edits as tracked changes a human can accept or reject, and attach

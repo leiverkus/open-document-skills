@@ -124,6 +124,7 @@ helpers) is internal and may change without notice.
 | `wrap_text_with_pair_in_element(element, start_anchor, end_anchor, start_element, end_element) -> bool` | Wrap an intra-paragraph text range with a start/end pair. |
 | `wrap_text_across_elements(elements, start_anchor, end_anchor, start_element, end_element) -> bool` | Same, spanning multiple paragraphs. |
 | `ensure_sequence_declarations(text_root, names, ns) -> None` | Ensure `text:sequence-decl` entries exist. |
+| `build_index_body_placeholder(title, container_name, section_style="Sect1", title_paragraph_style="Contents_20_Heading") -> ET.Element` | Build an empty `text:index-body` placeholder used by the ODT index inserters; LibreOffice fills it on refresh. |
 | `clear_children(element) -> None` | Remove all children of an element. |
 | `local_name(tag) -> str` | Local name from a Clark-notation tag. |
 

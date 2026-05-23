@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-VERSION = "1.9.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
+VERSION = "1.10.0"  # keep in sync with pyproject.toml (see CONTRIBUTING.md)
 
 ODF_NAMESPACES: dict[str, str] = {
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
@@ -1194,6 +1194,44 @@ def ensure_sequence_declarations(text_root: ET.Element, names: list[str], ns: Ma
         if name in existing:
             continue
         ET.SubElement(decls, decl_tag, {name_attr: name, display_attr: "0"})
+
+
+def build_index_body_placeholder(
+    title: str,
+    container_name: str,
+    section_style: str = "Sect1",
+    title_paragraph_style: str = "Contents_20_Heading",
+) -> ET.Element:
+    """Build an empty ``text:index-body`` placeholder for a generated index.
+
+    The body contains only the title paragraph. The actual index entries are
+    filled in later by LibreOffice when ``update_indexes.py`` opens the document
+    and dispatches the index-refresh action. Until then, opening the file in
+    LibreOffice GUI shows the empty index — pressing F9 (or Tools → Update →
+    Update All Indexes) fills it.
+
+    Args:
+        title: Title text rendered in the placeholder (e.g. ``"Table of Contents"``).
+        container_name: ``text:name`` of the enclosing index element
+            (e.g. ``"Table of Contents1"``); the title element's ``text:name``
+            is set to ``f"{container_name}_Head"`` per the LibreOffice convention.
+        section_style: ``text:style-name`` for the ``text:index-title`` element.
+        title_paragraph_style: ``text:style-name`` for the title paragraph.
+
+    Returns:
+        A ``text:index-body`` element with one ``text:index-title`` child.
+    """
+    text_ns: str = ODF_NAMESPACES["text"]
+    name_attr: str = f"{{{text_ns}}}name"
+    style_attr: str = f"{{{text_ns}}}style-name"
+    body: ET.Element = ET.Element(f"{{{text_ns}}}index-body")
+    title_el: ET.Element = ET.SubElement(body, f"{{{text_ns}}}index-title")
+    title_el.set(style_attr, section_style)
+    title_el.set(name_attr, f"{container_name}_Head")
+    p: ET.Element = ET.SubElement(title_el, f"{{{text_ns}}}p")
+    p.set(style_attr, title_paragraph_style)
+    p.text = title
+    return body
 
 
 def replace_text_in_element(element: ET.Element, old: str, new: str) -> int:

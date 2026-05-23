@@ -400,6 +400,78 @@ class LibreOfficeIntegrationTests(unittest.TestCase):
                 self.assertTrue(pdf.exists())
                 self.assertGreater(pdf.stat().st_size, 0)
 
+    def test_generated_indexes_round_trip(self) -> None:
+        """ODT with all four index types + a marker survives soffice round-trip.
+
+        The full ``update_indexes.py`` macro refresh requires the platform's
+        headless macro execution to fire, which is blocked on some macOS
+        LibreOffice bundles. Here we exercise the pieces that always work:
+        every inserter produces a valid ODF document that LibreOffice opens
+        cleanly (PDF render is non-empty), and ``validate_refs --strict``
+        stays green over the whole chain.
+        """
+        try:
+            import lxml  # noqa: F401
+        except ImportError:
+            self.skipTest("lxml not installed")
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odt" / "scripts"
+            spec = tmp_path / "spec.json"
+            spec.write_text(
+                json.dumps(
+                    {
+                        "title": "Indexes Demo",
+                        "blocks": [
+                            {"type": "heading", "level": 1, "text": "Intro"},
+                            {"type": "paragraph", "text": "Body of intro."},
+                            {"type": "heading", "level": 2, "text": "Background"},
+                            {"type": "paragraph", "text": "More text."},
+                            {"type": "heading", "level": 1, "text": "Methods"},
+                            {"type": "paragraph", "text": "Methods description."},
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            base = tmp_path / "0.odt"
+            run_script(scripts / "create_minimal_odt.py", spec, base)
+
+            step1 = tmp_path / "1.odt"
+            run_script(
+                scripts / "add_sequence.py",
+                base,
+                "--sequence",
+                "Figure",
+                "--name",
+                "fig1",
+                "--anchor",
+                "intro",
+                "-o",
+                step1,
+            )
+            step2 = tmp_path / "2.odt"
+            run_script(scripts / "add_index_mark.py", step1, "--anchor", "Background", "--key1", "Topics", "-o", step2)
+            step3 = tmp_path / "3.odt"
+            run_script(scripts / "add_toc.py", step2, "--at", "start", "-o", step3)
+            step4 = tmp_path / "4.odt"
+            run_script(scripts / "add_bibliography.py", step3, "--at", "end", "-o", step4)
+            step5 = tmp_path / "5.odt"
+            run_script(scripts / "add_illustration_index.py", step4, "--at", "end", "--sequence", "Figure", "-o", step5)
+            step6 = tmp_path / "6.odt"
+            run_script(scripts / "add_alphabetical_index.py", step5, "--at", "end", "-o", step6)
+
+            # Strict schema must stay green over the full chain.
+            result = json.loads(run_script(scripts / "validate_refs.py", step6, "--strict").stdout)
+            self.assertEqual(result["status"], "ok", msg=str(result))
+
+            # LibreOffice must open and render the document.
+            outdir = tmp_path / "qa"
+            run_script(scripts / "render.py", step6, "--outdir", outdir)
+            pdf = outdir / "6.pdf"
+            self.assertTrue(pdf.exists())
+            self.assertGreater(pdf.stat().st_size, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

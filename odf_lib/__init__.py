@@ -24,6 +24,7 @@ from odf_lib.odf_common import (
     VERSION,
     apply_strict_schema_check,
     build_contact_sheet,
+    build_index_body_placeholder,
     clear_children,
     copy_into_package,
     copy_with_multiple_members,
@@ -98,6 +99,7 @@ __all__ = [
     "wrap_text_with_pair_in_element",
     "wrap_text_across_elements",
     "ensure_sequence_declarations",
+    "build_index_body_placeholder",
     "clear_children",
     "local_name",
     # Styles / pictures

@@ -1,5 +1,43 @@
 # Changelog
 
+## v1.10.0 - 2026-05-23
+
+Generated indexes for ODT — the last remaining "Out of scope" entry in the
+README ("generated indexes and tables of contents") is now in scope. The
+ODT skill ships placeholder inserters for the four ODF index types plus a
+marker script for the alphabetical index, and a `update_indexes.py` that
+mirrors `recalc.py` (ODS v0.6) to dispatch the LibreOffice headless refresh.
+
+### Added
+
+- **`add_toc.py`** — inserts a `text:table-of-content` placeholder with
+  configurable outline level (default 3) and entry templates for each level.
+- **`add_bibliography.py`** — inserts a `text:bibliography` placeholder with
+  entry templates for the common ODF bibliography types.
+- **`add_illustration_index.py`** — inserts a `text:illustration-index`
+  (or `text:table-index` when `--sequence Table`); `--sequence` covers
+  `Figure`, `Table`, `Equation`, or any custom caption-sequence-name.
+- **`add_alphabetical_index.py`** — inserts a `text:alphabetical-index`
+  placeholder.
+- **`add_index_mark.py`** — inserts a `text:alphabetical-index-mark` point
+  marker (analogous to `add_bookmark.py` point mode); pair with
+  `add_alphabetical_index.py`.
+- **`update_indexes.py`** — soffice-driven refresh that fills the
+  `text:index-body` of every index container. Writes an isolated
+  `-env:UserInstallation` temp profile with a one-off
+  `Standard/Module1.RefreshIndexes` Basic library, invokes soffice on the
+  document + macro URL, then cleans the temp profile up. The real user
+  profile is never touched. On platforms where headless macro execution is
+  blocked, the script reports a clear diagnosis and the workaround
+  (open in LibreOffice GUI, press F9, save).
+- **`build_index_body_placeholder`** — new helper in `odf_lib.odf_common`,
+  exported in the public API; builds the empty `text:index-body` shared by
+  all four inserters.
+- **`validate_refs.py`** (ODT): four new warn-checks for structurally empty
+  indexes — TOC with no matching headings, bibliography without
+  `text:bibliography-mark`, illustration index with no matching
+  `text:sequence` group, alphabetical index without `text:alphabetical-index-mark`.
+
 ## v1.9.0 - 2026-05-22
 
 Curated themes — ROADMAP Track D item 6 / Track C, the last open roadmap

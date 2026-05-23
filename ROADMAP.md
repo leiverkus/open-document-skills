@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v1.9.0** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v1.10.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -281,6 +281,32 @@ Track D item 6 / Track C: a curated theme library. Rather than a static
   and `create_from_markdown`. Purely additive; output is unchanged without it.
 - ✅ **First font declarations** — generators now emit `office:font-face-decls`;
   themes use Liberation-fallback font stacks so they render deterministically.
+
+## v1.10 — Generated indexes (ODT) ✅ shipped (2026-05-23)
+
+Closes the last remaining "Out of scope" README entry: generated tables of
+contents and indexes. The skill already set every required marker
+(`text:h outline-level`, `text:bibliography-mark`, `text:sequence`); only the
+index containers + a soffice-driven refresh were missing. Same pattern as
+`recalc.py` (ODS, v0.6): isolated `-env:UserInstallation` temp profile with a
+one-off Basic macro, then `soffice` headless.
+
+- ✅ **`build_index_body_placeholder`** — new helper in `odf_lib.odf_common`,
+  in the published API.
+- ✅ **`add_toc.py`, `add_bibliography.py`, `add_illustration_index.py`,
+  `add_alphabetical_index.py`** — four index-container inserters following
+  the `add_footnote.py` / `add_bookmark.py` anchor pattern.
+  `add_illustration_index.py --sequence Table` emits `text:table-index`;
+  any other sequence emits `text:illustration-index`.
+- ✅ **`add_index_mark.py`** — point-marker for the alphabetical index
+  (analogous to `add_bookmark.py` point mode).
+- ✅ **`update_indexes.py`** — mirrors `recalc.py`: writes a one-off
+  Basic macro into a temp profile, invokes soffice, refreshes every
+  `text:index-body` in place.
+- ✅ **`validate_refs.py`** (ODT): four warn-checks for structurally empty
+  indexes (empty TOC, bibliography without `text:bibliography-mark`,
+  illustration index without a matching `text:sequence` group,
+  alphabetical index without `text:alphabetical-index-mark`).
 
 ### Versioning
 

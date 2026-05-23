@@ -1,10 +1,10 @@
 ---
 name: odt
-description: "Create, read, edit, convert, repair, or inspect OpenDocument Text files (.odt). Includes scholarly authoring: footnotes, endnotes, citations (BibTeX/CSL-JSON), cross-references (bookmarks, reference-marks, figure/table sequences), and MathML formulas (from LaTeX)."
-triggers: [".odt", "ODT", "OpenDocument Text", "Open Office document", "LibreOffice Writer", "Writer document", "odt-Datei", "OpenDocument-Text", "footnote", "endnote", "citation", "bibliography", "BibTeX", "CSL-JSON", "Fußnote", "Zitation", "Bibliographie", "Quellenangabe", "cross-reference", "Querverweis", "bookmark", "Lesezeichen", "figure", "Abbildung", "Table", "Tabelle", "equation", "Gleichung", "Formel", "MathML", "LaTeX", "flat ODF", ".fodt"]
+description: "Create, read, edit, convert, repair, or inspect OpenDocument Text files (.odt). Includes scholarly authoring: footnotes, endnotes, citations (BibTeX/CSL-JSON), cross-references (bookmarks, reference-marks, figure/table sequences), MathML formulas (from LaTeX), and generated indexes (table of contents, bibliography, illustration/table index, alphabetical index)."
+triggers: [".odt", "ODT", "OpenDocument Text", "Open Office document", "LibreOffice Writer", "Writer document", "odt-Datei", "OpenDocument-Text", "footnote", "endnote", "citation", "bibliography", "BibTeX", "CSL-JSON", "Fußnote", "Zitation", "Bibliographie", "Quellenangabe", "cross-reference", "Querverweis", "bookmark", "Lesezeichen", "figure", "Abbildung", "Table", "Tabelle", "equation", "Gleichung", "Formel", "MathML", "LaTeX", "flat ODF", ".fodt", "table of contents", "Inhaltsverzeichnis", "TOC", "Literaturverzeichnis", "index", "Index", "Abbildungsverzeichnis", "Tabellenverzeichnis", "alphabetical index", "alphabetisches Register"]
 dont_use_for: ["spreadsheets (.ods)", "presentations (.odp)", "PDFs as primary deliverable", "general prose editing"]
 license: MIT
-version: "1.9.0"
+version: "1.10.0"
 ---
 
 # ODT creation, editing, and analysis
@@ -415,6 +415,47 @@ python scripts/add_math.py input.odt --paragraph 3 \
 ```
 
 Formulas are embedded as `Object N/` sub-packages — the LibreOffice-native convention — with proper manifest entries (`application/vnd.oasis.opendocument.formula`). LibreOffice opens, renders, and roundtrips them.
+
+### Generated tables of contents and indexes
+
+The skill ships inserters for the four ODF index types plus a marker script for
+the alphabetical index. Each script writes the index *container* (with the
+proper `text:<kind>-source` configuration) and an empty `text:index-body`
+placeholder. The actual entries are filled by LibreOffice — run
+`update_indexes.py` to dispatch the refresh headlessly, or open the document
+in LibreOffice GUI and press F9 (Tools → Update → Update All Indexes).
+
+```bash
+# Table of contents over a doc's headings (default outline level 3):
+python scripts/add_toc.py input.odt --at start --title "Inhalt" -o output.odt
+
+# Bibliography (entries come from text:bibliography-mark — see add_citation.py):
+python scripts/add_bibliography.py input.odt --at end --title "Literatur" -o output.odt
+
+# Illustration index / table index — pass --sequence Figure | Table | Equation
+# (entries come from text:sequence captions inserted via add_sequence.py):
+python scripts/add_illustration_index.py input.odt --at end --sequence Figure -o output.odt
+
+# Alphabetical index — combine the container with point markers:
+python scripts/add_alphabetical_index.py input.odt --at end -o with_idx.odt
+python scripts/add_index_mark.py with_idx.odt --anchor "Datierung" \
+    --key1 "Methoden" --key2 "C14" -o with_marks.odt
+
+# Refresh all index bodies via headless soffice (mirrors recalc.py for Calc):
+python scripts/update_indexes.py with_marks.odt --outdir qa
+```
+
+`update_indexes.py` writes an isolated `-env:UserInstallation` temp profile
+with a one-off `Standard/Module1.RefreshIndexes` Basic library, invokes
+soffice on the document + macro URL, then deletes the temp profile. The real
+LibreOffice user profile is never touched. On platforms where headless macro
+execution is blocked the script prints a clear diagnosis; opening the file
+once in LibreOffice GUI and pressing F9 is the manual fallback.
+
+`validate_refs.py` warns when an index container is structurally empty:
+TOC with no matching headings, bibliography without `text:bibliography-mark`,
+illustration index referencing a `caption-sequence-name` that nothing in the
+body uses, or alphabetical index without any `text:alphabetical-index-mark`.
 
 ## Tracked Changes and Comments
 

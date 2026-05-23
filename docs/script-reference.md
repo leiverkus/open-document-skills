@@ -23,6 +23,12 @@ All scripts use the Python standard library.
 | `add_sequence.py` | Auto-numbered `text:sequence` (Figure/Table/Equation) with on-demand `text:sequence-decls`; also `text:sequence-ref`. |
 | `list_refs.py` | List bookmarks, reference-marks, sequences, and references as JSON. |
 | `add_math.py` | Embed a MathML formula via LaTeX (Pandoc), MathML file, or inline MathML; uses LibreOffice-native `Object N/` sub-packages. |
+| `add_toc.py` | Insert a `text:table-of-content` placeholder with configurable outline level (default 3) and entry templates. |
+| `add_bibliography.py` | Insert a `text:bibliography` placeholder with entry templates for the common ODF bibliography types. |
+| `add_illustration_index.py` | Insert a `text:illustration-index` (or `text:table-index` when `--sequence Table`); `--sequence Figure`/`Table`/`Equation`/… selects the caption-sequence-name. |
+| `add_alphabetical_index.py` | Insert a `text:alphabetical-index` placeholder; pair with `add_index_mark.py`. |
+| `add_index_mark.py` | Insert a `text:alphabetical-index-mark` point marker at an anchor with `--key1` / `--key2` headings. |
+| `update_indexes.py` | Refresh every `text:index-body` via headless LibreOffice (isolated temp profile + one-off Basic macro). Mirrors `recalc.py` for ODS. |
 | `add_comment.py` | Insert an `office:annotation` comment (point or range) with author, date, and body. |
 | `list_comments.py` | List all comments as JSON with name, author, date, text, and context. |
 | `track_change.py` | Record an edit as a tracked change — `--insert`, `--delete`, or `--replace`. |
