@@ -1851,6 +1851,76 @@ def render_to_pdf(odf_path: Path, outdir: Path) -> Path:
     return convert_with_soffice(odf_path, "pdf", outdir)
 
 
+def render_impress_to_pdf(
+    odp_path: Path,
+    outdir: Path,
+    *,
+    notes: bool = False,
+    notes_only: bool = False,
+) -> Path:
+    """Render an ODP deck to PDF with optional speaker-notes pages.
+
+    Uses LibreOffice's ``impress_pdf_Export`` filter to control whether the
+    PDF includes notes pages. The output filename varies with the mode so
+    callers can keep slide-only, slide+notes, and notes-only PDFs side by
+    side:
+
+    - default (neither flag): ``<stem>.pdf`` — slides only (same as
+      :func:`render_to_pdf`).
+    - ``notes=True``: ``<stem>-with-notes.pdf`` — slides interleaved with
+      notes pages.
+    - ``notes_only=True``: ``<stem>-notes.pdf`` — notes pages only.
+
+    Args:
+        odp_path: Source ODP file.
+        outdir: Directory for the PDF (created if absent).
+        notes: Include speaker-notes pages alongside the slide pages.
+        notes_only: Export only the notes pages (implies ``notes=True``).
+            Mutually exclusive with the slide-only default.
+
+    Returns:
+        Path to the rendered PDF (renamed per mode, see above).
+
+    Raises:
+        ValueError: If both ``notes`` and ``notes_only`` are ``False`` but
+            the caller expected a notes-flavoured output (i.e. nothing to do
+            here that ``render_to_pdf`` would not already cover). The
+            default mode is still supported for symmetry.
+        SystemExit: If LibreOffice fails or the PDF is not produced.
+    """
+    if notes_only:
+        # ``ExportOnlyNotesPages=True`` requires ``ExportNotesPages=True``
+        # in LibreOffice's filter — both must be set together.
+        filter_name: str | None = (
+            'impress_pdf_Export:{"ExportNotesPages":{"type":"boolean","value":"true"},'
+            '"ExportOnlyNotesPages":{"type":"boolean","value":"true"}}'
+        )
+        suffix = "-notes"
+    elif notes:
+        filter_name = 'impress_pdf_Export:{"ExportNotesPages":{"type":"boolean","value":"true"}}'
+        suffix = "-with-notes"
+    else:
+        filter_name = None
+        suffix = ""
+
+    outdir.mkdir(parents=True, exist_ok=True)
+    if not suffix:
+        return convert_with_soffice(odp_path, "pdf", outdir, filter_name=filter_name)
+
+    # Render into a private temp dir so the rename target does not clobber
+    # an existing ``<stem>.pdf`` (e.g. a slide-only PDF rendered first).
+    staging = Path(tempfile.mkdtemp(prefix="odf-render-notes-"))
+    try:
+        rendered = convert_with_soffice(odp_path, "pdf", staging, filter_name=filter_name)
+        target = outdir / f"{odp_path.stem}{suffix}.pdf"
+        if target.exists():
+            target.unlink()
+        rendered.replace(target)
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+    return target
+
+
 def pdf_to_pngs(pdf_path: Path, outdir: Path, dpi: int = 150) -> list[Path]:
     """Render every page of a PDF to a PNG with ``pdftoppm`` (Poppler).
 

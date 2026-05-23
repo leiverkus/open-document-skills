@@ -4,6 +4,17 @@
 The contact sheet (``--contact-sheet``) shows every slide in one labelled
 grid image — ideal for judging cross-slide consistency at a glance. Treat
 rendering as a design step, not only a final check.
+
+Speaker-notes export:
+
+- ``--notes``: include speaker-notes pages interleaved with slides
+  (output: ``<stem>-with-notes.pdf``).
+- ``--notes-only``: export only the notes pages (output:
+  ``<stem>-notes.pdf``).
+
+The flags are mutually exclusive. Both produce additional files alongside
+the default ``<stem>.pdf`` so slide-only and notes views can be compared
+side by side.
 """
 
 from __future__ import annotations
@@ -12,7 +23,7 @@ import argparse
 import tempfile
 from pathlib import Path
 
-from odp_common import build_contact_sheet, pdf_to_pngs, render_to_pdf
+from odp_common import build_contact_sheet, pdf_to_pngs, render_impress_to_pdf, render_to_pdf
 
 
 def main() -> None:
@@ -27,10 +38,28 @@ def main() -> None:
     )
     parser.add_argument("--dpi", type=int, default=150, help="PNG render resolution")
     parser.add_argument("--columns", type=int, default=0, help="contact-sheet columns (0 = auto)")
+    notes_group = parser.add_mutually_exclusive_group()
+    notes_group.add_argument(
+        "--notes",
+        action="store_true",
+        help="also export a slides+notes PDF (<stem>-with-notes.pdf)",
+    )
+    notes_group.add_argument(
+        "--notes-only",
+        action="store_true",
+        help="also export a notes-only PDF (<stem>-notes.pdf)",
+    )
     args = parser.parse_args()
 
     pdf = render_to_pdf(args.input, args.outdir)
     print(pdf)
+
+    if args.notes:
+        notes_pdf = render_impress_to_pdf(args.input, args.outdir, notes=True)
+        print(notes_pdf)
+    elif args.notes_only:
+        notes_pdf = render_impress_to_pdf(args.input, args.outdir, notes_only=True)
+        print(notes_pdf)
 
     if args.png:
         pages = pdf_to_pngs(pdf, args.outdir, args.dpi)

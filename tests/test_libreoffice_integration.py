@@ -52,6 +52,28 @@ class LibreOfficeIntegrationTests(unittest.TestCase):
             self.assertTrue(pdf.exists())
             self.assertGreater(pdf.stat().st_size, 0)
 
+    def test_odp_render_with_notes(self) -> None:
+        """--notes and --notes-only each emit a sibling PDF alongside the
+        slide-only PDF, exercising the impress_pdf_Export filter."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odp" / "scripts"
+            odp = tmp_path / "deck.odp"
+            outdir = tmp_path / "qa"
+            run_script(scripts / "create_minimal_odp.py", FIXTURES / "odp_slides.json", odp)
+
+            run_script(scripts / "render.py", odp, "--outdir", outdir, "--notes")
+            slides_pdf = outdir / "deck.pdf"
+            with_notes_pdf = outdir / "deck-with-notes.pdf"
+            self.assertTrue(slides_pdf.exists())
+            self.assertTrue(with_notes_pdf.exists())
+            self.assertGreater(with_notes_pdf.stat().st_size, 0)
+
+            run_script(scripts / "render.py", odp, "--outdir", outdir, "--notes-only")
+            notes_only_pdf = outdir / "deck-notes.pdf"
+            self.assertTrue(notes_only_pdf.exists())
+            self.assertGreater(notes_only_pdf.stat().st_size, 0)
+
     def test_odg_render_to_pdf(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)

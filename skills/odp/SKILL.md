@@ -517,7 +517,15 @@ deck blind and render once at the end.
 python scripts/render.py output.odp --outdir qa --contact-sheet  # all slides in one image
 python scripts/render.py output.odp --outdir qa --png            # one PNG per slide
 python scripts/render.py output.odp --outdir qa                  # PDF only
+python scripts/render.py output.odp --outdir qa --notes          # + slides+notes PDF
+python scripts/render.py output.odp --outdir qa --notes-only     # + notes-only PDF
 ```
+
+`--notes` / `--notes-only` use LibreOffice's ``impress_pdf_Export``
+filter (``ExportNotesPages`` / ``ExportOnlyNotesPages``) and write
+``<stem>-with-notes.pdf`` / ``<stem>-notes.pdf`` alongside the default
+slide-only PDF — useful for reviewing speaker notes or producing a
+handout for the presenter.
 
 The **contact sheet** composes every slide into a single labelled grid
 image — the best way to judge cross-slide consistency (alignment, colours,
