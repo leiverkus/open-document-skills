@@ -1,5 +1,50 @@
 # Changelog
 
+## v1.14.0 - 2026-05-23
+
+Speaker-notes PDF export for Impress. LibreOffice's `impress_pdf_Export`
+filter has always supported notes-page export via the `ExportNotesPages`
+and `ExportOnlyNotesPages` FilterData properties, but the ODP render
+script only ever produced slide-only PDFs. v1.14 surfaces the capability
+so reviewers and presenters can pull a handout PDF straight out of the
+visual-design loop.
+
+### Added
+
+- **`odf_lib.odf_common.render_impress_to_pdf`** — thin wrapper around
+  `convert_with_soffice` that sets the right `impress_pdf_Export`
+  FilterData JSON. Renders into a private temp directory and renames the
+  result to `<stem>-with-notes.pdf` or `<stem>-notes.pdf` so a slide-only
+  `<stem>.pdf` rendered in the same run is not clobbered.
+- **`skills/odp/scripts/render.py`** gains mutually exclusive `--notes`
+  and `--notes-only` flags:
+  - `--notes` → also emit `<stem>-with-notes.pdf` (slides interleaved
+    with notes pages).
+  - `--notes-only` → also emit `<stem>-notes.pdf` (notes pages only).
+  The default slide-only `<stem>.pdf` continues to be produced in every
+  run; the new flags add a sibling PDF alongside it.
+- `skills/odp/scripts/odp_common.py` re-exports
+  `render_impress_to_pdf`.
+- `skills/odp/SKILL.md` documents the new flags in the visual-design-loop
+  section.
+- `tests/test_libreoffice_integration.py::test_odp_render_with_notes`
+  exercises both flags end-to-end against the existing `odp_slides.json`
+  fixture (which already carries a speaker-note). Total: 403 tests
+  (was 402).
+
+### Changed
+
+- `examples/dao/` and the `grant-proposal` template documentation reframe
+  the DAO localisation as a German-language proposal to a third-party
+  funder. Earlier copy positioned the DAO example as a proposal to the
+  Deutsches Archäologisches Institut (DAI), which does not award
+  third-party grants, and listed the DFG alongside ERC/VW/Thyssen/EU.
+  Both references are removed throughout `examples/dao/README.md`, the
+  shipped `grant-proposal` README/PROVENANCE/styles.xml, `skills/odt/`,
+  `docs/`, `ROADMAP.md`, and the trigger keywords. The DAO branding
+  itself (Nunito Sans, `#02416C`, `DAO-*` style names, logo placeholder)
+  is retained as a pure styling showcase.
+
 ## v1.13.0 - 2026-05-23
 
 ODT template ecosystem — five English-first, institution-neutral templates

@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v1.13.0** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v1.14.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
