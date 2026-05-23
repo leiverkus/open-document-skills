@@ -21,7 +21,7 @@ open-document-skills/
 │   ├── repository-layout.md
 │   └── soffice-resolver.md
 ├── examples/              # Curated end-to-end examples
-│   ├── dao/               # DAO grant proposal (ODT, branded inject + DFG style)
+│   ├── dao/               # DAO grant proposal (ODT, branded inject, German localisation)
 │   ├── deck/              # Branded ODP deck
 │   ├── diagram/           # Branded ODG flowchart
 │   ├── article/           # Markdown → ODT showcase

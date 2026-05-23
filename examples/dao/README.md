@@ -19,7 +19,7 @@ LaTeX formulas.
 | Typography | Lato + Source Serif | Nunito Sans (+ SemiBold) |
 | Style names | `Title`, `Heading1`, … | DAO-prefixed + standard names |
 | Logo | none (institution-neutral) | `Pictures/logo.png` (DAO placeholder) |
-| Audience | Any agency, any country | German archaeology institutes |
+| Audience | Any agency, any country | Deutschsprachiger Drittmittelgeber |
 
 `examples/dao/` is itself a valid template directory (`styles.xml` +
 `Pictures/logo.png` + `LICENSE.txt`-style content) that `apply_template`

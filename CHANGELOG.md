@@ -27,7 +27,7 @@ proposal in `examples/dao/` is preserved as the localisation showcase.
   validate-refs. Supports `--template-name <shipped>` and `--template PATH`.
 - **Five shipped templates** in `skills/odt/templates/`:
   - `grant-proposal` — research grant proposal for any funding agency
-    (DFG / ERC / VolkswagenStiftung / Gerda Henkel / Fritz Thyssen /
+    (ERC / VolkswagenStiftung / Gerda Henkel / Fritz Thyssen /
     BMBF / EU Horizon). English, institution-neutral. A4 with 2.5 cm
     margins, navy Lato headings (`#1B3A57`) + Source Serif body, 4-level
     outline numbering.
@@ -686,7 +686,7 @@ DAO-branded template, cross-paragraph ranges, RelaxNG schema validation, magic-b
 ### Added
 
 - **DAO-branded template** in `examples/dao/`:
-  - `styles.xml` — Nunito Sans, `#02416C`, A4 with 2.5 cm DFG-Antrag margins, master page with logo header + footer with page number, 7 named paragraph styles (`DAO-Title`, `DAO-Heading-1..3`, `DAO-Body`, `DAO-Quote`, `DAO-Caption`), outline numbering for 3 levels.
+  - `styles.xml` — Nunito Sans, `#02416C`, A4 with 2.5 cm standard grant margins, master page with logo header + footer with page number, 7 named paragraph styles (`DAO-Title`, `DAO-Heading-1..3`, `DAO-Body`, `DAO-Quote`, `DAO-Caption`), outline numbering for 3 levels.
   - `logo-placeholder.png` — 300×100 PNG with `#02416C`-bordered transparent placeholder; user replaces with the real DAO logo.
   - `build_grant_proposal.py` — new Step 1b injects DAO styles + embeds logo.
   - `spec.json` — all block specs reference DAO-* style names.

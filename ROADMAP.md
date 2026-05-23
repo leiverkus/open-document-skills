@@ -32,7 +32,7 @@ Closed the largest gap relative to general-purpose tools (pandoc, docx skills): 
 
 ## v0.5 — DAO branding + Robustness ✅ shipped (2026-05-21)
 
-- ✅ DAO-branded template (Nunito Sans, `#02416C`, logo placeholder, DFG-standard margins, outline numbering)
+- ✅ DAO-branded template (Nunito Sans, `#02416C`, logo placeholder, standard 2.5 cm grant margins, outline numbering)
 - ✅ Cross-paragraph range bookmarks/refs via new `wrap_text_across_elements`
 - ✅ RelaxNG schema validation (opt-in via `[validate]` extra; OASIS schemas downloaded on first use)
 - ✅ Hypothesis property tests for walker/locator (5 invariants)
@@ -127,7 +127,7 @@ tracks — **not** a fixed `vX.Y` schedule — pursued as time and adoption allo
 The project has strong code and few users; that is the real constraint.
 
 - Follow the community plugin-directory submission through to listing.
-- A flagship example: a realistic DFG/DAI-style research proposal — footnotes, BibTeX citations, cross-references, MathML, DAO branding — rendered to PDF and screenshotted in the README. The scholarly-German workflow is the differentiation against generic document tools.
+- A flagship example: a realistic research proposal to a third-party funder — footnotes, BibTeX citations, cross-references, MathML, DAO branding — rendered to PDF and screenshotted in the README. The scholarly-German workflow is the differentiation against generic document tools.
 - A README hero GIF/screenshot: JSON spec → rendered PDF.
 - Watch the adoption signals (Smithery activations, PyPI downloads, GitHub stars) that this document says drive the pace.
 
@@ -362,10 +362,10 @@ and users bring their own.
   `apply_template`-based wrapper; the deck's branding moved into the
   shipped `dao-conference` template.
 
-Looking ahead: v1.13 generalises the template ecosystem to ODT (DFG-Antrag,
-Letterhead, CV, Academic-Paper) — the toolchain here is format-agnostic
-enough that ODT just needs the per-skill `templates/` directory plus a
-trivial inspector adaptation.
+Looking ahead: v1.13 generalises the template ecosystem to ODT
+(grant-proposal, letterhead, CV, academic-paper) — the toolchain here is
+format-agnostic enough that ODT just needs the per-skill `templates/`
+directory plus a trivial inspector adaptation.
 
 ## v1.13 — ODT template ecosystem ✅ shipped (2026-05-23)
 
@@ -385,7 +385,7 @@ v0.3–v1.10), so templates here matter most for the project's core audience.
   `apply_template`. Parallel to the v1.12 ODP set; same calling convention.
 - ✅ **Five shipped templates** in `skills/odt/templates/`:
   - `grant-proposal` — generalised research-grant proposal for any agency
-    (DFG / ERC / VolkswagenStiftung / Gerda Henkel / Fritz Thyssen / BMBF /
+    (ERC / VolkswagenStiftung / Gerda Henkel / Fritz Thyssen / BMBF /
     EU Horizon). English-first, institution-neutral. A4 with 2.5 cm
     margins, navy Lato headings + Source Serif body, 4-level outline.
   - `academic-paper` — IMRaD article with hanging-indent References.

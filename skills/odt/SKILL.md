@@ -1,7 +1,7 @@
 ---
 name: odt
 description: "Create, read, edit, convert, repair, or inspect OpenDocument Text files (.odt) — including bidirectional conversion to DOCX/DOC via headless LibreOffice and a template ecosystem (grant proposal, academic paper, letterhead, CV, dissertation). Includes scholarly authoring: footnotes, endnotes, citations (BibTeX/CSL-JSON), cross-references (bookmarks, reference-marks, figure/table sequences), MathML formulas (from LaTeX), and generated indexes (table of contents, bibliography, illustration/table index, alphabetical index)."
-triggers: [".odt", "ODT", "OpenDocument Text", "Open Office document", "LibreOffice Writer", "Writer document", "odt-Datei", "OpenDocument-Text", "footnote", "endnote", "citation", "bibliography", "BibTeX", "CSL-JSON", "Fußnote", "Zitation", "Bibliographie", "Quellenangabe", "cross-reference", "Querverweis", "bookmark", "Lesezeichen", "figure", "Abbildung", "Table", "Tabelle", "equation", "Gleichung", "Formel", "MathML", "LaTeX", "flat ODF", ".fodt", "table of contents", "Inhaltsverzeichnis", "TOC", "Literaturverzeichnis", "index", "Index", "Abbildungsverzeichnis", "Tabellenverzeichnis", "alphabetical index", "alphabetisches Register", ".docx", "DOCX", ".doc", "Word document", "Word-Dokument", "MS Word", "Microsoft Word", "template", "Vorlage", "Dokumentvorlage", "grant proposal", "Drittmittelantrag", "Forschungsantrag", "DFG-Antrag", "ERC", "Antrag", "academic paper", "letterhead", "Briefkopf", "Geschäftsbrief", "CV", "Lebenslauf", "dissertation", "Dissertation", "Habilitation", ".ott"]
+triggers: [".odt", "ODT", "OpenDocument Text", "Open Office document", "LibreOffice Writer", "Writer document", "odt-Datei", "OpenDocument-Text", "footnote", "endnote", "citation", "bibliography", "BibTeX", "CSL-JSON", "Fußnote", "Zitation", "Bibliographie", "Quellenangabe", "cross-reference", "Querverweis", "bookmark", "Lesezeichen", "figure", "Abbildung", "Table", "Tabelle", "equation", "Gleichung", "Formel", "MathML", "LaTeX", "flat ODF", ".fodt", "table of contents", "Inhaltsverzeichnis", "TOC", "Literaturverzeichnis", "index", "Index", "Abbildungsverzeichnis", "Tabellenverzeichnis", "alphabetical index", "alphabetisches Register", ".docx", "DOCX", ".doc", "Word document", "Word-Dokument", "MS Word", "Microsoft Word", "template", "Vorlage", "Dokumentvorlage", "grant proposal", "Drittmittelantrag", "Forschungsantrag", "ERC", "Antrag", "academic paper", "letterhead", "Briefkopf", "Geschäftsbrief", "CV", "Lebenslauf", "dissertation", "Dissertation", "Habilitation", ".ott"]
 dont_use_for: ["spreadsheets (.ods)", "presentations (.odp)", "PDFs as primary deliverable", "general prose editing"]
 license: MIT
 version: "1.13.0"
@@ -261,14 +261,14 @@ templates are full document-class designs.
 
 | Template | Use case |
 |---|---|
-| `grant-proposal` | research-grant proposal for any agency (DFG / ERC / VW / Thyssen / EU). A4, 2.5 cm margins, navy Lato headings + Source Serif body, outline-numbered 1./1.1./1.1.1. |
+| `grant-proposal` | research-grant proposal for any agency (ERC / VW / Thyssen / EU). A4, 2.5 cm margins, navy Lato headings + Source Serif body, outline-numbered 1./1.1./1.1.1. |
 | `academic-paper` | IMRaD article (Title / Abstract / Introduction / Methods / Results / Discussion / References) with hanging-indent References style |
 | `letterhead` | DIN-5008-ish business letter — institution placeholder header, asymmetric margins for envelope-window alignment, signature block |
 | `cv` | academic CV — navy section headers with bottom rule, compact 2 cm margins, EntryTitle/EntryDetail/DateRange styles |
 | `dissertation` | long-form thesis / Habilitation — A4 with 3 cm margins, 5-level outline numbering, chapter-per-page (`Heading1` page-break-before), 1.4 line-height, hanging-indent bibliography |
 
-All templates are English-first and institution-neutral. For German /
-DAO-archaeology customisation, see `examples/dao/`.
+All templates are English-first and institution-neutral. For German
+localisation aimed at a third-party funder, see `examples/dao/`.
 
 ### Apply a template
 

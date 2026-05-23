@@ -1,6 +1,6 @@
 # grant-proposal
 
-A research-grant-proposal template for any funding agency — DFG, ERC,
+A research-grant-proposal template for any funding agency — ERC,
 VolkswagenStiftung, Gerda Henkel, Fritz Thyssen, BMBF, EU Horizon, …
 English-first, institution-neutral. A4 + 2.5 cm margins, outline-numbered
 headings, Lato navy headings + Source Serif body.
@@ -52,6 +52,6 @@ python3 skills/odt/scripts/update_indexes.py branded.odt --outdir qa
 
 ## Localized variants
 
-`examples/dao/` shows how a German DAO archaeology institute customises a
-similar template (German headers, DAO blue, Nunito Sans, additional
-DAO-specific paragraph styles).
+`examples/dao/` shows how a German-language proposal to a third-party
+funder customises a similar template (German headers, DAO blue, Nunito
+Sans, additional DAO-specific paragraph styles).

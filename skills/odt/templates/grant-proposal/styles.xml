@@ -75,7 +75,7 @@
       <style:text-properties fo:font-weight="bold" fo:color="#1B3A57"/>
     </style:style>
 
-    <!-- Outline numbering: 1. / 1.1. / 1.1.1. (DFG / ERC standard) -->
+    <!-- Outline numbering: 1. / 1.1. / 1.1.1. (standard EU/DACH grant format) -->
     <text:outline-style style:name="Outline">
       <text:outline-level-style text:level="1" style:num-format="1" style:num-suffix=".">
         <style:list-level-properties text:min-label-distance="0.4cm"/>

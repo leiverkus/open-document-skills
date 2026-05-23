@@ -208,15 +208,15 @@ every Smithery / skills.sh / Claude Code plugin install.
 
 | Template | Use case |
 |---|---|
-| `grant-proposal` | research-grant proposal for any agency (DFG/ERC/VW/Thyssen/EU). A4, 2.5 cm margins, navy Lato + Source Serif, outline-numbered 1./1.1./1.1.1. |
+| `grant-proposal` | research-grant proposal for any agency (ERC/VW/Thyssen/EU). A4, 2.5 cm margins, navy Lato + Source Serif, outline-numbered 1./1.1./1.1.1. |
 | `academic-paper` | IMRaD article — Title/Author/Affiliation block, hanging-indent References |
 | `letterhead` | DIN-5008-ish business letter, institution-placeholder header, signature block |
 | `cv` | academic CV — navy section headers with bottom rule, compact 2 cm margins, EntryTitle/EntryDetail/DateRange styles |
 | `dissertation` | long-form thesis — A4 with 3 cm margins, 5-level outline numbering, chapter-per-page, hanging-indent bibliography |
 
-All English-first, institution-neutral. The German DAO-archaeology
-localisation lives in `examples/dao/` and showcases how to fork a
-template for institutional branding.
+All English-first, institution-neutral. The German DAO localisation —
+aimed at a third-party funder — lives in `examples/dao/` and showcases
+how to fork a template for institutional branding.
 
 ### Apply
 
@@ -679,7 +679,7 @@ python3 examples/dao/build_grant_proposal.py
 # Output: examples/dao/output/grant_proposal.{odt,pdf}
 ```
 
-The build runs `create_minimal_odt.py` then injects `examples/dao/styles.xml` (Nunito Sans, `#02416C`, DFG-Antrag margins, logo placeholder header, page-number footer) before filling citations, footnotes, cross-references, and a LaTeX math formula.
+The build runs `create_minimal_odt.py` then injects `examples/dao/styles.xml` (Nunito Sans, `#02416C`, standard 2.5 cm grant margins, logo placeholder header, page-number footer) before filling citations, footnotes, cross-references, and a LaTeX math formula.
 
 ## Branded deck (example)
 
