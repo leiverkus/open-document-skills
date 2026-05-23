@@ -65,22 +65,19 @@ class LibreOfficeIntegrationTests(unittest.TestCase):
             self.assertGreater(pdf.stat().st_size, 0)
 
     def test_branded_odp_deck_renders_to_pdf(self) -> None:
-        """A base ODP with the branded deck styles.xml injected + logo embedded
-        must render to a non-empty PDF."""
+        """A base ODP with the dao-conference template applied must render to PDF.
+
+        Exercises the v1.12 apply_template pipeline (the v1.1 branded-deck
+        styling now lives in skills/odp/templates/dao-conference/).
+        """
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             scripts = SKILLS / "odp" / "scripts"
-            sys.path.insert(0, str(scripts))
-            from odp_common import embed_pictures, inject_styles_from_file
-
             deck = ROOT / "examples" / "deck"
             base = tmp_path / "base.odp"
             run_script(scripts / "create_minimal_odp.py", deck / "spec.json", base)
-            styled = tmp_path / "styled.odp"
-            inject_styles_from_file(base, deck / "styles.xml", styled)
             final = tmp_path / "deck.odp"
-            embed_pictures(styled, {"Pictures/logo.png": deck / "logo-placeholder.png"}, final)
-            run_script(scripts / "validate_refs.py", final)
+            run_script(scripts / "apply_template.py", base, "--template-name", "dao-conference", "-o", final)
 
             outdir = tmp_path / "qa"
             run_script(scripts / "render.py", final, "--outdir", outdir)
@@ -523,6 +520,56 @@ class LibreOfficeIntegrationTests(unittest.TestCase):
             pdf = outdir / "doc.pdf"
             self.assertTrue(pdf.exists())
             self.assertGreater(pdf.stat().st_size, 0)
+
+    def test_each_template_renders_to_pdf(self) -> None:
+        """Every shipped ODP template must apply cleanly and render."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odp" / "scripts"
+            base = tmp_path / "base.odp"
+            run_script(scripts / "create_minimal_odp.py", FIXTURES / "odp_slides.json", base)
+            templates_dir = SKILLS / "odp" / "templates"
+            for template_dir in sorted(templates_dir.iterdir()):
+                if not template_dir.is_dir():
+                    continue
+                with self.subTest(template=template_dir.name):
+                    branded = tmp_path / f"{template_dir.name}.odp"
+                    run_script(
+                        scripts / "apply_template.py",
+                        base,
+                        "--template-name",
+                        template_dir.name,
+                        "-o",
+                        branded,
+                    )
+                    outdir = tmp_path / f"{template_dir.name}-pdf"
+                    run_script(scripts / "render.py", branded, "--outdir", outdir)
+                    pdf = outdir / f"{template_dir.name}.pdf"
+                    self.assertTrue(pdf.exists())
+                    self.assertGreater(pdf.stat().st_size, 0)
+
+    def test_extract_from_pptx_via_bridge(self) -> None:
+        """extract_template.py accepts .pptx via the v1.11 convert_with_soffice bridge."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odp" / "scripts"
+            # Build an ODP, convert it to PPTX, then extract a template from the PPTX.
+            base = tmp_path / "base.odp"
+            run_script(scripts / "create_minimal_odp.py", FIXTURES / "odp_slides.json", base)
+            pptx_dir = tmp_path / "pptx"
+            run_script(scripts / "convert.py", base, "--to", "pptx", "--outdir", pptx_dir)
+            pptx = pptx_dir / "base.pptx"
+            self.assertTrue(pptx.exists())
+            extract_dir = tmp_path / "templates"
+            run_script(
+                scripts / "extract_template.py",
+                pptx,
+                "--name",
+                "from-pptx",
+                "--outdir",
+                extract_dir,
+            )
+            self.assertTrue((extract_dir / "from-pptx" / "styles.xml").exists())
 
 
 if __name__ == "__main__":

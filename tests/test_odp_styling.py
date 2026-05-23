@@ -10,7 +10,7 @@ import zipfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-from helpers import ROOT, SKILLS, run_script
+from helpers import SKILLS, run_script
 
 NS = {
     "office": "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
@@ -21,7 +21,8 @@ NS = {
 }
 
 ODP_SCRIPTS = SKILLS / "odp" / "scripts"
-DECK_STYLES = ROOT / "examples" / "deck" / "styles.xml"
+# Branded styles for testing the inject path now live in the v1.12 template:
+DECK_STYLES = SKILLS / "odp" / "templates" / "dao-conference" / "styles.xml"
 
 
 def q(prefix: str, local: str) -> str:

@@ -59,7 +59,7 @@ Covers:
 - document review — comments and tracked changes (record edits, then accept or reject)
 - structural editing — bulk restyle, insert/delete blocks, table editing (rows, columns, cells)
 - spreadsheets — named ranges, data validation, embedded charts, conditional formatting, pivot tables
-- presentations — designed default styling, branded-theme injection, named slide layouts, multiple master pages, animations, slide transitions, master-page customization
+- presentations — designed default styling, branded-theme injection, named slide layouts, multiple master pages, animations, slide transitions, master-page customization, and a **template ecosystem** (three curated branded designs shipped, plus tools to inspect templates and extract new ones from any `.odp`/`.otp`/`.pptx`)
 - drawings — designed styling with per-shape colours, connectors with shape binding, glue points, shape groups
 - rendering to PDF, per-page PNG, or a single contact sheet — a visual design loop, not just final QA
 - image embedding with magic-byte MIME detection

@@ -1,5 +1,53 @@
 # Changelog
 
+## v1.12.0 - 2026-05-23
+
+ODP template ecosystem — three tools and three curated templates that close
+the last competitive-positioning gap with Anthropic's `pptx` skill. The
+`pptx` skill's HTML-design-loop solves "how does the agent produce good
+design" with HTML/CSS; this release takes the other route — templates the
+agent picks from and inspects per slide, plus an extractor that lets users
+bring their own from anywhere (including `.pptx` via the v1.11 bridge).
+
+### Added
+
+- **`inspect_template.py`** — reports a template's master pages,
+  presentation-page-layouts (placeholder zones with geometry), named
+  paragraph/graphic styles, and font face declarations as JSON.
+  Accepts `.odp`/`.otp` packages or a standalone `styles.xml`. The
+  per-slide layout-picking input for the agent.
+- **`extract_template.py`** — distils any `.odp`/`.otp`/`.pptx` into a
+  reusable template directory: filtered `styles.xml` (only what masters
+  reference, dropping per-slide anonyms), master-referenced `Pictures/`,
+  `LICENSE.txt`/`PROVENANCE.md`/`README.md`. PPTX inputs auto-convert via
+  the v1.11 OOXML bridge.
+- **`apply_template.py`** — wraps inject-styles + embed-pictures +
+  validate-refs into one call. Supports `--template-name` (shipped) and
+  `--template PATH` (any directory).
+- **Three shipped templates** in `skills/odp/templates/`:
+  - `dao-conference` (deep-blue branded, with logo placeholder) —
+    migrated from `examples/deck/styles.xml`.
+  - `academic-blue` (cream background, navy Lato + Source Serif).
+  - `minimalist-mono` (near-white, JetBrains Mono + Inter).
+- **`inspect_styles_xml`** and **`load_styles_xml`** helpers in
+  `odp_common.py` — the inspector's reusable plumbing.
+
+### Changed
+
+- `examples/deck/build_deck.py` reduced from a 90-line orchestration
+  script to a thin wrapper around `apply_template.py`. The deck's
+  branding now lives in the shipped `dao-conference` template; the
+  example demonstrates the v1.12 pipeline.
+- `inject_styles_from_file` (v1.1) and `embed_pictures` (v1.1) are still
+  the underlying primitives; `apply_template.py` is the new one-call
+  entry point that uses them.
+
+### Installation
+
+Templates ship inside `skills/odp/`, so `install_skills.py` includes them
+in every Smithery / skills.sh / Claude Code plugin install — no extra
+download or configuration.
+
 ## v1.11.0 - 2026-05-23
 
 OOXML format conversion — bidirectional bridges between ODT/ODS/ODP and

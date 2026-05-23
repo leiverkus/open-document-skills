@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v1.11.0** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v1.12.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -331,6 +331,41 @@ now precisely scoped to **in-place native-OOXML editing** only —
   round-trips, legacy-format smoke, and cross-family rejection.
   `test_libreoffice_integration.py` adds an ODT→DOCX→ODT bridge test
   asserting non-strict validation passes and the result renders to PDF.
+
+## v1.12 — ODP template ecosystem ✅ shipped (2026-05-23)
+
+Closes the last competitive-positioning gap with Anthropic's `pptx` skill.
+The `pptx` skill solves "good design without ODF-XML knowledge" via an
+HTML-design-loop; this release takes the other route — three tools and
+three shipped templates so the agent picks from curated branded designs
+and users bring their own.
+
+- ✅ **`inspect_template.py`** — JSON inventory of a template's master
+  pages (with backgrounds + frames), `presentation-page-layout`s (with
+  placeholder zone geometry), named paragraph/graphic styles, and font
+  declarations. Accepts `.odp`/`.otp` packages or a standalone
+  `styles.xml`. The agent's per-slide layout-picking input.
+- ✅ **`extract_template.py`** — distil any `.odp`/`.otp`/`.pptx` into a
+  reusable template directory. Filters `office:automatic-styles` to keep
+  only what master pages reference (and their parent-style chains),
+  copies master-page-referenced `Pictures/`, seeds
+  `LICENSE.txt`/`PROVENANCE.md`/`README.md`. PPTX inputs auto-convert via
+  the v1.11 OOXML bridge.
+- ✅ **`apply_template.py`** — one-call inject-styles + embed-pictures +
+  validate-refs. Supports `--template-name <shipped>` and
+  `--template PATH`.
+- ✅ **Three shipped templates** in `skills/odp/templates/`:
+  `dao-conference`, `academic-blue`, `minimalist-mono`. Each ships
+  `styles.xml`, optional `Pictures/`, and metadata. Bundled by
+  `install_skills.py` into every Smithery / skills.sh install.
+- ✅ **`examples/deck/build_deck.py`** reduced to a thin
+  `apply_template`-based wrapper; the deck's branding moved into the
+  shipped `dao-conference` template.
+
+Looking ahead: v1.13 generalises the template ecosystem to ODT (DFG-Antrag,
+Letterhead, CV, Academic-Paper) — the toolchain here is format-agnostic
+enough that ODT just needs the per-skill `templates/` directory plus a
+trivial inspector adaptation.
 
 ### Versioning
 

@@ -4,7 +4,7 @@ description: "Create, read, edit, convert, repair, or inspect OpenDocument Text 
 triggers: [".odt", "ODT", "OpenDocument Text", "Open Office document", "LibreOffice Writer", "Writer document", "odt-Datei", "OpenDocument-Text", "footnote", "endnote", "citation", "bibliography", "BibTeX", "CSL-JSON", "Fußnote", "Zitation", "Bibliographie", "Quellenangabe", "cross-reference", "Querverweis", "bookmark", "Lesezeichen", "figure", "Abbildung", "Table", "Tabelle", "equation", "Gleichung", "Formel", "MathML", "LaTeX", "flat ODF", ".fodt", "table of contents", "Inhaltsverzeichnis", "TOC", "Literaturverzeichnis", "index", "Index", "Abbildungsverzeichnis", "Tabellenverzeichnis", "alphabetical index", "alphabetisches Register", ".docx", "DOCX", ".doc", "Word document", "Word-Dokument", "MS Word", "Microsoft Word"]
 dont_use_for: ["spreadsheets (.ods)", "presentations (.odp)", "PDFs as primary deliverable", "general prose editing"]
 license: MIT
-version: "1.11.0"
+version: "1.12.0"
 ---
 
 # ODT creation, editing, and analysis

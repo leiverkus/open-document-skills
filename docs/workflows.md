@@ -190,8 +190,87 @@ are purely additive. Themes name fonts as CSS-style stacks ending in a
 Liberation fallback (`'Caladea', 'Liberation Serif', serif`), so a themed
 document renders deterministically even where the first-choice font is not
 installed. The theme registry lives in `odf_lib/themes.py` (`THEMES`,
-`get_theme`); for branding beyond the five themes, inject a curated `styles.xml`
-with `inject_styles_from_file`.
+`get_theme`); for branding beyond the five themes, use a **template** (next
+section).
+
+## Templates (ODP)
+
+Where a *theme* is a palette plus a font pairing, a *template* is a full
+branded design: styles + master pages + slide layouts + assets like a logo,
+packaged as a directory.
+
+The ODP skill ships three templates plus three tools (`inspect_template`,
+`extract_template`, `apply_template`) in v1.12. Templates live inside the
+skill (`skills/odp/templates/`) so they're bundled by `install_skills.py`
+into every Smithery / skills.sh / Claude Code plugin install.
+
+### Shipped templates
+
+| Template | Look |
+|---|---|
+| `dao-conference` | deep-blue background (`#02416C`), Nunito Sans, logo bottom-right |
+| `academic-blue` | cream background, navy Lato headings, Source Serif body |
+| `minimalist-mono` | near-white background, JetBrains Mono headings, Inter body |
+
+### Apply
+
+```bash
+# Build a base deck
+python3 skills/odp/scripts/create_minimal_odp.py spec.json deck.odp
+
+# Apply a shipped template
+python3 skills/odp/scripts/apply_template.py deck.odp \
+    --template-name dao-conference -o branded.odp
+
+# Or by path (e.g. a user template outside the shipped set)
+python3 skills/odp/scripts/apply_template.py deck.odp \
+    --template /path/to/my-template -o branded.odp
+```
+
+### Inspect (per-slide decision-making)
+
+The agent calls `inspect_template.py` per slide to know which layout to
+pick:
+
+```bash
+python3 skills/odp/scripts/inspect_template.py \
+    skills/odp/templates/dao-conference/styles.xml --json
+```
+
+The JSON reports `master_pages` (each with background colour and frame
+inventory), `presentation_page_layouts` (each with placeholder zones and
+geometry), `paragraph_styles`, `graphic_styles`, and `font_face_decls`.
+
+### Extract (bring your own templates)
+
+Turn any existing `.odp`/`.otp`/`.pptx` (PPTX via the v1.11 OOXML bridge)
+into a reusable template directory:
+
+```bash
+python3 skills/odp/scripts/extract_template.py investor-pitch.pptx \
+    --name pitch-warm --outdir skills/odp/templates/ \
+    --license CC-BY-4.0 --source "https://example.com/template"
+```
+
+The extractor filters `office:automatic-styles` to keep only what master
+pages reference, copies master-page-referenced `Pictures/`, and seeds
+`LICENSE.txt`/`PROVENANCE.md`/`README.md`. The result is directly usable
+by `apply_template.py`.
+
+### Workflow
+
+```text
+spec.json
+    │
+    ▼
+create_minimal_odp.py ───▶ base.odp ───▶ apply_template.py ───▶ branded.odp
+                                              ▲
+                                              │
+                                       templates/<name>/
+                                              ▲
+                                              │ (optional)
+                                       extract_template.py ◀─── .pptx / .otp
+```
 
 ## Visual design loop
 

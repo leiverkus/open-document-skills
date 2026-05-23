@@ -1,0 +1,106 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<office:document-styles
+    xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+    xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+    xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+    xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
+    xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
+    xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0"
+    xmlns:presentation="urn:oasis:names:tc:opendocument:xmlns:presentation:1.0"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    office:version="1.3">
+
+  <office:font-face-decls>
+    <style:font-face style:name="JetBrains Mono" svg:font-family="'JetBrains Mono', 'Liberation Mono', monospace" style:font-family-generic="modern" style:font-pitch="fixed"/>
+    <style:font-face style:name="Inter" svg:font-family="'Inter', 'Liberation Sans', sans-serif" style:font-family-generic="swiss" style:font-pitch="variable"/>
+  </office:font-face-decls>
+
+  <office:styles>
+
+    <!-- Frame styles. -->
+    <style:style style:name="gr-title" style:family="graphic">
+      <style:graphic-properties draw:fill="none" draw:stroke="none"
+          draw:textarea-vertical-align="middle"
+          draw:auto-grow-height="false" draw:auto-grow-width="false"/>
+      <style:text-properties style:font-name="JetBrains Mono"
+          fo:color="#0F172A" fo:font-size="32pt" fo:font-weight="bold"/>
+    </style:style>
+
+    <style:style style:name="gr-body" style:family="graphic">
+      <style:graphic-properties draw:fill="none" draw:stroke="none"
+          draw:textarea-vertical-align="top"
+          draw:auto-grow-height="false" draw:auto-grow-width="false"/>
+      <style:text-properties style:font-name="Inter"
+          fo:color="#334155" fo:font-size="20pt"/>
+    </style:style>
+
+    <style:style style:name="gr-notes" style:family="graphic">
+      <style:graphic-properties draw:fill="none" draw:stroke="none"
+          draw:textarea-vertical-align="top"/>
+      <style:text-properties style:font-name="Inter"
+          fo:color="#64748B" fo:font-size="11pt"/>
+    </style:style>
+
+    <style:style style:name="gr-image" style:family="graphic">
+      <style:graphic-properties draw:fill="none" draw:stroke="none"/>
+    </style:style>
+
+    <!-- Paragraph styles. -->
+    <style:style style:name="Title" style:family="paragraph">
+      <style:paragraph-properties fo:text-align="start"/>
+      <style:text-properties style:font-name="JetBrains Mono"
+          fo:color="#0F172A" fo:font-size="32pt" fo:font-weight="bold"/>
+    </style:style>
+
+    <style:style style:name="Body" style:family="paragraph">
+      <style:paragraph-properties fo:margin-bottom="0.45cm" fo:line-height="140%"/>
+      <style:text-properties style:font-name="Inter"
+          fo:color="#334155" fo:font-size="20pt" fo:font-weight="normal"/>
+    </style:style>
+
+    <style:style style:name="Notes" style:family="paragraph">
+      <style:text-properties style:font-name="Inter"
+          fo:color="#64748B" fo:font-size="11pt" fo:font-weight="normal"/>
+    </style:style>
+
+    <!-- Slide layouts — must mirror odp_layouts.py. -->
+    <style:presentation-page-layout style:name="pl-title-content">
+      <presentation:placeholder presentation:object="title" svg:x="1cm" svg:y="0.8cm" svg:width="26cm" svg:height="2cm"/>
+      <presentation:placeholder presentation:object="outline" svg:x="1.4cm" svg:y="3.2cm" svg:width="25cm" svg:height="8cm"/>
+    </style:presentation-page-layout>
+    <style:presentation-page-layout style:name="pl-title-slide">
+      <presentation:placeholder presentation:object="title" svg:x="2cm" svg:y="5cm" svg:width="24cm" svg:height="3cm"/>
+      <presentation:placeholder presentation:object="subtitle" svg:x="2cm" svg:y="8.5cm" svg:width="24cm" svg:height="2.5cm"/>
+    </style:presentation-page-layout>
+    <style:presentation-page-layout style:name="pl-two-content">
+      <presentation:placeholder presentation:object="title" svg:x="1cm" svg:y="0.8cm" svg:width="26cm" svg:height="2cm"/>
+      <presentation:placeholder presentation:object="outline" svg:x="1.4cm" svg:y="3.2cm" svg:width="12cm" svg:height="8cm"/>
+      <presentation:placeholder presentation:object="outline" svg:x="14.6cm" svg:y="3.2cm" svg:width="12cm" svg:height="8cm"/>
+    </style:presentation-page-layout>
+    <style:presentation-page-layout style:name="pl-section-header">
+      <presentation:placeholder presentation:object="title" svg:x="2cm" svg:y="6cm" svg:width="24cm" svg:height="3.5cm"/>
+    </style:presentation-page-layout>
+    <style:presentation-page-layout style:name="pl-title-only">
+      <presentation:placeholder presentation:object="title" svg:x="1cm" svg:y="0.8cm" svg:width="26cm" svg:height="2cm"/>
+    </style:presentation-page-layout>
+    <style:presentation-page-layout style:name="pl-blank"/>
+
+  </office:styles>
+
+  <office:automatic-styles>
+    <style:page-layout style:name="Screen">
+      <style:page-layout-properties
+          fo:page-width="28cm" fo:page-height="15.75cm"
+          style:print-orientation="landscape"/>
+    </style:page-layout>
+    <!-- Near-white background: a hair off pure white for screen comfort. -->
+    <style:style style:name="dp-default" style:family="drawing-page">
+      <style:drawing-page-properties draw:fill="solid" draw:fill-color="#F8FAFC"/>
+    </style:style>
+  </office:automatic-styles>
+
+  <office:master-styles>
+    <style:master-page style:name="Default" style:page-layout-name="Screen" draw:style-name="dp-default"/>
+  </office:master-styles>
+
+</office:document-styles>

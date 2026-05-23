@@ -1,10 +1,10 @@
 ---
 name: odp
-description: "Create, read, edit, convert, repair, or inspect OpenDocument Presentation files (.odp) — including bidirectional conversion to PPTX/PPT via headless LibreOffice. Supports shape animations (entrance, exit, emphasis, motion paths), slide transitions, and master-page customization."
-triggers: [".odp", "ODP", "OpenDocument Presentation", "Open Office presentation", "LibreOffice Impress", "Impress deck", "odp-Datei", "OpenDocument-Präsentation", "Folien", "Präsentation", "animation", "Animation", "transition", "Übergang", "Folienübergang", "slide transition", "master page", "master slide", "Folienmaster", "flat ODF", ".fodp", ".pptx", "PPTX", ".ppt", "PowerPoint", "PowerPoint-Datei", "MS PowerPoint", "Microsoft PowerPoint"]
+description: "Create, read, edit, convert, repair, or inspect OpenDocument Presentation files (.odp) — including bidirectional conversion to PPTX/PPT via headless LibreOffice. Supports shape animations (entrance, exit, emphasis, motion paths), slide transitions, master-page customization, and a template ecosystem (curated branded designs + inspector/extractor tools)."
+triggers: [".odp", "ODP", "OpenDocument Presentation", "Open Office presentation", "LibreOffice Impress", "Impress deck", "odp-Datei", "OpenDocument-Präsentation", "Folien", "Präsentation", "animation", "Animation", "transition", "Übergang", "Folienübergang", "slide transition", "master page", "master slide", "Folienmaster", "flat ODF", ".fodp", ".pptx", "PPTX", ".ppt", "PowerPoint", "PowerPoint-Datei", "MS PowerPoint", "Microsoft PowerPoint", "template", "Vorlage", "Designvorlage", "Foliendesign", "branding", "Branding", ".otp"]
 dont_use_for: ["text documents (.odt)", "spreadsheets (.ods)", "general presentation advice without .odp file"]
 license: MIT
-version: "1.11.0"
+version: "1.12.0"
 ---
 
 # ODP creation, editing, and analysis
@@ -307,8 +307,83 @@ Without `--theme` the output is unchanged. A theme sets the default slide
 background; a per-master `background_color` in the `masters` array still
 overrides it. Themes name fonts as stacks with a Liberation fallback, so a
 themed deck renders even where the first-choice font is absent. For branding
-beyond the five themes, inject a curated `styles.xml` with
-`inject_styles_from_file`.
+beyond the five themes, use a **template** (next section).
+
+## Templates
+
+A *template* is a complete branded design (styles + master pages + slide
+layouts + assets like a logo) packaged as a directory. The skill ships
+three templates and three tools to work with them — themes are quick
+palette+font tweaks; templates are full branded designs.
+
+### Shipped templates
+
+`skills/odp/templates/`:
+
+| Template | Look |
+|---|---|
+| `dao-conference` | deep-blue background (`#02416C`), Nunito Sans, logo bottom-right. Conference / grant decks. |
+| `academic-blue` | cream background, navy Lato headings, Source Serif body. Long academic talks. |
+| `minimalist-mono` | near-white background, JetBrains Mono headings, Inter body. Technical talks, post-mortems. |
+
+### Apply a template
+
+`apply_template.py` is the one-call wrapper for injection + asset embedding +
+validation. The agent's standard branding workflow:
+
+```bash
+# Build a base deck
+python scripts/create_minimal_odp.py spec.json deck.odp
+
+# Apply a shipped template by name
+python scripts/apply_template.py deck.odp \
+    --template-name dao-conference -o branded.odp
+
+# Or apply by path (e.g. a user-supplied template directory)
+python scripts/apply_template.py deck.odp \
+    --template /path/to/my-template -o branded.odp
+```
+
+### Inspect a template
+
+Before picking a layout per slide, ask what the template offers:
+
+```bash
+python scripts/inspect_template.py \
+    skills/odp/templates/dao-conference/styles.xml --json
+```
+
+Output is JSON with `master_pages` (each with background colour, frames,
+placeholder classes), `presentation_page_layouts` (each with placeholder
+zones and their geometry), `paragraph_styles`, `graphic_styles`, and
+`font_face_decls`. Use this to drive per-slide `layout` and `master`
+choices in your generation spec.
+
+### Extract a new template
+
+To turn an existing `.odp`/`.otp`/`.pptx` into a reusable template:
+
+```bash
+python scripts/extract_template.py investor-pitch.pptx \
+    --name pitch-warm --outdir skills/odp/templates/ \
+    --license CC-BY-4.0 --source "https://example.com/template"
+```
+
+The extractor filters `office:automatic-styles` to keep only what master
+pages reference (and parent-style chains), copies master-page-referenced
+images from `Pictures/`, and writes `LICENSE.txt`/`PROVENANCE.md`/`README.md`
+metadata. PPTX inputs are auto-converted via the v1.11 OOXML bridge.
+
+### Template structure
+
+Each template directory has:
+
+- `styles.xml` — the branded theme.
+- `Pictures/` (optional) — master-page assets like `logo.png`.
+- `LICENSE.txt`, `PROVENANCE.md`, `README.md` — metadata.
+
+Templates live inside `skills/odp/` so `install_skills.py` bundles them
+into every installation (Smithery, skills.sh, Claude Code plugin).
 
 ## Bundled Scripts
 

@@ -54,6 +54,9 @@ All scripts use the Python standard library.
 | `inspect_package.py` | Summarize slides, notes, images, package files, and manifest entries. |
 | `list_masters.py` | List master pages, slide layouts (`presentation-page-layout` + placeholders), and per-slide usage as JSON. |
 | `set_layout.py` | Reassign the slide layout and/or master page on one or more slides, repositioning placeholder frames to the new layout's zones. |
+| `inspect_template.py` | Inspect a template (`.odp`/`.otp`/standalone `styles.xml`) as JSON: master pages with backgrounds, slide layouts with placeholder zones, named graphic/paragraph styles, font declarations. The agent's per-slide layout-picking input. |
+| `extract_template.py` | Distil any `.odp`/`.otp`/`.pptx` (PPTX auto-converted via v1.11 bridge) into a reusable template directory: filtered `styles.xml`, master-page-referenced `Pictures/`, plus `LICENSE.txt`/`PROVENANCE.md`/`README.md`. |
+| `apply_template.py` | Apply a template directory (shipped or user-curated) to an ODP in one call: inject styles, embed master pictures, validate references. Replaces hand-rolled inject+embed orchestrations. |
 | `clone_slide.py` | Clone a slide from a template deck with optional text replacements. |
 | `replace_text.py` | XML-safe text replacement in slides and notes. |
 | `add_image.py` | Add an image to a slide and update package references. |

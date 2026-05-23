@@ -79,6 +79,8 @@ __all__ = [
     "find_soffice",
     "find_slides",
     "inject_styles_from_file",
+    "inspect_styles_xml",
+    "load_styles_xml",
     "media_type_for",
     "pack_dir_as_odp",
     "pack_flat_odf",
@@ -182,6 +184,180 @@ def embed_pictures(input_odp: Path, pictures: dict[str, Path], output_odp: Path)
 def find_slides(content_root: ET.Element) -> list[ET.Element]:
     """Return all draw:page elements from ODP content."""
     return content_root.findall(".//draw:page", NS)
+
+
+# ---- Template inspection ----------------------------------------------------
+#
+# An ODP "template" is the layered set of named styles + master pages + slide
+# layouts + font declarations defined in styles.xml. These helpers turn that
+# styles.xml into a JSON-serialisable inventory so an agent can pick a layout
+# per slide knowing what the template actually offers.
+
+_PLACEHOLDER_KEYS: tuple[tuple[str, str], ...] = (
+    ("object", "object"),
+    ("x", "x"),
+    ("y", "y"),
+    ("width", "width"),
+    ("height", "height"),
+)
+
+
+def _frame_summary(frame: ET.Element) -> dict[str, object]:
+    """Summarise a draw:frame node from a master page."""
+    image = frame.find("draw:image", NS)
+    role = "image" if image is not None else "text"
+    return {
+        "name": frame.attrib.get(q("draw", "name")),
+        "role": role,
+        "x": frame.attrib.get(q("svg", "x")),
+        "y": frame.attrib.get(q("svg", "y")),
+        "width": frame.attrib.get(q("svg", "width")),
+        "height": frame.attrib.get(q("svg", "height")),
+    }
+
+
+def _named_style_summary(style: ET.Element) -> dict[str, object]:
+    """Summarise a <style:style> from office:styles."""
+    name_attr = q("style", "name")
+    family_attr = q("style", "family")
+    parent_attr = q("style", "parent-style-name")
+    info: dict[str, object] = {
+        "name": style.attrib.get(name_attr),
+        "family": style.attrib.get(family_attr),
+    }
+    parent = style.attrib.get(parent_attr)
+    if parent:
+        info["parent"] = parent
+    text_props = style.find("style:text-properties", NS)
+    if text_props is not None:
+        font = text_props.attrib.get(q("style", "font-name"))
+        if font:
+            info["font"] = font
+        size = text_props.attrib.get(q("fo", "font-size"))
+        if size:
+            info["font-size"] = size
+        color = text_props.attrib.get(q("fo", "color"))
+        if color:
+            info["color"] = color
+    graphic_props = style.find("style:graphic-properties", NS)
+    if graphic_props is not None:
+        fill = graphic_props.attrib.get(q("draw", "fill"))
+        if fill:
+            info["fill"] = fill
+        fill_color = graphic_props.attrib.get(q("draw", "fill-color"))
+        if fill_color:
+            info["fill-color"] = fill_color
+    return info
+
+
+def inspect_styles_xml(styles_root: ET.Element) -> dict[str, object]:
+    """Inspect a parsed styles.xml document and return a template inventory.
+
+    Returns a dict with the following keys:
+
+    - ``master_pages``: list of ``{name, page_layout, background, frames,
+      placeholders}`` per ``style:master-page``. ``background`` resolves the
+      ``drawing-page`` style's ``fill-color`` when set.
+    - ``presentation_page_layouts``: list of ``{name, placeholders}`` per
+      ``style:presentation-page-layout``; each placeholder is
+      ``{object, x, y, width, height}``.
+    - ``paragraph_styles``, ``graphic_styles``: lists of summaries (name,
+      family, optional font/size/color/fill) for the matching named styles
+      under ``office:styles``.
+    - ``font_face_decls``: list of font face names declared in
+      ``office:font-face-decls``.
+
+    Agent-facing: this is what ``inspect_template.py`` prints as JSON.
+    Designed to be enough information for the agent to pick a layout per
+    slide without re-reading the raw XML.
+    """
+    # Master pages with resolved drawing-page backgrounds.
+    drawing_page_fills: dict[str, str] = {}
+    for style in styles_root.findall(".//office:automatic-styles/style:style", NS):
+        if style.attrib.get(q("style", "family")) != "drawing-page":
+            continue
+        props = style.find("style:drawing-page-properties", NS)
+        if props is not None:
+            fill_color = props.attrib.get(q("draw", "fill-color"))
+            if fill_color:
+                drawing_page_fills[style.attrib.get(q("style", "name"), "")] = fill_color
+
+    masters: list[dict[str, object]] = []
+    for master in styles_root.findall(".//style:master-page", NS):
+        bg_style = master.attrib.get(q("draw", "style-name"))
+        background = drawing_page_fills.get(bg_style or "")
+        placeholders = sorted(
+            {
+                node.attrib.get(q("presentation", "class"), "")
+                for node in master.iter()
+                if node.attrib.get(q("presentation", "class"))
+            }
+        )
+        frames = [_frame_summary(f) for f in master.findall(".//draw:frame", NS)]
+        masters.append(
+            {
+                "name": master.attrib.get(q("style", "name")),
+                "page_layout": master.attrib.get(q("style", "page-layout-name")),
+                "background": background,
+                "placeholders": placeholders,
+                "frames": frames,
+            }
+        )
+
+    # Presentation page layouts (slide-layout zones).
+    layouts: list[dict[str, object]] = []
+    for ppl in styles_root.findall(".//style:presentation-page-layout", NS):
+        zones = [
+            {
+                key_out: ph.attrib.get(q("svg" if key_in != "object" else "presentation", key_in))
+                for key_in, key_out in _PLACEHOLDER_KEYS
+            }
+            for ph in ppl.findall("presentation:placeholder", NS)
+        ]
+        layouts.append({"name": ppl.attrib.get(q("style", "name")), "placeholders": zones})
+
+    # Named styles (only office:styles, not automatic — agents care about names).
+    paragraph_styles: list[dict[str, object]] = []
+    graphic_styles: list[dict[str, object]] = []
+    for style in styles_root.findall(".//office:styles/style:style", NS):
+        family = style.attrib.get(q("style", "family"))
+        if family == "paragraph":
+            paragraph_styles.append(_named_style_summary(style))
+        elif family == "graphic":
+            graphic_styles.append(_named_style_summary(style))
+
+    # Font face declarations.
+    font_faces = [
+        ff.attrib.get(q("style", "name"))
+        for ff in styles_root.findall(".//office:font-face-decls/style:font-face", NS)
+        if ff.attrib.get(q("style", "name"))
+    ]
+
+    return {
+        "master_pages": masters,
+        "presentation_page_layouts": layouts,
+        "paragraph_styles": paragraph_styles,
+        "graphic_styles": graphic_styles,
+        "font_face_decls": font_faces,
+    }
+
+
+def load_styles_xml(path: Path) -> ET.Element:
+    """Load styles.xml from either an ODP/OTP package or a standalone XML file.
+
+    Detects by extension: ZIP-packaged ODF (``.odp`` / ``.otp``) goes through
+    :func:`parse_xml_from_zip`; otherwise the file is parsed as XML directly.
+    Falls back to direct XML parsing for files that look like packages but
+    aren't (e.g. a stray ``styles.xml`` saved with an ``.odp`` extension).
+    """
+    import zipfile
+
+    if path.suffix.lower() in {".odp", ".otp", ".fodp"}:
+        try:
+            return parse_xml_from_zip(path, "styles.xml")
+        except zipfile.BadZipFile:
+            pass  # fall through to direct XML parse
+    return ET.parse(path).getroot()
 
 
 def select_slide(content_root: ET.Element, slide: str | None) -> ET.Element:
