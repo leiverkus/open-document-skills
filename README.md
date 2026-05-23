@@ -55,7 +55,7 @@ Covers:
   OASIS ODF 1.3 schema (`validate_refs.py --strict`, all four formats)
 - text/formula/shape extraction
 - XML-safe replacements that preserve inline `text:span`, `text:note`, `text:bookmark`, and `text:a`
-- scholarly authoring — footnotes, endnotes, citations (BibTeX/CSL-JSON), cross-references, MathML, and generated indexes (table of contents, bibliography, illustration/table index, alphabetical index) refreshed via headless LibreOffice
+- scholarly authoring — footnotes, endnotes, citations (BibTeX/CSL-JSON), cross-references, MathML, generated indexes (table of contents, bibliography, illustration/table index, alphabetical index) refreshed via headless LibreOffice, and a **template ecosystem** (five English-first templates shipped — grant proposal, academic paper, letterhead, CV, dissertation — plus tools to inspect templates and extract new ones from any `.odt`/`.ott`/`.docx`)
 - document review — comments and tracked changes (record edits, then accept or reject)
 - structural editing — bulk restyle, insert/delete blocks, table editing (rows, columns, cells)
 - spreadsheets — named ranges, data validation, embedded charts, conditional formatting, pivot tables

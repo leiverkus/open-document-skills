@@ -1,14 +1,23 @@
 #!/usr/bin/env python3
-"""Build a DAO-branded grant proposal end-to-end.
+"""Build a DAO-branded German-language research-grant proposal end-to-end.
 
-Demonstrates the full v0.4 scholarly-authoring stack in one script:
+This is the **localization showcase** for the v1.13 ODT template ecosystem.
+The English-first generic template lives in
+``skills/odt/templates/grant-proposal/``; this directory carries the German
+DAO-archaeology localisation: DAO-blue (#02416C), Nunito Sans, German prose,
+DAO-specific paragraph styles, DAO logo placeholder.
+
+The pipeline:
+
 1. Generate base ODT from spec.json.
-2. Fill citations from refs.bib (pandoc-style [@bibkey] placeholders).
-3. Insert a footnote.
-4. Add a cross-reference (bookmark + bookmark-ref).
-5. Add a figure sequence with a sequence-ref.
-6. Embed a LaTeX formula via MathML.
-7. Optionally render to PDF via LibreOffice.
+2. Apply the localised DAO template via apply_template (one call replaces
+   the v1.4 hand-rolled inject_styles + embed_pictures + validate chain).
+3. Fill citations from refs.bib (pandoc-style ``[@bibkey]`` placeholders).
+4. Insert a footnote.
+5. Add a cross-reference (bookmark + bookmark-ref).
+6. Add a figure sequence + sequence-ref.
+7. Embed a LaTeX formula via MathML.
+8. Optionally render to PDF.
 
 Run from the repo root:
 
@@ -36,35 +45,23 @@ def run(script: str, *args: object) -> None:
     subprocess.run(cmd, check=True)
 
 
-def inject_dao_styles_and_logo(input_odt: Path, output_odt: Path) -> None:
-    """Replace styles.xml with the DAO-branded version and embed the logo."""
-    # Add scripts dir to sys.path so we can import odt_common in-process.
-    sys.path.insert(0, str(SCRIPTS))
-    from odt_common import embed_pictures, inject_styles_from_file  # noqa: E402
-
-    intermediate = OUT / "_styled.tmp.odt"
-    missing = inject_styles_from_file(input_odt, DAO / "styles.xml", intermediate)
-    if missing:
-        print(f"  ! style refs in content not defined in new styles.xml: {missing}", file=sys.stderr)
-    embed_pictures(intermediate, {"Pictures/logo.png": DAO / "logo-placeholder.png"}, output_odt)
-    intermediate.unlink(missing_ok=True)
-
-
 def main() -> None:
     print("Step 1: Generate base ODT from spec.json")
     base = OUT / "01-base.odt"
     run("create_minimal_odt.py", DAO / "spec.json", base)
 
-    print("Step 1b: Inject DAO branded styles + logo placeholder")
-    styled = OUT / "01b-styled.odt"
-    inject_dao_styles_and_logo(base, styled)
+    print("Step 2: Apply the DAO localised template (German, DAO-blue)")
+    # examples/dao/ IS the template directory — apply_template treats it
+    # like any other directory under --template.
+    styled = OUT / "02-styled.odt"
+    run("apply_template.py", base, "--template", DAO, "-o", styled)
 
-    print("Step 2: Fill citations from refs.bib")
-    with_citations = OUT / "02-with-citations.odt"
+    print("Step 3: Fill citations from refs.bib")
+    with_citations = OUT / "03-with-citations.odt"
     run("fill_citations.py", styled, "--source", DAO / "refs.bib", "-o", with_citations)
 
-    print("Step 3: Add a footnote on the methodology")
-    with_footnote = OUT / "03-with-footnote.odt"
+    print("Step 4: Add a footnote on the methodology")
+    with_footnote = OUT / "04-with-footnote.odt"
     run(
         "add_footnote.py",
         with_citations,
@@ -76,10 +73,10 @@ def main() -> None:
         with_footnote,
     )
 
-    print("Step 4: Bookmark + reference for cross-linking")
-    with_bookmark = OUT / "04-with-bookmark.odt"
+    print("Step 5: Bookmark + reference for cross-linking")
+    with_bookmark = OUT / "05-with-bookmark.odt"
     run("add_bookmark.py", with_footnote, "--name", "Methodik", "--anchor", "3. Methodik", "-o", with_bookmark)
-    with_ref = OUT / "05-with-ref.odt"
+    with_ref = OUT / "06-with-ref.odt"
     run(
         "add_reference.py",
         with_bookmark,
@@ -95,8 +92,8 @@ def main() -> None:
         with_ref,
     )
 
-    print("Step 5: Add a figure sequence + sequence-ref")
-    with_seq = OUT / "06-with-sequence.odt"
+    print("Step 6: Add a figure sequence + sequence-ref")
+    with_seq = OUT / "07-with-sequence.odt"
     run(
         "add_sequence.py",
         with_ref,
@@ -109,7 +106,7 @@ def main() -> None:
         "-o",
         with_seq,
     )
-    with_seq_ref = OUT / "07-with-sequence-ref.odt"
+    with_seq_ref = OUT / "08-with-sequence-ref.odt"
     run(
         "add_sequence.py",
         with_seq,
@@ -121,8 +118,8 @@ def main() -> None:
         with_seq_ref,
     )
 
-    print("Step 6: Embed a Carbon-14 formula via LaTeX")
-    with_math = OUT / "08-with-math.odt"
+    print("Step 7: Embed a Carbon-14 formula via LaTeX")
+    with_math = OUT / "09-with-math.odt"
     pandoc = shutil.which("pandoc")
     if pandoc:
         run(
@@ -142,9 +139,6 @@ def main() -> None:
     final = OUT / "grant_proposal.odt"
     shutil.copy(with_math, final)
     print(f"\nFinal ODT: {final}")
-
-    print("\nValidating references...")
-    run("validate_refs.py", final)
 
     soffice = (
         shutil.which("soffice")

@@ -1,10 +1,10 @@
 ---
 name: odt
-description: "Create, read, edit, convert, repair, or inspect OpenDocument Text files (.odt) — including bidirectional conversion to DOCX/DOC via headless LibreOffice. Includes scholarly authoring: footnotes, endnotes, citations (BibTeX/CSL-JSON), cross-references (bookmarks, reference-marks, figure/table sequences), MathML formulas (from LaTeX), and generated indexes (table of contents, bibliography, illustration/table index, alphabetical index)."
-triggers: [".odt", "ODT", "OpenDocument Text", "Open Office document", "LibreOffice Writer", "Writer document", "odt-Datei", "OpenDocument-Text", "footnote", "endnote", "citation", "bibliography", "BibTeX", "CSL-JSON", "Fußnote", "Zitation", "Bibliographie", "Quellenangabe", "cross-reference", "Querverweis", "bookmark", "Lesezeichen", "figure", "Abbildung", "Table", "Tabelle", "equation", "Gleichung", "Formel", "MathML", "LaTeX", "flat ODF", ".fodt", "table of contents", "Inhaltsverzeichnis", "TOC", "Literaturverzeichnis", "index", "Index", "Abbildungsverzeichnis", "Tabellenverzeichnis", "alphabetical index", "alphabetisches Register", ".docx", "DOCX", ".doc", "Word document", "Word-Dokument", "MS Word", "Microsoft Word"]
+description: "Create, read, edit, convert, repair, or inspect OpenDocument Text files (.odt) — including bidirectional conversion to DOCX/DOC via headless LibreOffice and a template ecosystem (grant proposal, academic paper, letterhead, CV, dissertation). Includes scholarly authoring: footnotes, endnotes, citations (BibTeX/CSL-JSON), cross-references (bookmarks, reference-marks, figure/table sequences), MathML formulas (from LaTeX), and generated indexes (table of contents, bibliography, illustration/table index, alphabetical index)."
+triggers: [".odt", "ODT", "OpenDocument Text", "Open Office document", "LibreOffice Writer", "Writer document", "odt-Datei", "OpenDocument-Text", "footnote", "endnote", "citation", "bibliography", "BibTeX", "CSL-JSON", "Fußnote", "Zitation", "Bibliographie", "Quellenangabe", "cross-reference", "Querverweis", "bookmark", "Lesezeichen", "figure", "Abbildung", "Table", "Tabelle", "equation", "Gleichung", "Formel", "MathML", "LaTeX", "flat ODF", ".fodt", "table of contents", "Inhaltsverzeichnis", "TOC", "Literaturverzeichnis", "index", "Index", "Abbildungsverzeichnis", "Tabellenverzeichnis", "alphabetical index", "alphabetisches Register", ".docx", "DOCX", ".doc", "Word document", "Word-Dokument", "MS Word", "Microsoft Word", "template", "Vorlage", "Dokumentvorlage", "grant proposal", "Drittmittelantrag", "Forschungsantrag", "DFG-Antrag", "ERC", "Antrag", "academic paper", "letterhead", "Briefkopf", "Geschäftsbrief", "CV", "Lebenslauf", "dissertation", "Dissertation", "Habilitation", ".ott"]
 dont_use_for: ["spreadsheets (.ods)", "presentations (.odp)", "PDFs as primary deliverable", "general prose editing"]
 license: MIT
-version: "1.12.0"
+version: "1.13.0"
 ---
 
 # ODT creation, editing, and analysis
@@ -245,8 +245,93 @@ python scripts/create_from_markdown.py in.md out.odt --theme forest
 
 Without `--theme` the output is unchanged. Themes name fonts as stacks with a
 Liberation fallback, so a themed document renders even where the first-choice
-font is absent. For branding beyond the five themes, inject a curated
-`styles.xml` with `inject_styles_from_file`.
+font is absent. For full branded designs (not just palette + fonts), use a
+**template** (next section).
+
+## Templates
+
+A *template* is a complete branded design (styles + page layout + master
+page + outline numbering) packaged as a directory. The skill ships five
+templates plus three tools — themes are quick palette+font tweaks;
+templates are full document-class designs.
+
+### Shipped templates
+
+`skills/odt/templates/`:
+
+| Template | Use case |
+|---|---|
+| `grant-proposal` | research-grant proposal for any agency (DFG / ERC / VW / Thyssen / EU). A4, 2.5 cm margins, navy Lato headings + Source Serif body, outline-numbered 1./1.1./1.1.1. |
+| `academic-paper` | IMRaD article (Title / Abstract / Introduction / Methods / Results / Discussion / References) with hanging-indent References style |
+| `letterhead` | DIN-5008-ish business letter — institution placeholder header, asymmetric margins for envelope-window alignment, signature block |
+| `cv` | academic CV — navy section headers with bottom rule, compact 2 cm margins, EntryTitle/EntryDetail/DateRange styles |
+| `dissertation` | long-form thesis / Habilitation — A4 with 3 cm margins, 5-level outline numbering, chapter-per-page (`Heading1` page-break-before), 1.4 line-height, hanging-indent bibliography |
+
+All templates are English-first and institution-neutral. For German /
+DAO-archaeology customisation, see `examples/dao/`.
+
+### Apply a template
+
+`apply_template.py` wraps inject-styles + embed-pictures + validate-refs
+into one call:
+
+```bash
+# Build a base document
+python scripts/create_minimal_odt.py spec.json doc.odt
+
+# Apply a shipped template by name
+python scripts/apply_template.py doc.odt \
+    --template-name grant-proposal -o branded.odt
+
+# Or by path (e.g. a user-supplied template directory)
+python scripts/apply_template.py doc.odt \
+    --template /path/to/my-template -o branded.odt
+```
+
+### Inspect a template
+
+Before authoring, ask what the template offers:
+
+```bash
+python scripts/inspect_template.py \
+    skills/odt/templates/grant-proposal/styles.xml --json
+```
+
+Output is JSON with `page_layouts` (margins, header/footer heights),
+`master_pages` (header/footer previews, frames), `outline_styles` (heading
+numbering levels), named `paragraph_styles` / `text_styles` /
+`list_styles`, and `font_face_decls`.
+
+### Extract a new template
+
+To turn an existing `.odt`/`.ott`/`.docx` (DOCX via the v1.11 OOXML bridge)
+into a reusable template:
+
+```bash
+python scripts/extract_template.py corporate-letterhead.docx \
+    --name corporate-letterhead --outdir skills/odt/templates/ \
+    --license CC-BY-4.0 --source "https://example.com/template"
+```
+
+The extractor filters `office:automatic-styles` to keep only what master
+pages reference (plus parent-style chains), copies master-page-referenced
+`Pictures/`, and writes `LICENSE.txt`/`PROVENANCE.md`/`README.md` metadata.
+
+### Pairing templates with scholarly authoring
+
+Templates pair naturally with the scholarly stack (v0.3 – v1.10):
+
+```bash
+# Apply template, then add the full apparatus
+python scripts/apply_template.py doc.odt --template-name dissertation -o branded.odt
+python scripts/fill_citations.py branded.odt --source refs.bib -o branded.odt
+python scripts/add_toc.py branded.odt --at start --title "Contents" --levels 4 -o branded.odt
+python scripts/add_bibliography.py branded.odt --at end --title "Bibliography" -o branded.odt
+python scripts/update_indexes.py branded.odt --outdir qa
+```
+
+Templates live inside `skills/odt/`, so `install_skills.py` bundles them
+into every Smithery / skills.sh / Claude Code plugin install.
 
 ## Bundled Scripts
 

@@ -95,9 +95,11 @@ __all__ = [
     "pdf_to_pngs",
     "render_to_pdf",
     "find_text_position_in_element",
+    "inspect_styles_xml",
     "insert_after_text_in_element",
     "insert_in_paragraph",
     "latex_to_mathml",
+    "load_styles_xml",
     "media_type_for",
     "pack_dir_as_odt",
     "pack_flat_odf",
@@ -199,3 +201,222 @@ def inject_styles_from_file(input_odt: Path, styles_path: Path, output_odt: Path
 
 def embed_pictures(input_odt: Path, pictures: dict[str, Path], output_odt: Path) -> None:
     _embed_pictures_base(input_odt, pictures, output_odt, ODT_MIMETYPE, NS, q)
+
+
+# ---- Template inspection ----------------------------------------------------
+#
+# An ODT "template" is the layered set of named styles + master pages + page
+# layouts (margins, headers, footers) + outline-style (heading numbering) +
+# list-styles + font declarations defined in styles.xml. These helpers turn
+# that styles.xml into a JSON-serialisable inventory so an agent can pick the
+# right named styles + outline numbering for a generated document.
+
+
+def _header_footer_preview(node: ET.Element | None) -> str:
+    """First ~80 chars of concatenated text inside a <style:header>/<style:footer>."""
+    if node is None:
+        return ""
+    parts: list[str] = []
+    for descendant in node.iter():
+        if descendant.text:
+            parts.append(descendant.text)
+        if descendant.tail:
+            parts.append(descendant.tail)
+    text = " ".join(p.strip() for p in parts if p.strip())
+    return text[:80] + ("…" if len(text) > 80 else "")
+
+
+def _frame_summary_odt(frame: ET.Element) -> dict[str, object]:
+    image = frame.find("draw:image", NS)
+    return {
+        "name": frame.attrib.get(q("draw", "name")),
+        "role": "image" if image is not None else "text",
+        "x": frame.attrib.get(q("svg", "x")),
+        "y": frame.attrib.get(q("svg", "y")),
+        "width": frame.attrib.get(q("svg", "width")),
+        "height": frame.attrib.get(q("svg", "height")),
+    }
+
+
+def _named_style_summary_odt(style: ET.Element) -> dict[str, object]:
+    info: dict[str, object] = {
+        "name": style.attrib.get(q("style", "name")),
+        "family": style.attrib.get(q("style", "family")),
+    }
+    parent = style.attrib.get(q("style", "parent-style-name"))
+    if parent:
+        info["parent"] = parent
+    outline = style.attrib.get(q("style", "default-outline-level"))
+    if outline:
+        info["outline_level"] = outline
+    text_props = style.find("style:text-properties", NS)
+    if text_props is not None:
+        for key, attr in (
+            ("font", q("style", "font-name")),
+            ("font-size", q("fo", "font-size")),
+            ("color", q("fo", "color")),
+            ("font-weight", q("fo", "font-weight")),
+            ("font-style", q("fo", "font-style")),
+        ):
+            value = text_props.attrib.get(attr)
+            if value:
+                info[key] = value
+    para_props = style.find("style:paragraph-properties", NS)
+    if para_props is not None:
+        align = para_props.attrib.get(q("fo", "text-align"))
+        if align:
+            info["text-align"] = align
+    return info
+
+
+def _page_layout_summary(pl: ET.Element) -> dict[str, object]:
+    info: dict[str, object] = {"name": pl.attrib.get(q("style", "name"))}
+    props = pl.find("style:page-layout-properties", NS)
+    if props is not None:
+        for key, attr in (
+            ("width", q("fo", "page-width")),
+            ("height", q("fo", "page-height")),
+            ("orientation", q("style", "print-orientation")),
+        ):
+            value = props.attrib.get(attr)
+            if value:
+                info[key] = value
+        margins: dict[str, str] = {}
+        for side, attr in (
+            ("top", q("fo", "margin-top")),
+            ("bottom", q("fo", "margin-bottom")),
+            ("left", q("fo", "margin-left")),
+            ("right", q("fo", "margin-right")),
+        ):
+            value = props.attrib.get(attr)
+            if value:
+                margins[side] = value
+        if margins:
+            info["margins"] = margins
+    header_style = pl.find("style:header-style", NS)
+    if header_style is not None:
+        hsp = header_style.find("style:header-footer-properties", NS)
+        if hsp is not None:
+            mh = hsp.attrib.get(q("fo", "min-height"))
+            if mh:
+                info["header_height"] = mh
+    footer_style = pl.find("style:footer-style", NS)
+    if footer_style is not None:
+        fsp = footer_style.find("style:header-footer-properties", NS)
+        if fsp is not None:
+            mh = fsp.attrib.get(q("fo", "min-height"))
+            if mh:
+                info["footer_height"] = mh
+    return info
+
+
+def _outline_style_summary(os_el: ET.Element) -> dict[str, object]:
+    levels: list[dict[str, object]] = []
+    for lvl in os_el.findall("text:outline-level-style", NS):
+        levels.append(
+            {
+                "level": lvl.attrib.get(q("text", "level")),
+                "num_format": lvl.attrib.get(q("style", "num-format")),
+                "num_suffix": lvl.attrib.get(q("style", "num-suffix")),
+                "num_prefix": lvl.attrib.get(q("style", "num-prefix")),
+                "display_levels": lvl.attrib.get(q("text", "display-levels")),
+            }
+        )
+    return {"name": os_el.attrib.get(q("style", "name")), "levels": levels}
+
+
+def inspect_styles_xml(styles_root: ET.Element) -> dict[str, object]:
+    """Inspect a parsed ODT ``styles.xml`` and return a template inventory.
+
+    Returns a dict with keys:
+
+    - ``page_layouts``: `{name, width, height, margins, orientation,
+      header_height, footer_height}` per ``style:page-layout``.
+    - ``master_pages``: `{name, page_layout, has_header, has_footer,
+      header_preview, footer_preview, frames}` per ``style:master-page``.
+    - ``outline_styles``: `{name, levels: [{level, num_format, …}]}` per
+      ``text:outline-style`` — the heading-numbering schemes.
+    - ``paragraph_styles``, ``text_styles``: named styles from
+      ``office:styles`` by family.
+    - ``list_styles``: ``[{name}]`` (inventory only).
+    - ``font_face_decls``: declared font face names.
+
+    Agent-facing: this is what ``inspect_template.py`` prints as JSON.
+    """
+    # Page layouts (live in office:automatic-styles in styles.xml).
+    page_layouts: list[dict[str, object]] = [
+        _page_layout_summary(pl) for pl in styles_root.findall(".//office:automatic-styles/style:page-layout", NS)
+    ]
+
+    # Master pages with header/footer previews.
+    masters: list[dict[str, object]] = []
+    for master in styles_root.findall(".//style:master-page", NS):
+        header = master.find("style:header", NS)
+        footer = master.find("style:footer", NS)
+        frames = [_frame_summary_odt(f) for f in master.findall(".//draw:frame", NS)]
+        masters.append(
+            {
+                "name": master.attrib.get(q("style", "name")),
+                "page_layout": master.attrib.get(q("style", "page-layout-name")),
+                "has_header": header is not None,
+                "has_footer": footer is not None,
+                "header_preview": _header_footer_preview(header),
+                "footer_preview": _header_footer_preview(footer),
+                "frames": frames,
+            }
+        )
+
+    # Outline styles (heading numbering).
+    outline_styles = [
+        _outline_style_summary(os_el) for os_el in styles_root.findall(".//office:styles/text:outline-style", NS)
+    ]
+
+    # Named paragraph / text styles in office:styles.
+    paragraph_styles: list[dict[str, object]] = []
+    text_styles: list[dict[str, object]] = []
+    for style in styles_root.findall(".//office:styles/style:style", NS):
+        family = style.attrib.get(q("style", "family"))
+        if family == "paragraph":
+            paragraph_styles.append(_named_style_summary_odt(style))
+        elif family == "text":
+            text_styles.append(_named_style_summary_odt(style))
+
+    # List styles (inventory only).
+    list_styles = [
+        {"name": ls.attrib.get(q("text", "name"))} for ls in styles_root.findall(".//office:styles/text:list-style", NS)
+    ]
+
+    # Font face declarations.
+    font_faces = [
+        ff.attrib.get(q("style", "name"))
+        for ff in styles_root.findall(".//office:font-face-decls/style:font-face", NS)
+        if ff.attrib.get(q("style", "name"))
+    ]
+
+    return {
+        "page_layouts": page_layouts,
+        "master_pages": masters,
+        "outline_styles": outline_styles,
+        "paragraph_styles": paragraph_styles,
+        "text_styles": text_styles,
+        "list_styles": list_styles,
+        "font_face_decls": font_faces,
+    }
+
+
+def load_styles_xml(path: Path) -> ET.Element:
+    """Load ``styles.xml`` from an ODT/OTT package or a standalone XML file.
+
+    Detects by extension: ZIP-packaged ODF (``.odt``/``.ott``/``.fodt``) goes
+    through :func:`parse_xml_from_zip`; otherwise parsed as XML directly.
+    Falls back to direct XML parsing for files that look like packages but
+    aren't (e.g. a stray ``styles.xml`` saved with a ``.odt`` extension).
+    """
+    import zipfile
+
+    if path.suffix.lower() in {".odt", ".ott", ".fodt"}:
+        try:
+            return parse_xml_from_zip(path, "styles.xml")
+        except zipfile.BadZipFile:
+            pass
+    return ET.parse(path).getroot()

@@ -1,0 +1,112 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<office:document-styles
+    xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+    xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+    xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+    xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
+    xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
+    xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    office:version="1.3">
+
+  <office:font-face-decls>
+    <style:font-face style:name="Lato" svg:font-family="'Lato', 'Liberation Sans', sans-serif" style:font-family-generic="swiss" style:font-pitch="variable"/>
+    <style:font-face style:name="Source Serif" svg:font-family="'Source Serif 4', 'Liberation Serif', serif" style:font-family-generic="roman" style:font-pitch="variable"/>
+  </office:font-face-decls>
+
+  <office:styles>
+
+    <style:default-style style:family="paragraph">
+      <style:paragraph-properties fo:text-align="justify"/>
+      <style:text-properties style:font-name="Source Serif" fo:font-size="11pt" fo:color="#2B2B2B" fo:language="en" fo:country="US"/>
+    </style:default-style>
+
+    <!-- Article title (centred, top of page) -->
+    <style:style style:name="Title" style:family="paragraph">
+      <style:paragraph-properties fo:text-align="center" fo:margin-bottom="0.4cm"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="22pt" fo:font-weight="bold" fo:color="#2B2B2B"/>
+    </style:style>
+
+    <style:style style:name="Author" style:family="paragraph">
+      <style:paragraph-properties fo:text-align="center" fo:margin-bottom="0.1cm"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="12pt" fo:color="#2B2B2B"/>
+    </style:style>
+
+    <style:style style:name="Affiliation" style:family="paragraph">
+      <style:paragraph-properties fo:text-align="center" fo:margin-bottom="0.6cm"/>
+      <style:text-properties fo:font-style="italic" fo:font-size="10pt" fo:color="#555555"/>
+    </style:style>
+
+    <style:style style:name="Heading1" style:family="paragraph" style:default-outline-level="1">
+      <style:paragraph-properties fo:margin-top="0.6cm" fo:margin-bottom="0.2cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="14pt" fo:font-weight="bold" fo:color="#2B2B2B"/>
+    </style:style>
+
+    <style:style style:name="Heading2" style:family="paragraph" style:default-outline-level="2">
+      <style:paragraph-properties fo:margin-top="0.4cm" fo:margin-bottom="0.15cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="12pt" fo:font-weight="bold" fo:color="#2B2B2B"/>
+    </style:style>
+
+    <style:style style:name="Heading3" style:family="paragraph" style:default-outline-level="3">
+      <style:paragraph-properties fo:margin-top="0.3cm" fo:margin-bottom="0.1cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="11pt" fo:font-weight="bold" fo:font-style="italic" fo:color="#2B2B2B"/>
+    </style:style>
+
+    <style:style style:name="Body" style:family="paragraph">
+      <style:paragraph-properties fo:margin-bottom="0.25cm" fo:line-height="115%" fo:text-indent="0.5cm"/>
+      <style:text-properties style:font-name="Source Serif" fo:font-size="11pt" fo:color="#2B2B2B"/>
+    </style:style>
+
+    <style:style style:name="Abstract" style:family="paragraph" style:parent-style-name="Body">
+      <style:paragraph-properties fo:margin-left="1cm" fo:margin-right="1cm" fo:margin-bottom="0.5cm" fo:text-indent="0cm"/>
+      <style:text-properties fo:font-size="10pt"/>
+    </style:style>
+
+    <style:style style:name="Quote" style:family="paragraph" style:parent-style-name="Body">
+      <style:paragraph-properties fo:margin-left="1cm" fo:margin-right="1cm" fo:margin-top="0.25cm" fo:margin-bottom="0.25cm" fo:text-indent="0cm"/>
+      <style:text-properties fo:font-size="10pt"/>
+    </style:style>
+
+    <style:style style:name="Caption" style:family="paragraph">
+      <style:paragraph-properties fo:text-align="center" fo:margin-top="0.2cm" fo:margin-bottom="0.4cm"/>
+      <style:text-properties style:font-name="Source Serif" fo:font-style="italic" fo:font-size="10pt" fo:color="#555555"/>
+    </style:style>
+
+    <style:style style:name="References" style:family="paragraph" style:parent-style-name="Body">
+      <style:paragraph-properties fo:margin-left="0.7cm" fo:text-indent="-0.7cm" fo:margin-bottom="0.15cm" fo:text-align="left"/>
+      <style:text-properties fo:font-size="10pt"/>
+    </style:style>
+
+    <style:style style:name="Emphasis" style:family="text">
+      <style:text-properties fo:font-style="italic"/>
+    </style:style>
+
+    <style:style style:name="Strong" style:family="text">
+      <style:text-properties fo:font-weight="bold"/>
+    </style:style>
+
+  </office:styles>
+
+  <office:automatic-styles>
+    <style:page-layout style:name="AP-A4">
+      <style:page-layout-properties
+          fo:page-width="21cm" fo:page-height="29.7cm"
+          fo:margin-top="2.5cm" fo:margin-bottom="2.5cm"
+          fo:margin-left="2.5cm" fo:margin-right="2.5cm"
+          style:print-orientation="portrait">
+        <style:footer-style>
+          <style:header-footer-properties fo:min-height="0.8cm" fo:margin-top="0.4cm"/>
+        </style:footer-style>
+      </style:page-layout-properties>
+    </style:page-layout>
+  </office:automatic-styles>
+
+  <office:master-styles>
+    <style:master-page style:name="Standard" style:page-layout-name="AP-A4">
+      <style:footer>
+        <text:p text:style-name="Caption"><text:page-number text:select-page="current">1</text:page-number></text:p>
+      </style:footer>
+    </style:master-page>
+  </office:master-styles>
+
+</office:document-styles>

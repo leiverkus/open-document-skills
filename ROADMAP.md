@@ -2,7 +2,7 @@
 
 Living document. Subject to revision based on adoption signals from [Smithery](https://smithery.ai/skills/leiverkus/odt) and [skills.sh](https://skills.sh) and on real-world usage feedback. Updated when each milestone ships.
 
-Current release: **v1.12.0** — see [CHANGELOG.md](CHANGELOG.md).
+Current release: **v1.13.0** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Guiding principles
 
@@ -366,6 +366,38 @@ Looking ahead: v1.13 generalises the template ecosystem to ODT (DFG-Antrag,
 Letterhead, CV, Academic-Paper) — the toolchain here is format-agnostic
 enough that ODT just needs the per-skill `templates/` directory plus a
 trivial inspector adaptation.
+
+## v1.13 — ODT template ecosystem ✅ shipped (2026-05-23)
+
+Generalises the v1.12 ODP template toolchain to ODT and ships five
+English-first, institution-neutral templates. ODT is the skill where the
+real scholarly authoring happens (BibTeX/MathML/Indexes/Tracked Changes,
+v0.3–v1.10), so templates here matter most for the project's core audience.
+
+- ✅ **ODT-specific inspector** in `odt_common.py` — `inspect_styles_xml`
+  reports page layouts (margins + header/footer heights), master pages
+  with header/footer text previews, outline-styles (heading numbering
+  levels), named paragraph/text/list styles, and font declarations.
+  `load_styles_xml` accepts `.odt`/`.ott`/`.fodt` packages or standalone
+  XML.
+- ✅ **Three new CLI scripts** in `skills/odt/scripts/`: `inspect_template`,
+  `extract_template` (accepts `.docx` via the v1.11 OOXML bridge),
+  `apply_template`. Parallel to the v1.12 ODP set; same calling convention.
+- ✅ **Five shipped templates** in `skills/odt/templates/`:
+  - `grant-proposal` — generalised research-grant proposal for any agency
+    (DFG / ERC / VolkswagenStiftung / Gerda Henkel / Fritz Thyssen / BMBF /
+    EU Horizon). English-first, institution-neutral. A4 with 2.5 cm
+    margins, navy Lato headings + Source Serif body, 4-level outline.
+  - `academic-paper` — IMRaD article with hanging-indent References.
+  - `letterhead` — DIN-5008-ish business letter.
+  - `cv` — academic CV (compact, EntryTitle/EntryDetail/DateRange styles).
+  - `dissertation` — long-form thesis (3 cm margins, 5-level outline,
+    chapter-per-page, hanging-indent bibliography).
+- ✅ **`examples/dao/build_grant_proposal.py`** reduced to the
+  `apply_template`-based pipeline; `examples/dao/` remains as the
+  **German DAO-archaeology localisation showcase** — same toolchain,
+  German prose + DAO-specific styles. The logo moved to `Pictures/logo.png`
+  so the directory is itself a valid template usable via `--template`.
 
 ### Versioning
 

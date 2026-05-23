@@ -43,6 +43,9 @@ All scripts use the Python standard library.
 | `unpack_fodt.py` | Convert a flat `.fodt` back to a zipped `.odt` package. |
 | `render.py` | Render ODT to PDF, per-page PNGs (`--png`), or a single labelled contact sheet (`--contact-sheet`) via LibreOffice/Poppler. |
 | `convert.py` | Bidirectional conversion to/from Microsoft Word: ODT ↔ DOCX/DOC via headless LibreOffice. Isolated `-env:UserInstallation` temp profile — your real LibreOffice profile is never touched. |
+| `inspect_template.py` | Inspect a template (`.odt`/`.ott`/standalone `styles.xml`) as JSON: page layouts (margins, header/footer heights), master pages, outline-styles (heading numbering), named paragraph/text/list styles, font declarations. The agent's per-block style-picking input. |
+| `extract_template.py` | Distil any `.odt`/`.ott`/`.docx` (DOCX auto-converted via v1.11 bridge) into a reusable template directory: filtered `styles.xml`, master-referenced `Pictures/`, plus `LICENSE.txt`/`PROVENANCE.md`/`README.md`. |
+| `apply_template.py` | Apply a template directory (shipped or user-curated) to an ODT in one call: inject styles, embed master pictures, validate references. Five shipped templates: `grant-proposal`, `academic-paper`, `letterhead`, `cv`, `dissertation`. |
 | `validate_refs.py` | Validate manifest, embedded image references, note id consistency, citation field completeness, leftover citation placeholders, cross-reference targets. Use `--strict` for OASIS RelaxNG schema validation (requires `pip install open-document-lib[validate]`). |
 
 ## ODP

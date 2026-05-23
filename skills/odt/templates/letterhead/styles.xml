@@ -1,0 +1,115 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<office:document-styles
+    xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+    xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+    xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+    xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
+    xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
+    xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    office:version="1.3">
+
+  <office:font-face-decls>
+    <style:font-face style:name="Lato" svg:font-family="'Lato', 'Liberation Sans', sans-serif" style:font-family-generic="swiss" style:font-pitch="variable"/>
+  </office:font-face-decls>
+
+  <office:styles>
+
+    <style:default-style style:family="paragraph">
+      <style:paragraph-properties fo:text-align="left"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="11pt" fo:color="#2B2B2B" fo:language="en" fo:country="US"/>
+    </style:default-style>
+
+    <!-- Letterhead title (e.g., institution name in the header) -->
+    <style:style style:name="Title" style:family="paragraph">
+      <style:paragraph-properties fo:text-align="left" fo:margin-bottom="0.2cm"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="14pt" fo:font-weight="bold" fo:color="#2B2B2B"/>
+    </style:style>
+
+    <!-- Recipient address block; left, ~5cm from top per DIN 5008 -->
+    <style:style style:name="Address" style:family="paragraph">
+      <style:paragraph-properties fo:margin-top="3cm" fo:margin-bottom="0.1cm"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="11pt"/>
+    </style:style>
+
+    <!-- Date, right-aligned -->
+    <style:style style:name="Date" style:family="paragraph">
+      <style:paragraph-properties fo:text-align="right" fo:margin-top="1cm" fo:margin-bottom="0.4cm"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="11pt"/>
+    </style:style>
+
+    <!-- Subject line: bold, slightly larger -->
+    <style:style style:name="Subject" style:family="paragraph">
+      <style:paragraph-properties fo:margin-top="0.4cm" fo:margin-bottom="0.6cm"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="11pt" fo:font-weight="bold"/>
+    </style:style>
+
+    <!-- Standard letter body, paragraph break instead of indent -->
+    <style:style style:name="Body" style:family="paragraph">
+      <style:paragraph-properties fo:margin-bottom="0.4cm" fo:line-height="125%"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="11pt" fo:color="#2B2B2B"/>
+    </style:style>
+
+    <!-- Headings (rare in letters, but provided for compatibility) -->
+    <style:style style:name="Heading1" style:family="paragraph" style:default-outline-level="1">
+      <style:paragraph-properties fo:margin-top="0.4cm" fo:margin-bottom="0.2cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="13pt" fo:font-weight="bold"/>
+    </style:style>
+
+    <style:style style:name="Heading2" style:family="paragraph" style:default-outline-level="2">
+      <style:paragraph-properties fo:margin-top="0.3cm" fo:margin-bottom="0.15cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="11pt" fo:font-weight="bold"/>
+    </style:style>
+
+    <!-- Closing + signature block (extra top margin to leave room for ink signature) -->
+    <style:style style:name="Closing" style:family="paragraph">
+      <style:paragraph-properties fo:margin-top="0.6cm" fo:margin-bottom="2cm"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="11pt"/>
+    </style:style>
+
+    <style:style style:name="Signature" style:family="paragraph">
+      <style:paragraph-properties fo:margin-bottom="0.1cm"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="11pt" fo:font-weight="bold"/>
+    </style:style>
+
+    <style:style style:name="Emphasis" style:family="text">
+      <style:text-properties fo:font-style="italic"/>
+    </style:style>
+
+    <style:style style:name="Strong" style:family="text">
+      <style:text-properties fo:font-weight="bold"/>
+    </style:style>
+
+  </office:styles>
+
+  <office:automatic-styles>
+    <!-- DIN-5008-ish layout: 2.5 cm left (Lochrand), 2 cm right, 2.5/2 cm vertical -->
+    <style:page-layout style:name="LH-A4">
+      <style:page-layout-properties
+          fo:page-width="21cm" fo:page-height="29.7cm"
+          fo:margin-top="2.5cm" fo:margin-bottom="2cm"
+          fo:margin-left="2.5cm" fo:margin-right="2cm"
+          style:print-orientation="portrait">
+        <style:header-style>
+          <style:header-footer-properties fo:min-height="2cm" fo:margin-bottom="1cm"/>
+        </style:header-style>
+        <style:footer-style>
+          <style:header-footer-properties fo:min-height="1cm" fo:margin-top="0.5cm"/>
+        </style:footer-style>
+      </style:page-layout-properties>
+    </style:page-layout>
+  </office:automatic-styles>
+
+  <office:master-styles>
+    <style:master-page style:name="Standard" style:page-layout-name="LH-A4">
+      <style:header>
+        <text:p text:style-name="Title">[Your Institution]</text:p>
+        <text:p text:style-name="Body">[Street Address] · [Postcode City] · [Country]</text:p>
+      </style:header>
+      <style:footer>
+        <text:p text:style-name="Body">[Contact line · Phone · Email · IBAN]</text:p>
+      </style:footer>
+    </style:master-page>
+  </office:master-styles>
+
+</office:document-styles>

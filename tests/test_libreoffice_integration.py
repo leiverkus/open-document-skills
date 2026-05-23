@@ -571,6 +571,70 @@ class LibreOfficeIntegrationTests(unittest.TestCase):
             )
             self.assertTrue((extract_dir / "from-pptx" / "styles.xml").exists())
 
+    def test_each_odt_template_renders_to_pdf(self) -> None:
+        """Every shipped ODT template must apply cleanly and render to PDF."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odt" / "scripts"
+            base = tmp_path / "base.odt"
+            run_script(scripts / "create_minimal_odt.py", FIXTURES / "odt_document.json", base)
+            templates_dir = SKILLS / "odt" / "templates"
+            for template_dir in sorted(templates_dir.iterdir()):
+                if not template_dir.is_dir():
+                    continue
+                with self.subTest(template=template_dir.name):
+                    branded = tmp_path / f"{template_dir.name}.odt"
+                    run_script(
+                        scripts / "apply_template.py",
+                        base,
+                        "--template-name",
+                        template_dir.name,
+                        "-o",
+                        branded,
+                    )
+                    outdir = tmp_path / f"{template_dir.name}-pdf"
+                    run_script(scripts / "render.py", branded, "--outdir", outdir)
+                    pdf = outdir / f"{template_dir.name}.pdf"
+                    self.assertTrue(pdf.exists())
+                    self.assertGreater(pdf.stat().st_size, 0)
+
+    def test_extract_odt_template_from_docx_via_bridge(self) -> None:
+        """extract_template.py (ODT) accepts .docx via the v1.11 bridge."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            scripts = SKILLS / "odt" / "scripts"
+            base = tmp_path / "base.odt"
+            run_script(scripts / "create_minimal_odt.py", FIXTURES / "odt_document.json", base)
+            docx_dir = tmp_path / "docx"
+            run_script(scripts / "convert.py", base, "--to", "docx", "--outdir", docx_dir)
+            docx = docx_dir / "base.docx"
+            self.assertTrue(docx.exists())
+            extract_dir = tmp_path / "templates"
+            run_script(
+                scripts / "extract_template.py",
+                docx,
+                "--name",
+                "from-docx",
+                "--outdir",
+                extract_dir,
+            )
+            self.assertTrue((extract_dir / "from-docx" / "styles.xml").exists())
+
+    def test_dao_localisation_end_to_end(self) -> None:
+        """The v1.13-migrated examples/dao/build_grant_proposal.py runs end-to-end."""
+        import subprocess
+
+        result = subprocess.run(
+            [sys.executable, "-B", str(ROOT / "examples" / "dao" / "build_grant_proposal.py")],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        self.assertEqual(result.returncode, 0, msg=result.stdout[-2000:])
+        final_odt = ROOT / "examples" / "dao" / "output" / "grant_proposal.odt"
+        self.assertTrue(final_odt.exists())
+        self.assertGreater(final_odt.stat().st_size, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

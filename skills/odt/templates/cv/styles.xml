@@ -1,0 +1,109 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<office:document-styles
+    xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+    xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+    xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+    xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
+    xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
+    xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    office:version="1.3">
+
+  <office:font-face-decls>
+    <style:font-face style:name="Lato" svg:font-family="'Lato', 'Liberation Sans', sans-serif" style:font-family-generic="swiss" style:font-pitch="variable"/>
+  </office:font-face-decls>
+
+  <office:styles>
+
+    <style:default-style style:family="paragraph">
+      <style:paragraph-properties fo:text-align="left"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="10pt" fo:color="#2B2B2B" fo:language="en" fo:country="US"/>
+    </style:default-style>
+
+    <!-- Name at the top of page 1 (used as Title) -->
+    <style:style style:name="Title" style:family="paragraph">
+      <style:paragraph-properties fo:text-align="left" fo:margin-bottom="0.1cm"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="24pt" fo:font-weight="bold" fo:color="#1B3A57"/>
+    </style:style>
+
+    <!-- Contact line below the name (email · phone · ORCID · website) -->
+    <style:style style:name="Contact" style:family="paragraph">
+      <style:paragraph-properties fo:text-align="left" fo:margin-bottom="0.8cm"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="9pt" fo:color="#555555"/>
+    </style:style>
+
+    <!-- Section headers (Education / Research / Publications / …) -->
+    <style:style style:name="Heading1" style:family="paragraph" style:default-outline-level="1">
+      <style:paragraph-properties fo:margin-top="0.6cm" fo:margin-bottom="0.25cm" fo:border-bottom="0.5pt solid #1B3A57" fo:padding-bottom="0.1cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="13pt" fo:font-weight="bold" fo:color="#1B3A57"/>
+    </style:style>
+
+    <!-- Sub-section headers (rare; "Refereed", "Conference Papers" etc.) -->
+    <style:style style:name="Heading2" style:family="paragraph" style:default-outline-level="2">
+      <style:paragraph-properties fo:margin-top="0.35cm" fo:margin-bottom="0.15cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="11pt" fo:font-weight="bold" fo:color="#2B2B2B"/>
+    </style:style>
+
+    <!-- Entry title (job title / degree / publication first author + title) -->
+    <style:style style:name="EntryTitle" style:family="paragraph">
+      <style:paragraph-properties fo:margin-top="0.2cm" fo:margin-bottom="0.05cm" fo:keep-with-next="always"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="11pt" fo:font-weight="bold" fo:color="#2B2B2B"/>
+    </style:style>
+
+    <!-- Entry detail (organisation / institution / venue / co-authors) -->
+    <style:style style:name="EntryDetail" style:family="paragraph">
+      <style:paragraph-properties fo:margin-bottom="0.2cm"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="10pt" fo:color="#555555"/>
+    </style:style>
+
+    <!-- Date range, used at end of EntryTitle line via inline span -->
+    <style:style style:name="DateRange" style:family="text">
+      <style:text-properties fo:color="#555555" fo:font-weight="normal" fo:font-size="9.5pt"/>
+    </style:style>
+
+    <!-- Plain body paragraph -->
+    <style:style style:name="Body" style:family="paragraph">
+      <style:paragraph-properties fo:margin-bottom="0.2cm" fo:line-height="125%"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="10pt" fo:color="#2B2B2B"/>
+    </style:style>
+
+    <!-- Bulleted item (for Languages, Skills, Service) -->
+    <style:style style:name="BulletItem" style:family="paragraph">
+      <style:paragraph-properties fo:margin-left="0.7cm" fo:margin-bottom="0.1cm" fo:text-indent="-0.4cm"/>
+      <style:text-properties style:font-name="Lato" fo:font-size="10pt"/>
+    </style:style>
+
+    <style:style style:name="Emphasis" style:family="text">
+      <style:text-properties fo:font-style="italic"/>
+    </style:style>
+
+    <style:style style:name="Strong" style:family="text">
+      <style:text-properties fo:font-weight="bold"/>
+    </style:style>
+
+  </office:styles>
+
+  <office:automatic-styles>
+    <!-- Compact margins typical of CVs -->
+    <style:page-layout style:name="CV-A4">
+      <style:page-layout-properties
+          fo:page-width="21cm" fo:page-height="29.7cm"
+          fo:margin-top="2cm" fo:margin-bottom="2cm"
+          fo:margin-left="2cm" fo:margin-right="2cm"
+          style:print-orientation="portrait">
+        <style:footer-style>
+          <style:header-footer-properties fo:min-height="0.8cm" fo:margin-top="0.5cm"/>
+        </style:footer-style>
+      </style:page-layout-properties>
+    </style:page-layout>
+  </office:automatic-styles>
+
+  <office:master-styles>
+    <style:master-page style:name="Standard" style:page-layout-name="CV-A4">
+      <style:footer>
+        <text:p text:style-name="Contact">[Your Name] · Page <text:page-number text:select-page="current">1</text:page-number></text:p>
+      </style:footer>
+    </style:master-page>
+  </office:master-styles>
+
+</office:document-styles>

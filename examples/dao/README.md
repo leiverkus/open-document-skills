@@ -1,17 +1,42 @@
-# DAO Grant Proposal Example
+# DAO Grant Proposal Example (German localisation)
 
-An end-to-end demonstration of the v0.4 scholarly-authoring stack: citations, footnotes, cross-references, sequences (figure numbering), and LaTeX formulas — all combined in a realistic German-language grant-proposal workflow.
+A **localisation showcase** for the v1.13 ODT template ecosystem: a
+German-language DAO-archaeology grant proposal built on the same
+`apply_template` pipeline as the shipped generic `grant-proposal`
+template, but with German prose, DAO-blue (`#02416C`) branding, and
+Nunito Sans typography instead of the generic Lato/Source Serif.
+
+This is also an end-to-end demonstration of the v0.4 scholarly-authoring
+stack: citations, footnotes, cross-references, figure sequences, and
+LaTeX formulas.
+
+## How it relates to the shipped template
+
+| | `skills/odt/templates/grant-proposal/` | `examples/dao/` |
+|---|---|---|
+| Language | English | German |
+| Accent | Navy `#1B3A57` | DAO blue `#02416C` |
+| Typography | Lato + Source Serif | Nunito Sans (+ SemiBold) |
+| Style names | `Title`, `Heading1`, … | DAO-prefixed + standard names |
+| Logo | none (institution-neutral) | `Pictures/logo.png` (DAO placeholder) |
+| Audience | Any agency, any country | German archaeology institutes |
+
+`examples/dao/` is itself a valid template directory (`styles.xml` +
+`Pictures/logo.png` + `LICENSE.txt`-style content) that `apply_template`
+consumes via the `--template` path argument.
 
 ## What this builds
 
-A short ODT (eventually `output/grant_proposal.odt`) with:
+A short ODT (`output/grant_proposal.odt`) with:
 
 - five sections (Zusammenfassung, Forschungsstand, Methodik, Arbeitsprogramm, Literatur)
+- DAO-blue styling injected via `apply_template.py`
+- DAO logo placeholder embedded in the header
 - three citations from `refs.bib` (filled from pandoc-style `[@bibkey]` placeholders)
 - one footnote on the methodology
 - a bookmark + cross-reference linking back to the Methodik chapter
 - a figure sequence (`Figure 1`) plus a sequence-ref to it
-- a LaTeX formula (Carbon-14 decay, `N(t) = N_0 e^{-\lambda t}`) embedded as MathML
+- a LaTeX formula (Carbon-14 decay) embedded as MathML
 
 ## Run it
 
@@ -19,25 +44,34 @@ A short ODT (eventually `output/grant_proposal.odt`) with:
 python3 examples/dao/build_grant_proposal.py
 ```
 
-The script writes intermediate stages (`01-base.odt` … `08-with-math.odt`) plus the final `grant_proposal.odt` into `examples/dao/output/`. If LibreOffice is available, it also renders `grant_proposal.pdf`.
+The script writes intermediate stages (`01-base.odt` … `09-with-math.odt`)
+plus the final `grant_proposal.odt` into `examples/dao/output/`. If
+LibreOffice is available, it also renders `grant_proposal.pdf`.
 
-## Files
+## Files in this example
 
-- `spec.json` — block-level content spec for `create_minimal_odt.py`. Contains the placeholder text including `[@bibkey]` markers and the anchors that later scripts target.
-- `refs.bib` — BibTeX bibliography with three Theologie-/Archäologie-Beispieleinträge.
-- `build_grant_proposal.py` — the end-to-end build pipeline; each step calls one of the ODT skill scripts.
+- `spec.json` — German block-level content spec for `create_minimal_odt.py`.
+  Contains the placeholder text including `[@bibkey]` markers and the
+  German anchors (e.g. "3. Methodik", "siehe Abbildung") that later
+  scripts target.
+- `styles.xml` — DAO-branded styles (the actual template).
+- `Pictures/logo.png` — DAO logo placeholder, referenced by the header
+  in `styles.xml`.
+- `refs.bib` — BibTeX bibliography with three example archaeology entries.
+- `build_grant_proposal.py` — the end-to-end build pipeline.
 
-## What this is not
+## Localising for your own institution
 
-- Not a real DAO/Solearis Antrag template. The styling layer (Nunito Sans, `#02416C`, official page geometry) is a v0.5 follow-up — for now the ODT uses the default `create_minimal_odt.py` styles.
-- Not a substitute for a proper Antrags-Software wie GEPRIS, DRUM, oder Antragsdatenbank. This shows what the **skills** can produce; the workflow with a real Verwaltung läuft anders.
-- Not the entire DFG-Antragsformular — kein Tabellenwerk, kein Personalkostenrechner, keine institutionellen Stempel.
+Use this directory as a copy-and-adapt starting point:
 
-## Adapting for your project
+```bash
+cp -r examples/dao my-project/
+# Edit my-project/styles.xml — colours, fonts, header text, logo position
+# Replace my-project/Pictures/logo.png with your institution's logo
+# Edit my-project/spec.json with your project's content
+python3 examples/dao/build_grant_proposal.py  # or copy + adapt to your project
+```
 
-1. Replace `spec.json` content with your own block list.
-2. Replace `refs.bib` with your bibliography (or use a `.csl.json` and adjust `--source`).
-3. Tweak anchors in `build_grant_proposal.py` so they match new spec text.
-4. Add or remove pipeline steps to suit (e.g. drop the math step if no formulas).
-
-The pipeline is intentionally linear and idempotent — every step takes one ODT and produces another, so you can stop after any step and inspect the intermediate result.
+The English-first generic starting point is
+`skills/odt/templates/grant-proposal/` — fork it if you don't need the
+DAO/German specifics.

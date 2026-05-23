@@ -4,7 +4,7 @@ description: "Create, read, edit, convert, repair, or inspect OpenDocument Prese
 triggers: [".odp", "ODP", "OpenDocument Presentation", "Open Office presentation", "LibreOffice Impress", "Impress deck", "odp-Datei", "OpenDocument-Präsentation", "Folien", "Präsentation", "animation", "Animation", "transition", "Übergang", "Folienübergang", "slide transition", "master page", "master slide", "Folienmaster", "flat ODF", ".fodp", ".pptx", "PPTX", ".ppt", "PowerPoint", "PowerPoint-Datei", "MS PowerPoint", "Microsoft PowerPoint", "template", "Vorlage", "Designvorlage", "Foliendesign", "branding", "Branding", ".otp"]
 dont_use_for: ["text documents (.odt)", "spreadsheets (.ods)", "general presentation advice without .odp file"]
 license: MIT
-version: "1.12.0"
+version: "1.13.0"
 ---
 
 # ODP creation, editing, and analysis

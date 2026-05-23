@@ -1,5 +1,65 @@
 # Changelog
 
+## v1.13.0 - 2026-05-23
+
+ODT template ecosystem — five English-first, institution-neutral templates
+covering the major scholarly document genres (grant proposal, academic
+paper, letterhead, CV, dissertation), plus the same inspect / extract /
+apply toolchain v1.12 shipped for ODP. The German DAO-archaeology grant
+proposal in `examples/dao/` is preserved as the localisation showcase.
+
+### Added
+
+- **ODT inspector layer** in `odt_common.py` — `inspect_styles_xml` reports
+  page layouts (margins, header/footer heights), master pages with
+  header/footer text previews + frames, outline-styles with their level
+  configurations, named paragraph/text/list styles with typography metadata,
+  and font declarations. `load_styles_xml` accepts `.odt`/`.ott`/`.fodt`
+  packages or standalone XML files.
+- **`inspect_template.py`** — JSON inventory CLI. The agent's per-block
+  style-picking input.
+- **`extract_template.py`** — distil `.odt`/`.ott`/`.fodt`/`.docx` into a
+  reusable template directory. DOCX inputs auto-convert via the v1.11
+  OOXML bridge. Filters `office:automatic-styles` to keep only what master
+  pages reference; copies master-referenced `Pictures/`; seeds
+  `LICENSE.txt`/`PROVENANCE.md`/`README.md`.
+- **`apply_template.py`** — one-call inject-styles + embed-pictures +
+  validate-refs. Supports `--template-name <shipped>` and `--template PATH`.
+- **Five shipped templates** in `skills/odt/templates/`:
+  - `grant-proposal` — research grant proposal for any funding agency
+    (DFG / ERC / VolkswagenStiftung / Gerda Henkel / Fritz Thyssen /
+    BMBF / EU Horizon). English, institution-neutral. A4 with 2.5 cm
+    margins, navy Lato headings (`#1B3A57`) + Source Serif body, 4-level
+    outline numbering.
+  - `academic-paper` — IMRaD article (Title / Author / Affiliation /
+    Abstract / IMRaD body / References). Lato + Source Serif, hanging-
+    indent References style.
+  - `letterhead` — DIN-5008-ish business letter. Asymmetric margins
+    (2.5 cm left Lochrand / 2 cm right). Lato single-font. Institution
+    placeholder header, contact-line footer.
+  - `cv` — academic CV. Navy section headers with bottom rule. Compact
+    2 cm margins. `EntryTitle`/`EntryDetail`/`DateRange` styles.
+  - `dissertation` — long-form thesis / Habilitation. A4 with 3 cm margins
+    (DIN), 5-level outline numbering, chapter-per-page (`Heading1` has
+    `fo:break-before="page"`), 1.4 line-height, hanging-indent
+    `BibliographyEntry` style. Pairs deeply with the v1.10 index pipeline.
+
+### Changed
+
+- **`examples/dao/build_grant_proposal.py`** reduced from a 90-line
+  orchestration to a thin `apply_template`-based wrapper. The
+  `examples/dao/` directory remains as a **German DAO-archaeology
+  localisation showcase** — German prose, DAO blue (`#02416C`), Nunito
+  Sans, DAO-specific paragraph styles. The logo moved to
+  `Pictures/logo.png` so the directory is itself a valid template
+  consumable by `apply_template --template examples/dao`.
+
+### Installation
+
+Templates ship inside `skills/odt/`, so `install_skills.py` includes them
+in every Smithery / skills.sh / Claude Code plugin install — no extra
+download or configuration.
+
 ## v1.12.0 - 2026-05-23
 
 ODP template ecosystem — three tools and three curated templates that close

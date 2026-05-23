@@ -193,6 +193,95 @@ installed. The theme registry lives in `odf_lib/themes.py` (`THEMES`,
 `get_theme`); for branding beyond the five themes, use a **template** (next
 section).
 
+## Templates (ODT)
+
+Where a *theme* is a palette plus a font pairing, a *template* is a full
+branded document design: styles + page layout + master page + outline
+numbering, packaged as a directory.
+
+The ODT skill ships five templates plus three tools (`inspect_template`,
+`extract_template`, `apply_template`) in v1.13. Templates live inside the
+skill (`skills/odt/templates/`) so `install_skills.py` bundles them into
+every Smithery / skills.sh / Claude Code plugin install.
+
+### Shipped templates
+
+| Template | Use case |
+|---|---|
+| `grant-proposal` | research-grant proposal for any agency (DFG/ERC/VW/Thyssen/EU). A4, 2.5 cm margins, navy Lato + Source Serif, outline-numbered 1./1.1./1.1.1. |
+| `academic-paper` | IMRaD article — Title/Author/Affiliation block, hanging-indent References |
+| `letterhead` | DIN-5008-ish business letter, institution-placeholder header, signature block |
+| `cv` | academic CV — navy section headers with bottom rule, compact 2 cm margins, EntryTitle/EntryDetail/DateRange styles |
+| `dissertation` | long-form thesis — A4 with 3 cm margins, 5-level outline numbering, chapter-per-page, hanging-indent bibliography |
+
+All English-first, institution-neutral. The German DAO-archaeology
+localisation lives in `examples/dao/` and showcases how to fork a
+template for institutional branding.
+
+### Apply
+
+```bash
+# Build a base document
+python3 skills/odt/scripts/create_minimal_odt.py spec.json doc.odt
+
+# Apply a shipped template
+python3 skills/odt/scripts/apply_template.py doc.odt \
+    --template-name grant-proposal -o branded.odt
+
+# Or by path (a user-curated template)
+python3 skills/odt/scripts/apply_template.py doc.odt \
+    --template /path/to/my-template -o branded.odt
+```
+
+### Inspect (per-block decision-making)
+
+The agent calls `inspect_template.py` to know what page layout, named
+styles, and outline scheme a template offers:
+
+```bash
+python3 skills/odt/scripts/inspect_template.py \
+    skills/odt/templates/grant-proposal/styles.xml --json
+```
+
+The JSON reports `page_layouts` (margins, header/footer heights),
+`master_pages` (header/footer text previews + frames),
+`outline_styles` (heading numbering levels), `paragraph_styles`,
+`text_styles`, `list_styles`, and `font_face_decls`.
+
+### Extract (bring your own templates)
+
+Turn any `.odt`/`.ott`/`.docx` (DOCX via the v1.11 OOXML bridge) into a
+reusable template directory:
+
+```bash
+python3 skills/odt/scripts/extract_template.py corporate-letterhead.docx \
+    --name corporate-letterhead --outdir skills/odt/templates/ \
+    --license CC-BY-4.0 --source "https://example.com/template"
+```
+
+Filters `office:automatic-styles` to keep only what master pages
+reference, copies master-page-referenced `Pictures/`, seeds metadata.
+
+### Pairing with scholarly authoring
+
+Templates compose with the full scholarly stack:
+
+```bash
+python3 skills/odt/scripts/create_minimal_odt.py spec.json proposal.odt
+python3 skills/odt/scripts/apply_template.py proposal.odt \
+    --template-name grant-proposal -o branded.odt
+python3 skills/odt/scripts/fill_citations.py branded.odt \
+    --source refs.bib -o branded.odt
+python3 skills/odt/scripts/add_toc.py branded.odt \
+    --at start --title "Table of Contents" -o branded.odt
+python3 skills/odt/scripts/add_bibliography.py branded.odt \
+    --at end --title "References" -o branded.odt
+python3 skills/odt/scripts/update_indexes.py branded.odt --outdir qa
+```
+
+The `dissertation` template pairs particularly well with v1.10 indexes
+(TOC + bibliography + illustration index + alphabetical index).
+
 ## Templates (ODP)
 
 Where a *theme* is a palette plus a font pairing, a *template* is a full
