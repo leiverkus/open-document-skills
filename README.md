@@ -5,9 +5,9 @@
 [![Python](https://img.shields.io/pypi/pyversions/open-document-lib)](https://pypi.org/project/open-document-lib/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Native ODT / ODP / ODS / ODG generation and editing for agents — plus bidirectional bridges to DOCX/XLSX/PPTX. No LibreOffice dependency for the core path.**
+**A complete native-ODF skill set for agents — generate, edit, validate, brand, and convert all four OpenDocument formats (ODT / ODP / ODS / ODG) without a DOCX detour.**
 
-Four self-contained skills for Codex, Claude Code, and OpenCode that teach an agent to create, inspect, and edit OpenDocument files directly via Python (stdlib only). Edits preserve inline structure (`text:span`, `text:note`, `text:bookmark`, `text:a`), `meta.xml` is updated on every save, and flat single-XML formats (`.fodt`/`.fodp`/`.fods`/`.fodg`) give you Git-friendly diffs. LibreOffice is optional — needed only for rendering, formula recalculation, PDF export, generated-index refresh, and the new (v1.11) OOXML bridge.
+Four self-contained skills for Codex, Claude Code, OpenCode, and any agent runtime that supports the `SKILL.md` convention. Production-deep across all four OpenDocument formats: generation, structure-preserving edits, scholarly authoring (footnotes, citations, MathML, generated indexes), curated templates and themes, RelaxNG validation, bidirectional bridges to DOCX / XLSX / PPTX, and PDF rendering — all driven from stdlib-only Python with LibreOffice as an optional QA companion.
 
 <p align="center">
   <img src="docs/assets/hero.png" alt="A branded presentation title slide generated from a JSON spec — deep-blue theme, white typography, logo" width="640">
@@ -27,52 +27,38 @@ python skills/odt/scripts/validate_refs.py out.odt
 
 | Skill | LibreOffice app | Smithery | Triggers |
 | --- | --- | --- | --- |
-| [`odt`](skills/odt) | Writer | [smithery.ai/skills/leiverkus/odt](https://smithery.ai/skills/leiverkus/odt) | author from Markdown, edit ODT, footnotes, citations (BibTeX/CSL-JSON), bookmarks, cross-references, figure/table sequences, MathML formulas, render to PDF |
-| [`odp`](skills/odp) | Impress | [smithery.ai/skills/leiverkus/odp](https://smithery.ai/skills/leiverkus/odp) | clone slide, edit notes, add image, named slide layouts, multiple master pages, animations (entrance/exit/emphasis/motion), slide transitions, master-page customization (background, header/footer, logo), render deck |
-| [`ods`](skills/ods) | Calc | [smithery.ai/skills/leiverkus/ods](https://smithery.ai/skills/leiverkus/ods) | set cells/formulas, named ranges, dropdowns + data validation, embedded charts (bar/line/pie/scatter), conditional formatting, pivot tables, export CSV, recalculate |
+| [`odt`](skills/odt) | Writer | [smithery.ai/skills/leiverkus/odt](https://smithery.ai/skills/leiverkus/odt) | author from Markdown, edit ODT, footnotes, citations (BibTeX/CSL-JSON), bookmarks, cross-references, figure/table sequences, MathML formulas, generated indexes, tracked changes, **5 shipped templates** (grant proposal, academic paper, letterhead, CV, dissertation), DOCX bridge, render to PDF |
+| [`odp`](skills/odp) | Impress | [smithery.ai/skills/leiverkus/odp](https://smithery.ai/skills/leiverkus/odp) | clone slide, edit notes, add image, named slide layouts, multiple master pages, animations (entrance/exit/emphasis/motion), slide transitions, master-page customization, **3 shipped templates** (dao-conference, academic-blue, minimalist-mono), PPTX bridge, render deck |
+| [`ods`](skills/ods) | Calc | [smithery.ai/skills/leiverkus/ods](https://smithery.ai/skills/leiverkus/ods) | set cells/formulas, named ranges, dropdowns + data validation, embedded charts (bar/line/pie/scatter), conditional formatting, pivot tables, XLSX bridge, export CSV, recalculate |
 | [`odg`](skills/odg) | Draw | [smithery.ai/skills/leiverkus/odg](https://smithery.ai/skills/leiverkus/odg) | edit labels, add shape image, glue points, connectors with shape binding, groups, flowcharts, org charts, export SVG/PNG |
 
-## Why use these
+## What makes this different
 
-- **Native ODF — and a bridge to DOCX/XLSX/PPTX when you need it.** Generation and editing stay native (no font drift, no lost styles); when interop demands it, `convert.py` per skill round-trips through Microsoft Office formats via headless LibreOffice.
-- **Stdlib-only core.** Every generator, validator, and edit script runs without `pip install` — `xml.etree.ElementTree` and `zipfile` only. LibreOffice is needed only for rendering and recalculation.
-- **Structure-preserving edits.** `replace_text` keeps footnotes, hyperlinks, and inline formatting intact. `add_image` updates the manifest and `meta.xml`. `replace_cells` handles typed values and formulas.
-- **Audit-friendly.** Every edit writes `meta:modification-date`, `meta:generator`, and increments `meta:editing-cycles`. Pack to `.fodt` and `git diff` works.
-- **Tested.** Over 200 unit and integration tests run on every push across Python 3.10–3.13; CI installs LibreOffice so the render/recalc paths are exercised too.
+- **Native ODF — with an OOXML bridge.** Generation and editing stay native (no font drift, no lost styles); when interop demands it, `convert.py` per skill round-trips through Microsoft Office formats (DOCX / XLSX / PPTX, plus legacy DOC / XLS / PPT) via headless LibreOffice. No tool in the agent ecosystem covers both directions natively.
+- **Stdlib-only core.** Every generator, validator, and edit script runs without `pip install` — `xml.etree.ElementTree` and `zipfile` only. LibreOffice is optional, needed for rendering, formula recalculation, generated-index refresh, and the OOXML bridge.
+- **Structure-preserving edits.** `replace_text` keeps inline children (`text:span`, `text:note`, `text:bookmark`, `text:a`) intact; `add_image` updates the manifest and `meta.xml`; `replace_cells` handles typed values and formulas. No tool flattens your formatting.
+- **Scholarly authoring, end-to-end.** Footnotes, endnotes, citations (BibTeX or CSL-JSON), cross-references, MathML formulas (LaTeX→MathML via Pandoc), and generated indexes (table of contents, bibliography, illustration/table index, alphabetical index) — refreshed via headless LibreOffice. The only ODF-agent suite with this depth.
+- **Curated template ecosystem.** Five English-first ODT templates (grant proposal, academic paper, letterhead, CV, dissertation) and three branded ODP templates ship in-box; an `inspect_template` / `extract_template` / `apply_template` toolchain lets users bring their own from any `.odt` / `.ott` / `.docx` / `.odp` / `.otp` / `.pptx`. Templates are bundled into every Smithery / skills.sh / Claude Code plugin install.
+- **Audit- and Git-friendly.** Every edit writes `meta:modification-date`, `meta:generator`, and increments `meta:editing-cycles`. Pack to flat ODF (`.fodt` / `.fodp` / `.fods` / `.fodg`) and `git diff` shows real, reviewable changes — embedded images and all.
+- **Tested.** 416 unit, integration, and property-based tests on every push across Python 3.10–3.13. CI installs LibreOffice so the render / recalc / convert / index-refresh paths are exercised, validates against the OASIS ODF 1.3 RelaxNG schema with `--strict`, and runs `tests/test_corpus.py` against LibreOffice-roundtripped real-world fixtures to catch regressions native-LO files would surface.
 
-## Scope
+## What the four skills cover
 
-The scripts are intentionally small and conservative, but production-deep
-across all four formats. The goal is to make the 80% of ODF automation that
-agents need safe, repeatable, and dependency-light — not a LibreOffice
-replacement.
+| Skill | Generation | Editing | Format-specific |
+|---|---|---|---|
+| **ODT** | spec-driven; Markdown → ODT with rich inline (`text:span`, links, GFM tables, footnotes); **5 shipped templates** | structure-preserving text/image edits; bulk restyle; block insert/delete; table editing (rows, columns, cells); tracked changes; comments | footnotes, citations (BibTeX/CSL-JSON), cross-references, MathML, generated indexes (TOC, bibliography, illustration/alphabetical index) |
+| **ODP** | spec-driven with six standard slide layouts and multiple master pages; **3 shipped templates** | per-slide layout/master reassignment; clone slide; add image; master-page customization (background, header/footer, logo) | animations (entrance/exit/emphasis/motion paths), slide transitions, contact-sheet visual design loop |
+| **ODS** | spec-driven, themed header rows | typed cells, formulas, named ranges, data validation (dropdowns + range constraints) | embedded charts (bar/line/pie/scatter), conditional formatting, pivot tables (computed + refreshable), formula recalc via soffice |
+| **ODG** | spec-driven with role-styled shapes; per-shape styling keys | edit labels; add shape image; per-shape colours | connectors with shape binding, glue points, groups; flowcharts, org charts; PDF/SVG/PNG export |
 
-Covers:
+**Shared by all four**: `--theme NAME` (5 curated palette + font pairings); RelaxNG `--strict` validation against the OASIS ODF 1.3 schema; flat-ODF roundtrip; `render.py` to PDF / per-page PNG / contact sheet; MIME-byte-detected image embedding; `meta.xml` lifecycle on every edit; bidirectional `convert.py` to/from the matching Microsoft Office format (ODT ↔ DOCX/DOC, ODS ↔ XLSX/XLS, ODP ↔ PPTX/PPT).
 
-- direct generation, template-based editing, and Markdown → ODT authoring with inline rich text, links, tables, and footnotes
-- five curated themes (palette + font pairing) applied to any generator via `--theme`
-- package validation, including optional RelaxNG validation against the
-  OASIS ODF 1.3 schema (`validate_refs.py --strict`, all four formats)
-- text/formula/shape extraction
-- XML-safe replacements that preserve inline `text:span`, `text:note`, `text:bookmark`, and `text:a`
-- scholarly authoring — footnotes, endnotes, citations (BibTeX/CSL-JSON), cross-references, MathML, generated indexes (table of contents, bibliography, illustration/table index, alphabetical index) refreshed via headless LibreOffice, and a **template ecosystem** (five English-first templates shipped — grant proposal, academic paper, letterhead, CV, dissertation — plus tools to inspect templates and extract new ones from any `.odt`/`.ott`/`.docx`)
-- document review — comments and tracked changes (record edits, then accept or reject)
-- structural editing — bulk restyle, insert/delete blocks, table editing (rows, columns, cells)
-- spreadsheets — named ranges, data validation, embedded charts, conditional formatting, pivot tables
-- presentations — designed default styling, branded-theme injection, named slide layouts, multiple master pages, animations, slide transitions, master-page customization, and a **template ecosystem** (three curated branded designs shipped, plus tools to inspect templates and extract new ones from any `.odp`/`.otp`/`.pptx`)
-- drawings — designed styling with per-shape colours, connectors with shape binding, glue points, shape groups
-- rendering to PDF, per-page PNG, or a single contact sheet — a visual design loop, not just final QA
-- image embedding with magic-byte MIME detection
-- `meta.xml` lifecycle updates on every edit (`modification-date`, `generator`, `editing-cycles`)
-- flat ODF (`.fodt`/`.fodp`/`.fods`/`.fodg`) roundtrip
-- bidirectional conversion to and from Microsoft Office: ODT ↔ DOCX/DOC, ODS ↔ XLSX/XLS, ODP ↔ PPTX/PPT via headless LibreOffice (one `convert.py` per skill)
+## Out of scope
 
-Out of scope — use LibreOffice or another tool for these:
+- **In-place native-OOXML editing** (open `.docx`/`.xlsx`/`.pptx`, edit as DOCX/XLSX/PPTX, save back as DOCX/XLSX/PPTX) — use `python-docx`, `openpyxl`, `python-pptx`, or `pandoc`. One-shot conversion in either direction ships via `convert.py`; for sustained DOCX work the natural pattern is `convert.py → edit as ODF → convert.py` back.
+- **Master-page inheritance chains** — ODF has no such concept; slides reference a master page and a slide layout independently, both supported.
 
-- master-page inheritance chains (ODF has no such concept — slides reference a master and a slide layout independently, which the skills do support)
-- **in-place** native-OOXML editing (open `.docx`/`.xlsx`/`.pptx`, edit as DOCX/XLSX/PPTX, save as DOCX/XLSX/PPTX) — use `python-docx`, `openpyxl`, `python-pptx`, or `pandoc`. One-shot conversion in either direction ships in v1.11 (above); for sustained DOCX work the natural pattern is `convert.py → edit as ODF → convert.py` back.
-
-See [ROADMAP.md](ROADMAP.md) for what is planned next.
+See [ROADMAP.md](ROADMAP.md) for the trajectory across the v0.2 – v1.13 releases.
 
 ## Documentation
 
