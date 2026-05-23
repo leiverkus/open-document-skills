@@ -8,6 +8,8 @@ Start here:
 - [Agent Compatibility](agent-compatibility.md) - how the same `skills/` source works across agent runtimes.
 - [OpenDocument Workflows](workflows.md) - practical ODT, ODP, ODS, and ODG workflows.
 - [Script Reference](script-reference.md) - helper scripts by format.
+- [Library API](library-api.md) - public `odf_lib` functions for direct Python use.
+- [Repository Layout](repository-layout.md) - top-level structure of the repo.
 
 The repository keeps one canonical skill source under `skills/`. Installers and plugin metadata adapt that source to each target runtime.
 

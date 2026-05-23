@@ -40,44 +40,39 @@ python skills/odt/scripts/validate_refs.py out.odt
 - **Audit-friendly.** Every edit writes `meta:modification-date`, `meta:generator`, and increments `meta:editing-cycles`. Pack to `.fodt` and `git diff` works.
 - **Tested.** Over 200 unit and integration tests run on every push across Python 3.10–3.13; CI installs LibreOffice so the render/recalc paths are exercised too.
 
-## What this is not
+## Scope
 
-Not a LibreOffice replacement, and not a substitute for full ODF feature coverage. Generated tables of contents and DOCX/PPTX/XLSX import-and-edit are explicit non-goals. See [Current Limits](#current-limits). The goal is to make the 80% of ODF automation that agents need safe, repeatable, and dependency-light.
+The scripts are intentionally small and conservative, but production-deep
+across all four formats. The goal is to make the 80% of ODF automation that
+agents need safe, repeatable, and dependency-light — not a LibreOffice
+replacement.
 
-## Repository Layout
+Covers:
 
-```text
-skills/
-  odt/
-    SKILL.md
-    scripts/
-  odp/
-    SKILL.md
-    scripts/
-  ods/
-    SKILL.md
-    scripts/
-  odg/
-    SKILL.md
-    scripts/
-tests/
-  fixtures/
-  test_smoke.py
-  test_edge_cases.py
-  test_libreoffice_integration.py
-scripts/
-  install_skills.py
-.claude-plugin/
-  plugin.json
-examples/
-  README.md
-  build_examples.py
-  *.json
-docs/
-  index.md
-```
+- direct generation, template-based editing, and Markdown → ODT authoring with inline rich text, links, tables, and footnotes
+- five curated themes (palette + font pairing) applied to any generator via `--theme`
+- package validation, including optional RelaxNG validation against the
+  OASIS ODF 1.3 schema (`validate_refs.py --strict`, all four formats)
+- text/formula/shape extraction
+- XML-safe replacements that preserve inline `text:span`, `text:note`, `text:bookmark`, and `text:a`
+- scholarly authoring — footnotes, endnotes, citations (BibTeX/CSL-JSON), cross-references, MathML
+- document review — comments and tracked changes (record edits, then accept or reject)
+- structural editing — bulk restyle, insert/delete blocks, table editing (rows, columns, cells)
+- spreadsheets — named ranges, data validation, embedded charts, conditional formatting, pivot tables
+- presentations — designed default styling, branded-theme injection, named slide layouts, multiple master pages, animations, slide transitions, master-page customization
+- drawings — designed styling with per-shape colours, connectors with shape binding, glue points, shape groups
+- rendering to PDF, per-page PNG, or a single contact sheet — a visual design loop, not just final QA
+- image embedding with magic-byte MIME detection
+- `meta.xml` lifecycle updates on every edit (`modification-date`, `generator`, `editing-cycles`)
+- flat ODF (`.fodt`/`.fodp`/`.fods`/`.fodg`) roundtrip
 
-Each skill is MIT-licensed and also contains its own `LICENSE.txt`.
+Out of scope — use LibreOffice or another tool for these:
+
+- generated indexes and tables of contents (LibreOffice builds these from the markers the skills set)
+- master-page inheritance chains (ODF has no such concept — slides reference a master and a slide layout independently, which the skills do support)
+- DOCX/PPTX/XLSX import-and-edit — use `pandoc` if you need those round-trips
+
+See [ROADMAP.md](ROADMAP.md) for what is planned next.
 
 ## Documentation
 
@@ -88,6 +83,7 @@ Detailed documentation lives in [docs/index.md](docs/index.md):
 - [OpenDocument Workflows](docs/workflows.md)
 - [Script Reference](docs/script-reference.md)
 - [Library API](docs/library-api.md)
+- [Repository Layout](docs/repository-layout.md)
 
 ## Installation
 
@@ -298,39 +294,6 @@ documents are startup-bound; large spreadsheets are the heaviest case and
 still finish well under a second. Reproduce or re-measure with
 [`benchmarks/run_benchmarks.py`](benchmarks/README.md). Numbers are
 indicative and machine-dependent.
-
-## Current Limits
-
-The scripts are intentionally small and conservative, but production-deep
-across all four formats.
-
-They cover:
-
-- direct generation, template-based editing, and Markdown → ODT authoring with inline rich text, links, tables, and footnotes
-- five curated themes (palette + font pairing) applied to any generator via `--theme`
-- package validation, including optional RelaxNG validation against the
-  OASIS ODF 1.3 schema (`validate_refs.py --strict`, all four formats)
-- text/formula/shape extraction
-- XML-safe replacements that preserve inline `text:span`, `text:note`, `text:bookmark`, and `text:a`
-- scholarly authoring — footnotes, endnotes, citations (BibTeX/CSL-JSON), cross-references, MathML
-- document review — comments and tracked changes (record edits, then accept or reject)
-- structural editing — bulk restyle, insert/delete blocks, table editing (rows, columns, cells)
-- spreadsheets — named ranges, data validation, embedded charts, conditional formatting, pivot tables
-- presentations — designed default styling, branded-theme injection, named slide layouts, multiple master pages, animations, slide transitions, master-page customization
-- drawings — designed styling with per-shape colours, connectors with shape binding, glue points, shape groups
-- rendering to PDF, per-page PNG, or a single contact sheet — a visual design loop, not just final QA
-- image embedding with magic-byte MIME detection
-- `meta.xml` lifecycle updates on every edit (`modification-date`, `generator`, `editing-cycles`)
-- flat ODF (`.fodt`/`.fodp`/`.fods`/`.fodg`) roundtrip
-
-They intentionally do **not** model every OpenDocument feature.
-Some gaps stay out of scope — use LibreOffice for these:
-
-- generated indexes and tables of contents (LibreOffice builds these from the markers the skills set)
-- master-page inheritance chains (ODF has no such concept — slides reference a master and a slide layout independently, which the skills do support)
-- DOCX/PPTX/XLSX import-and-edit — use `pandoc` if you need those round-trips
-
-See [ROADMAP.md](ROADMAP.md) for what is planned next.
 
 ## Contributing & releases
 
