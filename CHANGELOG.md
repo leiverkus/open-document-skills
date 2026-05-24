@@ -1,5 +1,30 @@
 # Changelog
 
+## Unreleased
+
+Test-quality work, no version bump.
+
+### Changes
+
+- **`odf_lib/citation_mapping.py` from 0 % to 100 %** statement coverage.
+  Adds `tests/test_lib_citation_mapping.py` with 47 unit tests covering
+  every public function (`csl_authors_to_string`, `csl_date_to_year`,
+  `csl_entry_to_odf_fields`, `bibtex_entry_to_odf_fields`) and lookup
+  table (`CSL_TYPE_TO_ODF`, `BIBTEX_TYPE_TO_ODF`, `BIBTEX_FIELD_TO_ODF`,
+  `REQUIRED_FIELDS`). Includes edge cases (missing date parts, list-form
+  ISSN, brace-stripped field values, literal author names, uppercase
+  BibTeX `ENTRYTYPE`, unknown-type fallback to `misc`) plus
+  spec-conformance invariants (every value in the lookup tables must
+  be a valid ODF bibliography type/field).
+- **Coverage gate raised from 30 % to 40 %.** The previous floor sat
+  below the actual coverage and was a tripwire, not a constraint. With
+  citation-mapping fully covered the suite now reports ~50 % on
+  `odf_lib/`; the new gate of 40 % constrains regressions without
+  flapping under refactors. Set in both `pyproject.toml`
+  (`[tool.coverage.report] fail_under`) and `.github/workflows/tests.yml`
+  (`--cov-fail-under`).
+- Total: 450 tests (was 403).
+
 ## v1.14.0 - 2026-05-23
 
 Speaker-notes PDF export for Impress. LibreOffice's `impress_pdf_Export`

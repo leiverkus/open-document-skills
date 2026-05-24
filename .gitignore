@@ -13,3 +13,4 @@ examples/diagram/output/
 /build/
 *.egg-info/
 benchmarks/results.md
+uv.lock
