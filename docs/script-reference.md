@@ -71,7 +71,7 @@ All scripts use the Python standard library.
 | `pack_odp.py` | Repack an unpacked ODP directory with correct `mimetype` handling. |
 | `pack_fodp.py` | Convert a zipped ODP to a flat `.fodp` (single XML, Git-friendly). |
 | `unpack_fodp.py` | Convert a flat `.fodp` back to a zipped `.odp` package. |
-| `render.py` | Render ODP to PDF, per-slide PNGs (`--png`), or a single labelled contact sheet (`--contact-sheet`) via LibreOffice/Poppler. |
+| `render.py` | Render ODP to PDF, per-slide PNGs (`--png`), or a single labelled contact sheet (`--contact-sheet`) via LibreOffice/Poppler. Use `--notes` for an interleaved slides+notes PDF (`<stem>-with-notes.pdf`) or `--notes-only` for a notes-only PDF (`<stem>-notes.pdf`). |
 | `convert.py` | Bidirectional conversion to/from Microsoft PowerPoint: ODP ↔ PPTX/PPT via headless LibreOffice. |
 | `validate_refs.py` | Validate manifest, embedded image references, animation/transition/master-page/slide-layout targets. Use `--strict` for OASIS RelaxNG schema validation. |
 
