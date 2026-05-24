@@ -10,6 +10,188 @@ The skills prefer native OpenDocument package/XML workflows. LibreOffice is trea
 4. Validate package references.
 5. Render or recalculate with LibreOffice when visual or formula QA matters.
 
+## Workflow recipes (briefing → document)
+
+The skills ship as a toolbox of small scripts so an agent can compose
+freely. Below are ready-to-copy multi-step pipelines for the most common
+goals — each is one block you paste into a shell, edit the inputs, and
+run. Every recipe is also a **reference pipeline** you can fork into a
+`build_*.py` (see [`examples/dao/build_grant_proposal.py`](../examples/dao/build_grant_proposal.py),
+[`examples/deck/build_deck.py`](../examples/deck/build_deck.py),
+[`examples/diagram/build_diagram.py`](../examples/diagram/build_diagram.py)).
+
+### 1. Grant proposal — briefing + bibliography → branded ODT + PDF
+
+**Inputs**: a `spec.json` describing the document structure and a
+BibTeX or CSL-JSON bibliography. **Output**: a fully branded grant
+proposal with citations, TOC, and bibliography refreshed.
+
+```bash
+# 1. Generate the base document from a structured spec.
+python3 skills/odt/scripts/create_minimal_odt.py spec.json proposal.odt
+
+# 2. Apply a shipped template (institutionally neutral, English-first).
+#    Swap to a forked template directory for institutional branding.
+python3 skills/odt/scripts/apply_template.py proposal.odt \
+    --template-name grant-proposal -o proposal.odt
+
+# 3. Resolve pandoc-style [@key] citation placeholders against your bib.
+python3 skills/odt/scripts/fill_citations.py proposal.odt \
+    --source refs.bib -o proposal.odt
+
+# 4. Insert empty TOC and bibliography containers.
+python3 skills/odt/scripts/add_toc.py proposal.odt \
+    --at start --title "Table of Contents" -o proposal.odt
+python3 skills/odt/scripts/add_bibliography.py proposal.odt \
+    --at end --title "References" -o proposal.odt
+
+# 5. Refresh both index bodies through LibreOffice, then render.
+python3 skills/odt/scripts/update_indexes.py proposal.odt --outdir qa
+python3 skills/odt/scripts/render.py qa/proposal.odt --outdir qa
+```
+
+For German-language localisation with institutional styling (DAO blue,
+Nunito Sans, DFG-style outline), substitute `--template examples/dao` in
+step 2 — see the full pipeline in
+[`examples/dao/build_grant_proposal.py`](../examples/dao/build_grant_proposal.py).
+
+### 2. Conference deck — outline → branded ODP + contact-sheet preview
+
+**Inputs**: a `spec.json` listing slides. **Output**: a branded deck and
+a single-image grid preview to judge layout at a glance.
+
+```bash
+# 1. Generate a base deck. Use --theme for a quick palette/font pairing,
+#    or skip --theme and apply a full template in step 2.
+python3 skills/odp/scripts/create_minimal_odp.py spec.json deck.odp
+
+# 2. Apply a shipped template (dao-conference, academic-blue, or
+#    minimalist-mono) — injects styles + logo + validates.
+python3 skills/odp/scripts/apply_template.py deck.odp \
+    --template-name dao-conference -o deck.odp
+
+# 3. Visual design loop: render every slide into one labelled grid image.
+python3 skills/odp/scripts/render.py deck.odp --outdir qa --contact-sheet
+# qa/deck-contact.png — open it, judge alignment, iterate.
+
+# 4. Final render to PDF (with optional speaker notes).
+python3 skills/odp/scripts/render.py deck.odp --outdir qa
+python3 skills/odp/scripts/render.py deck.odp --outdir qa --notes
+```
+
+To author from your own template, extract it once with
+`extract_template.py` from any `.odp`/`.otp`/`.pptx`, then point step 2
+at the resulting directory.
+
+### 3. Academic paper — Markdown + refs → IMRaD ODT + bibliography
+
+**Inputs**: a Markdown file with pandoc-style `[@key]` citations and a
+BibTeX file. **Output**: an IMRaD-styled ODT with hanging-indent
+references.
+
+```bash
+# 1. Markdown → ODT with rich inline (spans, links, footnotes, GFM tables).
+#    No Pandoc needed — md_parser.py is stdlib-only.
+python3 skills/odt/scripts/create_from_markdown.py paper.md paper.odt
+
+# 2. Apply the IMRaD academic-paper template.
+python3 skills/odt/scripts/apply_template.py paper.odt \
+    --template-name academic-paper -o paper.odt
+
+# 3. Fill [@key] markers from your bibliography (BibTeX or CSL-JSON).
+python3 skills/odt/scripts/fill_citations.py paper.odt \
+    --source refs.bib -o paper.odt
+
+# 4. Add a bibliography container; LibreOffice generates the entries.
+python3 skills/odt/scripts/add_bibliography.py paper.odt \
+    --at end --title "References" -o paper.odt
+python3 skills/odt/scripts/update_indexes.py paper.odt --outdir qa
+```
+
+### 4. Dissertation skeleton — all four index types
+
+**Inputs**: a `spec.json` with chapter headings, figure captions, and
+in-text index marks. **Output**: a dissertation-styled ODT with TOC,
+bibliography, illustration index, and alphabetical index — all
+populated.
+
+```bash
+# 1. Generate base + apply the dissertation template (3 cm margins,
+#    5-level outline numbering, chapter-per-page).
+python3 skills/odt/scripts/create_minimal_odt.py spec.json thesis.odt
+python3 skills/odt/scripts/apply_template.py thesis.odt \
+    --template-name dissertation -o thesis.odt
+
+# 2. Fill citations and add the four index containers.
+python3 skills/odt/scripts/fill_citations.py thesis.odt --source refs.bib -o thesis.odt
+python3 skills/odt/scripts/add_toc.py thesis.odt --at start --title "Inhalt" --levels 5 -o thesis.odt
+python3 skills/odt/scripts/add_bibliography.py thesis.odt --at end --title "Literatur" -o thesis.odt
+python3 skills/odt/scripts/add_illustration_index.py thesis.odt --at end --sequence Figure -o thesis.odt
+python3 skills/odt/scripts/add_alphabetical_index.py thesis.odt --at end -o thesis.odt
+
+# 3. Refresh all four index bodies via LibreOffice in one pass.
+python3 skills/odt/scripts/update_indexes.py thesis.odt --outdir qa
+```
+
+The dissertation template is the strongest pairing for the full v1.10
+indexing stack — point markers are inserted in the body with
+`add_index_mark.py` ahead of `update_indexes.py`.
+
+### 5. Spreadsheet report — data → named ranges + chart + recalc
+
+**Inputs**: a `spec.json` defining sheets and rows. **Output**: an ODS
+with named ranges, a chart, and freshly-computed formulas.
+
+```bash
+# 1. Generate the base workbook.
+python3 skills/ods/scripts/create_minimal_ods.py spec.json report.ods
+
+# 2. Name a data column so formulas read naturally: =SUM(Sales) not B2:B100.
+python3 skills/ods/scripts/add_named_range.py report.ods \
+    --name Sales --range 'Data.B2:B100' -o report.ods
+
+# 3. Embed a chart anchored to a target cell.
+python3 skills/ods/scripts/add_chart.py report.ods --type bar \
+    --data 'Data.A1:B10' --title 'Q1 Sales' --cell 'Summary.D1' -o report.ods
+
+# 4. Optional: highlight outliers by condition (stackable rules).
+python3 skills/ods/scripts/add_conditional_format.py report.ods \
+    --range 'Data.B2:B100' --condition 'value > 1000' --background '#C8E6C9' -o report.ods
+
+# 5. Recalculate every formula, then render to PDF.
+python3 skills/ods/scripts/recalc.py report.ods --outdir qa
+python3 skills/ods/scripts/render.py qa/report.ods --outdir qa
+```
+
+For pivot tables and validation dropdowns, see the dedicated sections
+below.
+
+### 6. DOCX in → ODT edit → DOCX out (interop bridge)
+
+**Inputs**: an existing `.docx` from a collaborator. **Output**: the
+same document edited with the ODT skill and exported back as DOCX.
+
+```bash
+# 1. Bridge in: DOCX → ODT via headless LibreOffice (isolated profile).
+python3 skills/odt/scripts/convert.py incoming.docx --to odt --outdir work
+
+# 2. Apply ODT-skill edits — structure-preserving, manifest-aware.
+python3 skills/odt/scripts/replace_text.py work/incoming.odt \
+    "{{CLIENT}}" "Acme Corp" -o work/edited.odt
+python3 skills/odt/scripts/add_footnote.py work/edited.odt \
+    --anchor "compliance review" --body "Per audit dated 2026-Q1." \
+    -o work/edited.odt
+python3 skills/odt/scripts/validate_refs.py work/edited.odt   # non-strict
+                                                              # (DOCX import emits loext:)
+
+# 3. Bridge out: ODT → DOCX. Use the same convert.py.
+python3 skills/odt/scripts/convert.py work/edited.odt --to docx --outdir out
+```
+
+The bridge round-trips well for prose, tables, simple formatting, and
+images. Complex DOCX features (advanced bibliography, macros, embedded
+ActiveX) may lose detail — inspect before relying on the output.
+
 ## ODT
 
 Create:

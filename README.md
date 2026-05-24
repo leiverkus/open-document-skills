@@ -53,6 +53,27 @@ python skills/odt/scripts/validate_refs.py out.odt
 
 **Shared by all four**: `--theme NAME` (5 curated palette + font pairings); RelaxNG `--strict` validation against the OASIS ODF 1.3 schema; flat-ODF roundtrip; `render.py` to PDF / per-page PNG / contact sheet; MIME-byte-detected image embedding; `meta.xml` lifecycle on every edit; bidirectional `convert.py` to/from the matching Microsoft Office format (ODT ↔ DOCX/DOC, ODS ↔ XLSX/XLS, ODP ↔ PPTX/PPT).
 
+## Recipes and reference pipelines
+
+The skills ship as a toolbox so an agent can compose freely — but for human users, [`docs/workflows.md`](docs/workflows.md) opens with a **goal-oriented cookbook**: paste-and-edit pipelines for the most common outcomes.
+
+| Recipe | Outcome |
+|---|---|
+| **[Grant proposal](docs/workflows.md#1-grant-proposal--briefing--bibliography--branded-odt--pdf)** | briefing + bibliography → branded ODT + PDF (template + citations + TOC + bibliography) |
+| **[Conference deck](docs/workflows.md#2-conference-deck--outline--branded-odp--contact-sheet-preview)** | outline → branded ODP + contact-sheet preview |
+| **[Academic paper](docs/workflows.md#3-academic-paper--markdown--refs--imrad-odt--bibliography)** | Markdown + refs.bib → IMRaD ODT with bibliography |
+| **[Dissertation skeleton](docs/workflows.md#4-dissertation-skeleton--all-four-index-types)** | spec → dissertation ODT with all four index types populated |
+| **[Spreadsheet report](docs/workflows.md#5-spreadsheet-report--data--named-ranges--chart--recalc)** | data → ODS with named ranges + chart + recalc |
+| **[DOCX interop bridge](docs/workflows.md#6-docx-in--odt-edit--docx-out-interop-bridge)** | DOCX in → ODT edit → DOCX out |
+
+**Fork the examples.** Each recipe is also a reference pipeline that you adapt into a one-command script — exactly the pattern of the shipped `build_*.py` examples:
+
+- [`examples/dao/build_grant_proposal.py`](examples/dao/build_grant_proposal.py) — DAO-branded German grant proposal end-to-end (forks recipe #1)
+- [`examples/deck/build_deck.py`](examples/deck/build_deck.py) — branded ODP deck end-to-end (forks recipe #2)
+- [`examples/diagram/build_diagram.py`](examples/diagram/build_diagram.py) — branded flowchart end-to-end
+
+Copy one of these into your project, swap the inputs (`spec.json`, `refs.bib`, template choice), and you have a single-command pipeline tailored to your workflow. Each is a thin orchestrator over the same skill scripts the recipes call.
+
 ## Out of scope
 
 - **In-place native-OOXML editing** (open `.docx`/`.xlsx`/`.pptx`, edit as DOCX/XLSX/PPTX, save back as DOCX/XLSX/PPTX) — use `python-docx`, `openpyxl`, `python-pptx`, or `pandoc`. One-shot conversion in either direction ships via `convert.py`; for sustained DOCX work the natural pattern is `convert.py → edit as ODF → convert.py` back.
