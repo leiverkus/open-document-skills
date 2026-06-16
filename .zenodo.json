@@ -1,0 +1,35 @@
+{
+  "title": "Open Document Skills: a stdlib-only native-ODF toolkit and agent skill set (ODT/ODP/ODS/ODG)",
+  "upload_type": "software",
+  "description": "Dependency-free Python toolkit for the four OpenDocument formats (ODT/ODP/ODS/ODG). The shared library is published to PyPI as open-document-lib; four agent skills (SKILL.md) let an LLM generate, edit, validate, brand, repair and convert ODF files locally, on an open ISO standard, without a proprietary office suite. Includes scholarly authoring (footnotes, BibTeX/CSL-JSON citations, cross-references, MathML), named ranges and data validation, embedded charts, connectors and shape groups, RelaxNG validation, and PDF rendering.",
+  "license": "MIT",
+  "access_right": "open",
+  "creators": [
+    {
+      "name": "Leiverkus, Patrick",
+      "orcid": "0009-0006-2308-8297",
+      "affiliation": "Carl von Ossietzky Universität Oldenburg"
+    }
+  ],
+  "keywords": [
+    "OpenDocument",
+    "ODF",
+    "ODT",
+    "ODP",
+    "ODS",
+    "ODG",
+    "LibreOffice",
+    "open standards",
+    "open formats",
+    "document automation",
+    "agent skills",
+    "research software"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://pypi.org/project/open-document-lib/",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    }
+  ]
+}

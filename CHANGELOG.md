@@ -1,10 +1,14 @@
 # Changelog
 
-## Unreleased
+## 1.15.0 (2026-06-16)
 
-Test-quality work, no version bump.
+Citable-software release: adds `CITATION.cff` and `.zenodo.json`; the GitHub
+release is archived on Zenodo to mint a DOI. Includes the test-quality work below.
 
 ### Changes
+
+- Add `CITATION.cff` (CFF 1.2.0) and `.zenodo.json` for citation metadata and
+  Zenodo archiving (concept + version DOI on release).
 
 - **`odf_lib/citation_mapping.py` from 0 % to 100 %** statement coverage.
   Adds `tests/test_lib_citation_mapping.py` with 47 unit tests covering
