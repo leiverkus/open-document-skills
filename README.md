@@ -4,6 +4,7 @@
 [![PyPI](https://img.shields.io/pypi/v/open-document-lib)](https://pypi.org/project/open-document-lib/)
 [![Python](https://img.shields.io/pypi/pyversions/open-document-lib)](https://pypi.org/project/open-document-lib/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20717279.svg)](https://doi.org/10.5281/zenodo.20717279)
 
 **A complete native-ODF skill set for agents — generate, edit, validate, brand, and convert all four OpenDocument formats (ODT / ODP / ODS / ODG) without a DOCX detour.**
 

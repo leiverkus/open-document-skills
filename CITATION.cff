@@ -22,8 +22,13 @@ authors:
 version: "1.15.0"
 date-released: "2026-06-16"
 license: MIT
+doi: "10.5281/zenodo.20717279"
 repository-code: "https://github.com/leiverkus/open-document-skills"
 url: "https://github.com/leiverkus/open-document-skills"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.20717279"
+    description: "Concept DOI (resolves to all versions on Zenodo)"
 keywords:
   - OpenDocument
   - ODF
