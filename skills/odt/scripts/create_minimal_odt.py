@@ -24,6 +24,7 @@ from odt_common import (
     q,
     theme_font_faces,
     unique_picture_name,
+    xml_bytes,
 )
 
 
@@ -253,7 +254,7 @@ def main() -> None:
             else:
                 raise SystemExit(f"Unknown block type: {kind}")
 
-        ET.ElementTree(content).write(root_dir / "content.xml", encoding="utf-8", xml_declaration=True)
+        (root_dir / "content.xml").write_bytes(xml_bytes(content))
         ET.ElementTree(build_styles(theme)).write(root_dir / "styles.xml", encoding="utf-8", xml_declaration=True)
         ET.ElementTree(build_meta(spec.get("title"))).write(
             root_dir / "meta.xml", encoding="utf-8", xml_declaration=True

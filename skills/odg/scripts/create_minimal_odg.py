@@ -26,6 +26,7 @@ from odg_common import (
     q,
     theme_font_faces,
     unique_picture_name,
+    xml_bytes,
 )
 
 # Default drawing theme — a designed look, not LibreOffice's generic blue.
@@ -334,7 +335,7 @@ def main() -> None:
         ensure_manifest_entry(manifest, "/", ODG_MIMETYPE)
         for full_path, media_type in manifest_entries:
             ensure_manifest_entry(manifest, full_path, media_type)
-        ET.ElementTree(content).write(root_dir / "content.xml", encoding="utf-8", xml_declaration=True)
+        (root_dir / "content.xml").write_bytes(xml_bytes(content))
         ET.ElementTree(build_styles(theme)).write(root_dir / "styles.xml", encoding="utf-8", xml_declaration=True)
         ET.ElementTree(meta).write(root_dir / "meta.xml", encoding="utf-8", xml_declaration=True)
         ET.ElementTree(settings).write(root_dir / "settings.xml", encoding="utf-8", xml_declaration=True)

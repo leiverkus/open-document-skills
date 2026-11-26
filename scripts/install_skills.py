@@ -13,7 +13,12 @@ ROOT = Path(__file__).resolve().parents[1]
 SKILLS_DIR = ROOT / "skills"
 DEFAULT_SKILLS = ("odt", "odp", "ods", "odg")
 PLUGIN_FILES = ("README.md", "LICENSE")
-PLUGIN_DIRS = (".claude-plugin", "skills")
+PLUGIN_DIRS = (".claude-plugin", "skills", "docs")
+# Repo docs that SKILL.md files link to via ``../../docs/``. A standalone
+# install has no repo root above it, so these are bundled into the skill and
+# the links rewritten to point at the bundled copies.
+BUNDLED_DOCS = ("soffice-resolver.md", "script-reference.md")
+REPO_URL = "https://github.com/leiverkus/open-document-skills"
 
 # Junk that must never end up in an installed skill or plugin bundle.
 _IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc", ".DS_Store")
@@ -59,7 +64,22 @@ def install_skill(name: str, dest: Path, replace: bool) -> str:
     # Bundle the shared odf_lib/ package so the skill runs standalone —
     # the scripts search upward from their own location for odf_lib/.
     shutil.copytree(ROOT / "odf_lib", target / "odf_lib", ignore=_IGNORE)
+    _bundle_docs(target)
     return f"install {name}: {target}"
+
+
+def _bundle_docs(target: Path) -> None:
+    """Copy linked repo docs into *target* and repoint SKILL.md links."""
+    docs = target / "docs"
+    docs.mkdir(exist_ok=True)
+    for doc in BUNDLED_DOCS:
+        shutil.copy2(ROOT / "docs" / doc, docs / doc)
+    skill_md = target / "SKILL.md"
+    text = skill_md.read_text(encoding="utf-8")
+    text = text.replace("](../../docs/", "](docs/")
+    # Examples are not bundled; link them on GitHub instead of a dead path.
+    text = text.replace("](../../examples/", f"]({REPO_URL}/tree/main/examples/")
+    skill_md.write_text(text, encoding="utf-8")
 
 
 def install_skills(dest: Path, skills: list[str], replace: bool) -> None:

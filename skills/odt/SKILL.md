@@ -288,6 +288,11 @@ python scripts/apply_template.py doc.odt \
     --template /path/to/my-template -o branded.odt
 ```
 
+Styles the document references but the template does not define (for
+example the list and table styles written by `create_from_markdown.py`) are
+carried over from the original `styles.xml`; template styles always win. Pass
+`--no-carry-over` to drop them instead.
+
 ### Inspect a template
 
 Before authoring, ask what the template offers:

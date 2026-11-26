@@ -790,7 +790,7 @@ pivot tables whose source or target range names an unknown sheet.
 
 ## Schema validation (--strict)
 
-`validate_refs.py --strict` runs OASIS ODF 1.3 RelaxNG validation against `content.xml` and `META-INF/manifest.xml`. The OASIS `content` schema is shared across formats, so the `--strict` flag works for all four — ODT, ODP, ODS, and ODG. The schemas are downloaded once on first use to `~/.cache/open-document-skills/schemas/` and reused afterwards.
+`validate_refs.py --strict` runs OASIS ODF RelaxNG validation against `content.xml` and `META-INF/manifest.xml`, using the schema that matches the version each file declares: ODF 1.3 (what the generators write) or ODF 1.4 (what LibreOffice 25.2+ and Microsoft 365 save). Other declared versions are skipped with a warning. The OASIS `content` schema is shared across formats, so the `--strict` flag works for all four — ODT, ODP, ODS, and ODG. The schemas are downloaded once on first use to `~/.cache/open-document-skills/schemas/` (as `odf-<version>-content.rng` / `odf-<version>-manifest.rng`) and reused afterwards; copying the OASIS files there by hand works offline.
 
 ```bash
 pip install open-document-lib[validate]

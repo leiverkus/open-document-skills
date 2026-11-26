@@ -1,5 +1,62 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+
+- **Formulas no longer break on save.** ElementTree only declares namespaces
+  used in qualified names, so `xmlns:of` (used only inside `table:formula`
+  values) was dropped by every generator and every edit script. LibreOffice
+  then evaluated each formula as `Err:510` — including formulas already present
+  in an existing workbook edited with `replace_cells.py`. `xml_bytes()` now
+  re-declares `of`, `oooc`, `ooow` and `msoxl` when attribute values reference
+  them, and the `create_*` generators serialize `content.xml` through it.
+- **`recalc.py` actually recalculates.** It converted the copied file onto
+  itself; soffice refuses that but still exits 0, so the output was never
+  recalculated. It now converts in a scratch directory.
+  `convert_with_soffice()` refuses same-path conversions and deletes a stale
+  output first, so an old file can no longer mask a failed conversion.
+- **`update_indexes.py` no longer hangs or does nothing.** The macro relied on
+  `ThisComponent` for a document passed on the command line, which is racy and
+  left soffice running until the timeout; the macro now loads the document
+  itself. A fresh profile also needs `ooSetupInstCompleted=true`, otherwise
+  LibreOffice's first-start setup drops the macro URL. On timeout the whole
+  process group is killed instead of leaving `soffice.bin` orphaned.
+- **`create_from_markdown.py` tables and footnotes.** Table cell styles now
+  inherit from `Body` (right/centre-aligned cells were rendered at
+  LibreOffice's 12pt default and lost theme fonts); header cells follow the
+  column alignment (`TableHeaderCenter`/`TableHeaderRight`); plain cells use
+  `TableCell`. Footnote bodies use a new `Footnote` style with a hanging indent
+  instead of running into the note number.
+- **`apply_template.py` keeps document styles the template lacks** (e.g.
+  `ListNumber`, `Quote`, `TableHeader`), with their parent chain and font
+  faces, so numbered lists no longer turn into bullets. Template styles still
+  win; `--no-carry-over` restores the previous behaviour.
+- **Spreadsheet cell assignments replace the whole cell.** `set_cell_value()`
+  left a previous `table:formula` in place, so `replace_cells.py S!B1=7` on a
+  formula cell kept the formula and LibreOffice ignored the new value; stale
+  cached values and `calcext:value-type` survived too. Formula cells no longer
+  get `office:value-type="float"` without `office:value` (schema-invalid —
+  every generated workbook with a formula failed `--strict`), and JSON `null`
+  in `create_minimal_ods.py` rows yields an empty cell instead of `"None"`.
+- **`--strict` accepts LibreOffice's own extensions.** `loext` and `officeooo`
+  join `calcext` as known foreign-content namespaces, so LibreOffice-saved
+  Writer documents with comments (`loext:resolved`) no longer fail.
+- **ODF 1.4 documents validate.** LibreOffice 25.2+ and Microsoft 365 save
+  ODF 1.4, which the 1.3-only `--strict` check rejected outright. The check now
+  picks the OASIS schema matching each file's declared `office:version` /
+  `manifest:version` (1.3 or 1.4; others are skipped with a warning).
+  `ensure_schema()` / `validate_against_schema()` take a `version` argument
+  (default `"1.3"`). Generators still write ODF 1.3 for the widest
+  compatibility.
+- **Flat ODF conversion keeps the document's ODF version.** `pack_flat_odf()`
+  / `unpack_flat_odf()` (and embedded objects) hard-coded `1.3`, relabelling
+  1.4 documents on every round trip.
+- **Standalone installs bundle linked docs.** `install_skills.py` copies
+  `docs/soffice-resolver.md` and `docs/script-reference.md` into each skill and
+  rewrites the `../../docs/` links; `../../examples/` links point to GitHub.
+  The Claude plugin bundle now includes `docs/`.
+
 ## 1.15.0 (2026-06-16)
 
 Citable-software release: adds `CITATION.cff` and `.zenodo.json`; the GitHub
