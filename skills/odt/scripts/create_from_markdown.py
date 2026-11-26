@@ -30,6 +30,7 @@ from odt_common import (
     q,
     theme_font_faces,
     unique_picture_name,
+    xml_bytes,
 )
 
 MAX_IMAGE_WIDTH_CM = 15.0
@@ -42,8 +43,13 @@ INLINE_IMAGE = (1.2, 1.2)
 # --------------------------------------------------------------------------
 
 
-def _paragraph_style(styles: ET.Element, name: str, props: dict[str, str], text: dict[str, str]) -> None:
-    style = ET.SubElement(styles, q("style", "style"), {q("style", "name"): name, q("style", "family"): "paragraph"})
+def _paragraph_style(
+    styles: ET.Element, name: str, props: dict[str, str], text: dict[str, str], parent: str | None = None
+) -> None:
+    attrs = {q("style", "name"): name, q("style", "family"): "paragraph"}
+    if parent:
+        attrs[q("style", "parent-style-name")] = parent
+    style = ET.SubElement(styles, q("style", "style"), attrs)
     if props:
         ET.SubElement(style, q("style", "paragraph-properties"), props)
     if text:
@@ -155,9 +161,29 @@ def build_styles(theme: Theme | None = None) -> ET.Element:
         },
         {},
     )
-    _paragraph_style(styles, "TableHeader", {}, {q("fo", "font-weight"): "bold"})
-    _paragraph_style(styles, "CellCenter", {q("fo", "text-align"): "center"}, {})
-    _paragraph_style(styles, "CellRight", {q("fo", "text-align"): "end"}, {})
+    # Table cell styles inherit from Body so they share its size, font and
+    # theme colour (without a parent they fell back to LibreOffice's 12pt
+    # default, larger than the 11pt body text in neighbouring cells).
+    cell = {q("fo", "margin-bottom"): "0cm"}
+    _paragraph_style(styles, "TableHeader", cell, {q("fo", "font-weight"): "bold"}, parent="Body")
+    _paragraph_style(styles, "TableHeaderCenter", {q("fo", "text-align"): "center"}, {}, parent="TableHeader")
+    _paragraph_style(styles, "TableHeaderRight", {q("fo", "text-align"): "end"}, {}, parent="TableHeader")
+    _paragraph_style(styles, "TableCell", cell, {}, parent="Body")
+    _paragraph_style(styles, "CellCenter", {q("fo", "text-align"): "center"}, {}, parent="TableCell")
+    _paragraph_style(styles, "CellRight", {q("fo", "text-align"): "end"}, {}, parent="TableCell")
+    # Footnote text: smaller, with a hanging indent so the note number in the
+    # footnote area is set apart from the text instead of running into it.
+    _paragraph_style(
+        styles,
+        "Footnote",
+        {
+            q("fo", "margin-left"): "0.5cm",
+            q("fo", "text-indent"): "-0.5cm",
+            q("fo", "margin-bottom"): "0cm",
+        },
+        {q("fo", "font-size"): "9pt"},
+        parent="Body",
+    )
 
     _text_style(styles, "Strong", {q("fo", "font-weight"): "bold"})
     _text_style(styles, "Emphasis", {q("fo", "font-style"): "italic"})
@@ -326,14 +352,12 @@ class Emitter:
         for col in range(ncols):
             cell_el = ET.SubElement(row_el, q("table", "table-cell"), {q("office", "value-type"): "string"})
             align = alignments[col] if col < len(alignments) else "default"
-            if header:
-                style = "TableHeader"
-            elif align == "center":
-                style = "CellCenter"
+            if align == "center":
+                style = "TableHeaderCenter" if header else "CellCenter"
             elif align == "right":
-                style = "CellRight"
+                style = "TableHeaderRight" if header else "CellRight"
             else:
-                style = "Body"
+                style = "TableHeader" if header else "TableCell"
             cell = cells[col] if col < len(cells) else md.TableCell([])
             self.emit_paragraph(cell_el, cell.children, style)
 
@@ -407,9 +431,9 @@ class Emitter:
         citation.text = str(self.footnote_counter)
         body = ET.SubElement(note, q("text", "note-body"))
         if definition.children:
-            self.emit_blocks(body, definition.children)
+            self.emit_blocks(body, definition.children, para_style="Footnote")
         else:
-            ET.SubElement(body, q("text", "p"), {q("text", "style-name"): "Body"})
+            ET.SubElement(body, q("text", "p"), {q("text", "style-name"): "Footnote"})
         return note
 
     def _image_frame(self, parent: ET.Element, src: str, alt: str, anchor: str) -> ET.Element:
@@ -527,7 +551,7 @@ def main() -> None:
         emitter.emit_blocks(text, document.children)
 
         title = _document_title(document, args.title)
-        ET.ElementTree(content).write(root_dir / "content.xml", encoding="utf-8", xml_declaration=True)
+        (root_dir / "content.xml").write_bytes(xml_bytes(content))
         ET.ElementTree(build_styles(theme)).write(root_dir / "styles.xml", encoding="utf-8", xml_declaration=True)
         ET.ElementTree(build_meta(title)).write(root_dir / "meta.xml", encoding="utf-8", xml_declaration=True)
         ET.ElementTree(build_settings()).write(root_dir / "settings.xml", encoding="utf-8", xml_declaration=True)

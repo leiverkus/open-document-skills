@@ -25,6 +25,7 @@ from odp_common import (
     q,
     theme_font_faces,
     unique_picture_name,
+    xml_bytes,
 )
 from odp_layouts import (
     DEFAULT_LAYOUT,
@@ -434,7 +435,7 @@ def main() -> None:
                     "gr-notes",
                 )
 
-        ET.ElementTree(content).write(root_dir / "content.xml", encoding="utf-8", xml_declaration=True)
+        (root_dir / "content.xml").write_bytes(xml_bytes(content))
         ET.ElementTree(build_styles(masters, theme)).write(
             root_dir / "styles.xml", encoding="utf-8", xml_declaration=True
         )

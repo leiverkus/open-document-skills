@@ -11,10 +11,15 @@ index-refresh on the loaded document. This script automates that:
 2. Creates an isolated ``-env:UserInstallation`` temp profile.
 3. Writes a tiny ``Standard/Module1.RefreshIndexes`` Basic library + permissive
    ``MacroSecurityLevel=0`` into the temp profile (the real user profile is
-   never touched).
-4. Invokes ``soffice`` headless with the document URL **and** the macro URL.
-   The macro walks ``ThisComponent.DocumentIndexes`` and calls ``.update()``
-   on each, then stores and closes the document.
+   never touched). ``ooSetupInstCompleted=true`` is set as well: without it a
+   fresh profile runs LibreOffice's first-start setup, which silently drops
+   the macro URL, so nothing is refreshed.
+4. Invokes ``soffice`` headless with a macro URL that carries the document
+   URL as its argument. The macro loads the document itself (hidden), walks
+   ``DocumentIndexes`` and calls ``.update()`` on each, then stores and closes
+   it. (Passing the document on the command line and relying on
+   ``ThisComponent`` is racy: the macro can run before the document is loaded,
+   exit without closing anything, and leave soffice running forever.)
 5. Cleans up the temp profile.
 
 Mirrors the ``recalc.py`` (ODS, v0.6) pattern for Calc formulas. On
@@ -27,7 +32,9 @@ Indexes** (or press F9) as a manual fallback.
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -53,9 +60,13 @@ _XLB_DIALOG_INDEX = """<?xml version="1.0" encoding="UTF-8"?>
 
 _MODULE_XBA = """<?xml version="1.0" encoding="UTF-8"?>
 <script:module xmlns:script="http://openoffice.org/2000/script" script:name="Module1" script:language="StarBasic">
-Sub RefreshIndexes
+Sub RefreshIndexes(sUrl As String)
     Dim oDoc As Object
-    oDoc = ThisComponent
+    On Error GoTo Failed
+    Dim aProps(0) As New com.sun.star.beans.PropertyValue
+    aProps(0).Name = &quot;Hidden&quot;
+    aProps(0).Value = True
+    oDoc = StarDesktop.loadComponentFromURL(sUrl, &quot;_blank&quot;, 0, aProps())
     If IsNull(oDoc) Then
         Exit Sub
     End If
@@ -67,6 +78,11 @@ Sub RefreshIndexes
     Next i
     oDoc.store()
     oDoc.close(True)
+    Exit Sub
+Failed:
+    If Not IsNull(oDoc) Then
+        oDoc.close(True)
+    End If
 End Sub
 </script:module>
 """
@@ -75,6 +91,7 @@ _REGISTRY_XCU = """<?xml version="1.0" encoding="UTF-8"?>
 <oor:items xmlns:oor="http://openoffice.org/2001/registry">
  <item oor:path="/org.openoffice.Office.Common/Security/Scripting"><prop oor:name="MacroSecurityLevel" oor:op="fuse"><value>0</value></prop></item>
  <item oor:path="/org.openoffice.Office.Common/Misc"><prop oor:name="FirstRun" oor:op="fuse"><value>false</value></prop></item>
+ <item oor:path="/org.openoffice.Setup/Office"><prop oor:name="ooSetupInstCompleted" oor:op="fuse"><value>true</value></prop></item>
 </oor:items>
 """
 
@@ -118,33 +135,43 @@ def main() -> None:
     profile = Path(tempfile.mkdtemp(prefix="odf-soffice-"))
     try:
         _write_basic_module(profile)
-        target_url = "file://" + str(target.resolve())
+        # as_uri() percent-encodes quotes, commas and parentheses, so the
+        # URL is safe inside the Basic string literal and the macro URL.
+        target_url = target.resolve().as_uri()
         cmd = [
             soffice,
-            f"-env:UserInstallation=file://{profile}",
+            f"-env:UserInstallation={profile.as_uri()}",
             "--headless",
             "--norestore",
             "--nologo",
             "--nofirststartwizard",
-            target_url,
-            "macro:///Standard.Module1.RefreshIndexes",
+            f'macro:///Standard.Module1.RefreshIndexes("{target_url}")',
         ]
+        # Own process group: the soffice launcher forks soffice.bin, and on
+        # timeout the whole group must go — otherwise soffice.bin survives
+        # with its profile deleted underneath it.
+        proc = subprocess.Popen(
+            cmd,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            start_new_session=os.name != "nt",
+        )
         try:
-            proc = subprocess.run(
-                cmd,
-                text=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                timeout=args.timeout,
-            )
+            output, _ = proc.communicate(timeout=args.timeout)
         except subprocess.TimeoutExpired:
+            if os.name == "nt":
+                proc.kill()
+            else:
+                os.killpg(proc.pid, signal.SIGKILL)
+            proc.communicate()
             print(
                 f"soffice timed out after {args.timeout}s — indexes may not be refreshed",
                 file=sys.stderr,
             )
             raise SystemExit(2)
         if proc.returncode != 0:
-            print(proc.stdout, file=sys.stderr)
+            print(output, file=sys.stderr)
             raise SystemExit(proc.returncode)
     finally:
         shutil.rmtree(profile, ignore_errors=True)

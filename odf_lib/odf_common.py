@@ -69,8 +69,46 @@ def parse_xml_from_zip(path: Path, member: str) -> ET.Element:
             return ET.parse(handle).getroot()
 
 
+# Namespace prefixes that ODF uses *inside attribute values* rather than in
+# element or attribute names: formula grammars (``table:formula="of:=..."``,
+# ``text:formula="ooow:..."``, validation and conditional-format conditions).
+# ElementTree only declares namespaces that appear in qualified names, so a
+# parse/serialize round trip silently drops these declarations. LibreOffice
+# then fails to recognise the grammar prefix and every formula evaluates to an
+# error (Err:510). ``xml_bytes`` re-declares the ones that are referenced.
+VALUE_PREFIX_NAMESPACES: dict[str, str] = {
+    "of": "urn:oasis:names:tc:opendocument:xmlns:of:1.2",
+    "oooc": "http://openoffice.org/2004/calc",
+    "ooow": "http://openoffice.org/2004/writer",
+    "msoxl": "http://schemas.microsoft.com/office/excel/formula",
+}
+
+
+def _value_prefix_declarations(root: ET.Element) -> dict[str, str]:
+    """Return value-level namespace declarations *root* needs but ET won't emit."""
+    needed: dict[str, str] = {}
+    used_uris: set[str] = set()
+    for node in root.iter():
+        tag = node.tag
+        if isinstance(tag, str) and tag.startswith("{"):
+            used_uris.add(tag[1:].split("}", 1)[0])
+        for key, value in node.attrib.items():
+            if key.startswith("{"):
+                used_uris.add(key[1:].split("}", 1)[0])
+            head, sep, _ = value.partition(":")
+            if sep and head in VALUE_PREFIX_NAMESPACES:
+                needed[head] = VALUE_PREFIX_NAMESPACES[head]
+    # A URI that also appears in a qualified name is declared by ET itself;
+    # declaring it again would produce a duplicate attribute.
+    return {prefix: uri for prefix, uri in needed.items() if uri not in used_uris}
+
+
 def xml_bytes(root: ET.Element) -> bytes:
     """Serialize an XML element to UTF-8 bytes with XML declaration.
+
+    Namespace prefixes referenced only inside attribute values (see
+    :data:`VALUE_PREFIX_NAMESPACES`) are declared on the root element so that
+    formulas survive the round trip.
 
     Args:
         root: The XML element to serialize.
@@ -78,6 +116,16 @@ def xml_bytes(root: ET.Element) -> bytes:
     Returns:
         UTF-8 encoded bytes including the ``<?xml ...?>`` declaration.
     """
+    extra = _value_prefix_declarations(root)
+    if extra:
+        # Fresh root with its own attribute dict and the same children, so
+        # the caller's tree is left untouched (copy.copy would share attrib).
+        clone = ET.Element(root.tag, dict(root.attrib))
+        clone.text, clone.tail = root.text, root.tail
+        clone.extend(list(root))
+        for prefix, uri in extra.items():
+            clone.set(f"xmlns:{prefix}", uri)
+        root = clone
     return ET.tostring(root, encoding="utf-8", xml_declaration=True)
 
 
@@ -515,39 +563,57 @@ def find_pandoc() -> str | None:
     return shutil.which("pandoc")
 
 
-SCHEMA_URLS: dict[str, str] = {
-    "content": "https://docs.oasis-open.org/office/OpenDocument/v1.3/os/schemas/OpenDocument-v1.3-schema.rng",
-    "manifest": "https://docs.oasis-open.org/office/OpenDocument/v1.3/os/schemas/OpenDocument-v1.3-manifest-schema.rng",
+_OASIS_SCHEMA_BASE = "https://docs.oasis-open.org/office/OpenDocument"
+
+# OASIS RelaxNG schemas per ODF version. The generators write ODF 1.3 (read by
+# every 1.3- and 1.4-capable consumer); LibreOffice 25.2+ and Microsoft 365
+# save ODF 1.4, so --strict picks the schema matching the document's own
+# office:version / manifest:version.
+SCHEMA_URLS_BY_VERSION: dict[str, dict[str, str]] = {
+    version: {
+        "content": f"{_OASIS_SCHEMA_BASE}/v{version}/os/schemas/OpenDocument-v{version}-schema.rng",
+        "manifest": f"{_OASIS_SCHEMA_BASE}/v{version}/os/schemas/OpenDocument-v{version}-manifest-schema.rng",
+    }
+    for version in ("1.3", "1.4")
 }
+DEFAULT_SCHEMA_VERSION = "1.3"
+# Backwards-compatible alias: the ODF 1.3 schema URLs.
+SCHEMA_URLS: dict[str, str] = SCHEMA_URLS_BY_VERSION[DEFAULT_SCHEMA_VERSION]
 
 
-def ensure_schema(name: str) -> Path:
-    """Locate an OASIS ODF 1.3 RelaxNG schema, downloading it on first use.
+def ensure_schema(name: str, version: str = DEFAULT_SCHEMA_VERSION) -> Path:
+    """Locate an OASIS ODF RelaxNG schema, downloading it on first use.
 
     Schemas are cached under ``$XDG_CACHE_HOME/open-document-skills/schemas/``
-    (defaulting to ``~/.cache/open-document-skills/schemas/``).
+    (defaulting to ``~/.cache/open-document-skills/schemas/``) as
+    ``odf-<version>-<name>.rng``. Placing the files there by hand works
+    offline.
 
     Args:
         name: Either ``"content"`` or ``"manifest"``.
+        version: ODF version, ``"1.3"`` (default) or ``"1.4"``.
 
     Returns:
         Local filesystem path to the cached schema.
 
     Raises:
-        SystemExit: If *name* is unknown or download fails.
+        SystemExit: If *name* or *version* is unknown or download fails.
     """
     import os
     import urllib.request
 
-    if name not in SCHEMA_URLS:
-        raise SystemExit(f"unknown schema {name!r}; choose from {sorted(SCHEMA_URLS)}")
+    if version not in SCHEMA_URLS_BY_VERSION:
+        raise SystemExit(f"no schema for ODF {version!r}; choose from {sorted(SCHEMA_URLS_BY_VERSION)}")
+    urls = SCHEMA_URLS_BY_VERSION[version]
+    if name not in urls:
+        raise SystemExit(f"unknown schema {name!r}; choose from {sorted(urls)}")
     cache_root: Path = (
         Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "open-document-skills" / "schemas"
     )
     cache_root.mkdir(parents=True, exist_ok=True)
-    schema_path: Path = cache_root / f"odf-1.3-{name}.rng"
+    schema_path: Path = cache_root / f"odf-{version}-{name}.rng"
     if not schema_path.exists():
-        url: str = SCHEMA_URLS[name]
+        url: str = urls[name]
         try:
             with urllib.request.urlopen(url, timeout=30) as resp:
                 schema_path.write_bytes(resp.read())
@@ -560,8 +626,9 @@ def validate_against_schema(
     xml_bytes_input: bytes,
     schema_name: str,
     strip_namespaces: tuple[str, ...] = (),
+    version: str = DEFAULT_SCHEMA_VERSION,
 ) -> tuple[bool, list[str]]:
-    """Validate *xml_bytes_input* against the named OASIS ODF 1.3 RelaxNG schema.
+    """Validate *xml_bytes_input* against the named OASIS ODF RelaxNG schema.
 
     Lazily imports ``lxml`` and raises ``SystemExit`` with an install hint
     when the optional dependency is missing.
@@ -573,6 +640,7 @@ def validate_against_schema(
             removed before validation. Use this for documented vendor
             extensions (e.g. ``calcext``) that ODF permits as foreign content
             but the OASIS core schema does not describe.
+        version: ODF version of the schema (``"1.3"`` or ``"1.4"``).
 
     Returns:
         ``(is_valid, errors)`` where errors is a list of human-readable strings.
@@ -581,7 +649,7 @@ def validate_against_schema(
         from lxml import etree  # type: ignore
     except ImportError:
         raise SystemExit("Schema validation requires lxml. Install with:\n  pip install open-document-lib[validate]")
-    schema_path: Path = ensure_schema(schema_name)
+    schema_path: Path = ensure_schema(schema_name, version)
     rng_doc = etree.parse(str(schema_path))
     relaxng = etree.RelaxNG(rng_doc)
     try:
@@ -604,7 +672,33 @@ def validate_against_schema(
 # RelaxNG check (and reported as a warning) rather than counted as errors.
 KNOWN_EXTENSION_NAMESPACES: dict[str, str] = {
     "calcext": "urn:org:documentfoundation:names:experimental:calc:xmlns:calcext:1.0",
+    # LibreOffice writes these in ordinary Writer documents (e.g.
+    # loext:resolved on comments, officeooo:rsid in automatic styles); without
+    # them every LibreOffice-saved document with comments failed --strict.
+    "loext": "urn:org:documentfoundation:names:experimental:office:xmlns:loext:1.0",
+    "officeooo": "http://openoffice.org/2009/office",
 }
+
+
+def _declared_version(xml: bytes, namespace: str) -> str:
+    """Return the root element's ``<ns>:version`` attribute (default 1.3)."""
+    import io
+
+    try:
+        for _event, element in ET.iterparse(io.BytesIO(xml), events=("start",)):
+            # A missing attribute is itself a schema error: validate against
+            # the default version so it gets reported.
+            return element.get(f"{{{namespace}}}version") or DEFAULT_SCHEMA_VERSION
+    except ET.ParseError:
+        pass  # let the schema check report the syntax error
+    return DEFAULT_SCHEMA_VERSION
+
+
+def _unsupported_version_warning(member: str, version: str) -> str:
+    return (
+        f"{member} declares ODF {version} — no OASIS schema available for it, schema check skipped "
+        f"(supported: {', '.join(sorted(SCHEMA_URLS_BY_VERSION))})"
+    )
 
 
 def apply_strict_schema_check(
@@ -643,13 +737,24 @@ def apply_strict_schema_check(
         errors = []
         result["errors"] = errors
     present = {label: uri for label, uri in extension_namespaces.items() if uri.encode("utf-8") in content_bytes}
-    ok, errs = validate_against_schema(content_bytes, "content", strip_namespaces=tuple(present.values()))
-    if not ok:
-        errors.extend(f"content.xml: {err}" for err in errs)
+    warnings_out = result.get("warnings")
+    content_version = _declared_version(content_bytes, ODF_NAMESPACES["office"])
+    if content_version in SCHEMA_URLS_BY_VERSION:
+        ok, errs = validate_against_schema(
+            content_bytes, "content", strip_namespaces=tuple(present.values()), version=content_version
+        )
+        if not ok:
+            errors.extend(f"content.xml: {err}" for err in errs)
+    elif isinstance(warnings_out, list):
+        warnings_out.append(_unsupported_version_warning("content.xml", content_version))
     if manifest_bytes is not None:
-        ok_m, errs_m = validate_against_schema(manifest_bytes, "manifest")
-        if not ok_m:
-            errors.extend(f"manifest.xml: {err}" for err in errs_m)
+        manifest_version = _declared_version(manifest_bytes, ODF_NAMESPACES["manifest"])
+        if manifest_version in SCHEMA_URLS_BY_VERSION:
+            ok_m, errs_m = validate_against_schema(manifest_bytes, "manifest", version=manifest_version)
+            if not ok_m:
+                errors.extend(f"manifest.xml: {err}" for err in errs_m)
+        elif isinstance(warnings_out, list):
+            warnings_out.append(_unsupported_version_warning("manifest.xml", manifest_version))
     if present:
         warnings = result.get("warnings")
         if isinstance(warnings, list):
@@ -1393,6 +1498,11 @@ def _object_media_types(manifest_bytes: bytes | None) -> dict[str, str]:
     return result
 
 
+def _odf_version_of(root: ET.Element) -> str:
+    """Return *root*'s ``office:version`` (``"1.3"`` when absent)."""
+    return root.get(f"{{{ODF_NAMESPACES['office']}}}version") or "1.3"
+
+
 def _flatten_object(members: dict[str, bytes], mimetype: str | None) -> ET.Element:
     """Merge an embedded object's sub-package members into one flat document.
 
@@ -1414,6 +1524,8 @@ def _flatten_object(members: dict[str, bytes], mimetype: str | None) -> ET.Eleme
             roots[name] = ET.fromstring(data)
         except ET.ParseError:
             continue
+    if "content.xml" in roots:
+        doc.set(f"{{{office_ns}}}version", _odf_version_of(roots["content.xml"]))
 
     def pick(member: str, names: set[str]) -> list[ET.Element]:
         root = roots.get(member)
@@ -1453,10 +1565,11 @@ def _split_object_flat(doc: ET.Element) -> tuple[dict[str, bytes], str | None]:
     """
     office_ns: str = ODF_NAMESPACES["office"]
     mimetype: str | None = doc.attrib.get(f"{{{office_ns}}}mimetype")
-    content_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-content", {f"{{{office_ns}}}version": "1.3"})
-    styles_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-styles", {f"{{{office_ns}}}version": "1.3"})
-    meta_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-meta", {f"{{{office_ns}}}version": "1.3"})
-    settings_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-settings", {f"{{{office_ns}}}version": "1.3"})
+    version = _odf_version_of(doc)
+    content_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-content", {f"{{{office_ns}}}version": version})
+    styles_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-styles", {f"{{{office_ns}}}version": version})
+    meta_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-meta", {f"{{{office_ns}}}version": version})
+    settings_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-settings", {f"{{{office_ns}}}version": version})
     content_auto: ET.Element = ET.SubElement(content_doc, f"{{{office_ns}}}automatic-styles")
     has_styles = has_meta = has_settings = False
     for child in list(doc):
@@ -1529,7 +1642,7 @@ def pack_flat_odf(input_zip: Path, output_flat: Path) -> None:
     flat_root: ET.Element = ET.Element(
         f"{{{office_ns}}}document",
         {
-            f"{{{office_ns}}}version": "1.3",
+            f"{{{office_ns}}}version": _odf_version_of(content_root),
             f"{{{office_ns}}}mimetype": mimetype,
         },
     )
@@ -1623,10 +1736,11 @@ def unpack_flat_odf(input_flat: Path, output_zip: Path) -> None:
     if not mimetype:
         raise SystemExit("flat ODF root missing office:mimetype attribute")
 
-    meta_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-meta", {f"{{{office_ns}}}version": "1.3"})
-    settings_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-settings", {f"{{{office_ns}}}version": "1.3"})
-    styles_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-styles", {f"{{{office_ns}}}version": "1.3"})
-    content_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-content", {f"{{{office_ns}}}version": "1.3"})
+    version = _odf_version_of(flat_root)
+    meta_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-meta", {f"{{{office_ns}}}version": version})
+    settings_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-settings", {f"{{{office_ns}}}version": version})
+    styles_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-styles", {f"{{{office_ns}}}version": version})
+    content_doc: ET.Element = ET.Element(f"{{{office_ns}}}document-content", {f"{{{office_ns}}}version": version})
 
     styles_auto: ET.Element = ET.SubElement(styles_doc, f"{{{office_ns}}}automatic-styles")
     content_auto: ET.Element = ET.SubElement(content_doc, f"{{{office_ns}}}automatic-styles")
@@ -1702,7 +1816,7 @@ def unpack_flat_odf(input_flat: Path, output_zip: Path) -> None:
 
     manifest_doc: ET.Element = ET.Element(
         f"{{{manifest_ns}}}manifest",
-        {f"{{{manifest_ns}}}version": "1.3"},
+        {f"{{{manifest_ns}}}version": version},
     )
     ET.SubElement(
         manifest_doc,
@@ -1710,7 +1824,7 @@ def unpack_flat_odf(input_flat: Path, output_zip: Path) -> None:
         {
             f"{{{manifest_ns}}}full-path": "/",
             f"{{{manifest_ns}}}media-type": mimetype,
-            f"{{{manifest_ns}}}version": "1.3",
+            f"{{{manifest_ns}}}version": version,
         },
     )
     for name in ("content.xml", "styles.xml", "meta.xml", "settings.xml"):
@@ -1805,6 +1919,16 @@ def convert_with_soffice(
     import subprocess
 
     outdir.mkdir(parents=True, exist_ok=True)
+    output: Path = outdir / f"{input_path.stem}.{target_format}"
+    if output.resolve() == input_path.resolve():
+        # soffice cannot overwrite the document it has open: it prints an
+        # error but still exits 0, leaving the input untouched.
+        raise SystemExit(
+            f"refusing to convert {input_path} onto itself — choose an --outdir other than the input's directory"
+        )
+    # A stale output from an earlier run would otherwise mask a failed
+    # conversion (the existence check below would pass).
+    output.unlink(missing_ok=True)
     soffice: str = find_soffice()
     convert_arg: str = f"{target_format}:{filter_name}" if filter_name else target_format
     profile: str = tempfile.mkdtemp(prefix="odf-soffice-")
@@ -1826,7 +1950,6 @@ def convert_with_soffice(
         )
     finally:
         shutil.rmtree(profile, ignore_errors=True)
-    output: Path = outdir / f"{input_path.stem}.{target_format}"
     if result.returncode != 0 or not output.exists():
         raise SystemExit(f"LibreOffice failed to convert {input_path.name} to {target_format}:\n{result.stdout}")
     return output

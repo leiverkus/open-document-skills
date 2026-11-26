@@ -383,6 +383,19 @@ def expanded_rows(
     return rows
 
 
+_CELL_VALUE_ATTRS = (
+    q("table", "formula"),
+    q("office", "value-type"),
+    q("office", "value"),
+    q("office", "string-value"),
+    q("office", "date-value"),
+    q("office", "time-value"),
+    q("office", "boolean-value"),
+    q("office", "currency"),
+    q("calcext", "value-type"),
+)
+
+
 def set_cell_value(
     cell: ET.Element,
     value: str,
@@ -390,11 +403,19 @@ def set_cell_value(
 ) -> None:
     """Set the value or formula of a table:table-cell element."""
     cell.attrib.pop(q("table", "number-columns-repeated"), None)
+    # Drop every attribute describing the previous content. A stale
+    # table:formula would otherwise survive a plain-value assignment and
+    # LibreOffice would keep recalculating it, ignoring the new value; stale
+    # cached values or value types would contradict the new content.
+    for attr in _CELL_VALUE_ATTRS:
+        cell.attrib.pop(attr, None)
     for child in list(cell):
         cell.remove(child)
     if formula:
+        # No office:value-type: ODF requires office:value alongside
+        # value-type="float", and the result is unknown until LibreOffice
+        # recalculates (recalc.py writes the cached value and type).
         cell.set(q("table", "formula"), value)
-        cell.set(q("office", "value-type"), "float")
     else:
         try:
             number = float(value)

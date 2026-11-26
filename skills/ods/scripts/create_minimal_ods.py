@@ -22,6 +22,7 @@ from ods_common import (
     q,
     set_cell_value,
     theme_font_faces,
+    xml_bytes,
 )
 
 # Cell style applied to the first (header) row of each sheet under a theme.
@@ -135,6 +136,8 @@ def main() -> None:
                 cell = ET.SubElement(row, q("table", "table-cell"))
                 if theme is not None and r == 1:
                     cell.set(q("table", "style-name"), HEADER_CELL_STYLE)
+                if value is None:
+                    continue  # JSON null → empty cell (not the string "None")
                 if isinstance(value, dict):
                     if "formula" in value:
                         set_cell_value(cell, str(value["formula"]), formula=True)
@@ -163,7 +166,7 @@ def main() -> None:
         root_dir = Path(tmp)
         (root_dir / "META-INF").mkdir()
         (root_dir / "mimetype").write_text(ODS_MIMETYPE)
-        ET.ElementTree(content).write(root_dir / "content.xml", encoding="utf-8", xml_declaration=True)
+        (root_dir / "content.xml").write_bytes(xml_bytes(content))
         ET.ElementTree(build_styles(theme)).write(root_dir / "styles.xml", encoding="utf-8", xml_declaration=True)
         ET.ElementTree(build_meta(spec.get("title"))).write(
             root_dir / "meta.xml", encoding="utf-8", xml_declaration=True

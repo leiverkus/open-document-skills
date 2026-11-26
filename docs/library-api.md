@@ -139,7 +139,7 @@ helpers) is internal and may change without notice.
 
 | Signature | Description |
 |---|---|
-| `ensure_schema(name) -> Path` | Download and cache an OASIS ODF 1.3 RelaxNG schema (`content`/`manifest`). |
+| `ensure_schema(name, version="1.3") -> Path` | Download and cache an OASIS ODF RelaxNG schema (`content`/`manifest`; version `1.3` or `1.4`). |
 | `validate_against_schema(xml_bytes_input, schema_name) -> tuple[bool, list[str]]` | Validate XML bytes against a cached schema (requires `lxml`). |
 
 ### External tooling
